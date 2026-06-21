@@ -3,9 +3,9 @@ use jiff::Zoned;
 use jiff::civil::Date;
 use regex::Regex;
 use rusqlite::{Connection, params};
-use tracing::info;
 use std::fs;
 use std::path::Path;
+use tracing::info;
 
 // 優先度を表す Enum
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -41,6 +41,8 @@ pub struct Task {
     pub start_date: Date, // String から Dateに変更
     pub due_date: Date,   // String から Dateに変更
     pub priority: Priority,
+    pub progress: f32,
+    pub time_spent: f32,
 }
 
 impl Default for Task {
@@ -55,6 +57,8 @@ impl Default for Task {
             start_date: Zoned::now().date(),
             due_date: Zoned::now().date(),
             priority: Priority::Low,
+            progress: 0.0f32,
+            time_spent: 0.0f32,
         }
     }
 }
@@ -70,6 +74,8 @@ impl Task {
         start_date: Date,
         due_date: Date,
         priority: Priority,
+        progress: f32,
+        time_spent: f32,
     ) -> Self {
         Self {
             id,
@@ -81,6 +87,8 @@ impl Task {
             start_date,
             due_date,
             priority,
+            progress,
+            time_spent,
         }
     }
 }
@@ -90,8 +98,7 @@ pub fn connect() -> Result<Connection> {
     if path.exists() && !path.is_dir() {
         bail!("'runtime' はディレクトリではなく、同名のファイルとして既に存在しています。");
     } else {
-        fs::create_dir_all(path)
-            .context("runtime ディレクトリの作成に失敗しました。")?;
+        fs::create_dir_all(path).context("runtime ディレクトリの作成に失敗しました。")?;
     }
 
     let conn = Connection::open("./runtime/task_fighter.db")
@@ -108,7 +115,9 @@ pub fn connect() -> Result<Connection> {
             detail      TEXT NOT NULL,
             start_date  DATETIME NOT NULL,
             due_date    DATETIME NOT NULL,
-            priority    INTEGER NOT NULL DEFAULT 1
+            priority    INTEGER NOT NULL DEFAULT 1,
+            progress    REAL NOT NULL DEFAULT 0.0 CHECK(progress >= 0.0 AND progress <= 100.0),
+            time_spent  REAL NOT NULL DEFAULT 0.0
         )",
         [],
     )
@@ -121,7 +130,7 @@ pub fn connect() -> Result<Connection> {
 pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     info!("Insert task: {:?}", task);
     conn.execute(
-        "INSERT INTO tasks (active, done, project, title, detail, start_date, due_date, priority) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        "INSERT INTO tasks (active, done, project, title, detail, start_date, due_date, priority, progress, time_spent) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
         params![
             task.active as i32,
             task.done as i32,
@@ -130,7 +139,9 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
             task.detail,
             task.start_date, // rusqliteのchrono機能により、Dateをそのまま渡せます
             task.due_date,
-            task.priority as i32
+            task.priority as i32,
+            task.progress,
+            task.time_spent
         ],
     )
     .context("データの挿入に失敗しました")?;
@@ -159,12 +170,26 @@ pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
             row.get::<_, Date>(6)?, // SQLから直接Dateとして取得
             row.get::<_, Date>(7)?, // SQLから直接Dateとして取得
             priority_raw,
+            row.get(9)?,
+            row.get(10)?,
         ))
     })?;
 
     let mut tasks = Vec::new();
     for item in task_iter {
-        let (id, active, done, project, title, detail, start_date, due_date, p_raw) = item?;
+        let (
+            id,
+            active,
+            done,
+            project,
+            title,
+            detail,
+            start_date,
+            due_date,
+            p_raw,
+            progress,
+            time_spent,
+        ) = item?;
         tasks.push(Task {
             id,
             active,
@@ -175,6 +200,8 @@ pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
             start_date,
             due_date,
             priority: Priority::try_from(p_raw)?,
+            progress,
+            time_spent,
         });
     }
 
@@ -184,7 +211,7 @@ pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
 pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
     info!("Fetch task by id : {}", id);
     let mut stmt = conn
-        .prepare("SELECT id, active, done, project, title, detail, start_date, due_date, priority FROM tasks WHERE id = ?1")
+        .prepare("SELECT id, active, done, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE id = ?1")
         .context("クエリの準備に失敗しました")?;
 
     let row_result = stmt.query_row(params![id], |row| {
@@ -201,12 +228,26 @@ pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
             row.get::<_, Date>(6)?,
             row.get::<_, Date>(7)?,
             priority_raw,
+            row.get(9)?,
+            row.get(10)?,
         ))
     });
 
     match row_result {
         Ok(tup) => {
-            let (id, active, done, project, title, detail, start_date, due_date, p_raw) = tup;
+            let (
+                id,
+                active,
+                done,
+                project,
+                title,
+                detail,
+                start_date,
+                due_date,
+                p_raw,
+                progress,
+                time_spent,
+            ) = tup;
             Ok(Task {
                 id,
                 active,
@@ -217,6 +258,8 @@ pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
                 start_date,
                 due_date,
                 priority: Priority::try_from(p_raw)?,
+                progress,
+                time_spent,
             })
         }
         Err(e) => {
@@ -232,7 +275,7 @@ pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
 pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Fetch active tasks");
     let mut stmt = conn
-        .prepare("SELECT id, active, done, project, title, detail, start_date, due_date, priority FROM tasks WHERE active = 1")
+        .prepare("SELECT id, active, done, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE active = 1")
         .context("クエリの準備に失敗しました")?;
 
     let task_iter = stmt.query_map([], |row| {
@@ -249,13 +292,26 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
             row.get::<_, Date>(6)?,
             row.get::<_, Date>(7)?,
             priority_raw,
+            row.get(9)?,
+            row.get(10)?,
         ))
     })?;
 
     let mut tasks = Vec::new();
     for item in task_iter {
-        let (id, active, done, project, title, detail, start_date, due_date, p_raw) =
-            item.context("レコードの読み込みに失敗しました")?;
+        let (
+            id,
+            active,
+            done,
+            project,
+            title,
+            detail,
+            start_date,
+            due_date,
+            p_raw,
+            progress,
+            time_spent,
+        ) = item.context("レコードの読み込みに失敗しました")?;
         tasks.push(Task {
             id,
             active,
@@ -266,6 +322,8 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
             start_date,
             due_date,
             priority: Priority::try_from(p_raw)?,
+            progress,
+            time_spent,
         });
     }
 
@@ -276,7 +334,7 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
 pub fn fetch_incomplete_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Fetch incomplete tasks");
     let mut stmt = conn
-        .prepare("SELECT id, active, done, project, title, detail, start_date, due_date, priority FROM tasks WHERE done = 0")
+        .prepare("SELECT id, active, done, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE done = 0")
         .context("クエリの準備に失敗しました")?;
 
     let task_iter = stmt.query_map([], |row| {
@@ -293,13 +351,26 @@ pub fn fetch_incomplete_tasks(conn: &Connection) -> Result<Vec<Task>> {
             row.get::<_, Date>(6)?,
             row.get::<_, Date>(7)?,
             priority_raw,
+            row.get(9)?,
+            row.get(10)?,
         ))
     })?;
 
     let mut tasks = Vec::new();
     for item in task_iter {
-        let (id, active, done, project, title, detail, start_date, due_date, p_raw) =
-            item.context("レコードの読み込みに失敗しました")?;
+        let (
+            id,
+            active,
+            done,
+            project,
+            title,
+            detail,
+            start_date,
+            due_date,
+            p_raw,
+            progress,
+            time_spent,
+        ) = item.context("レコードの読み込みに失敗しました")?;
         tasks.push(Task {
             id,
             active,
@@ -310,6 +381,8 @@ pub fn fetch_incomplete_tasks(conn: &Connection) -> Result<Vec<Task>> {
             start_date,
             due_date,
             priority: Priority::try_from(p_raw)?,
+            progress,
+            time_spent,
         });
     }
 
@@ -321,8 +394,8 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
     let mut stmt = conn
         .prepare(
             "UPDATE tasks 
-             SET active = ?1, done = ?2, project = ?3, title = ?4, detail = ?5, start_date = ?6, due_date = ?7, priority = ?8 
-             WHERE id = ?9",
+             SET active = ?1, done = ?2, project = ?3, title = ?4, detail = ?5, start_date = ?6, due_date = ?7, priority = ?8, progress = ?9, time_spent = ?10 
+             WHERE id = ?11",
         )
         .context("クエリの準備に失敗しました")?;
 
@@ -336,6 +409,8 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
             task.start_date, // Dateを直接バインド
             task.due_date,   // Dateを直接バインド
             task.priority as i32,
+            task.progress,
+            task.time_spent,
             task.id
         ])
         .context("データの更新に失敗しました")?;
@@ -403,7 +478,9 @@ mod tests {
                 detail      TEXT NOT NULL,
                 start_date  DATETIME NOT NULL,
                 due_date    DATETIME NOT NULL,
-                priority    INTEGER NOT NULL DEFAULT 1
+                priority    INTEGER NOT NULL DEFAULT 1,
+                progress    REAL NOT NULL DEFAULT 0.0 CHECK(progress >= 0.0 AND progress <= 100.0),
+                time_spent  REAL NOT NULL DEFAULT 0.0
             )",
             [],
         )
@@ -438,6 +515,8 @@ mod tests {
             start,
             due,
             Priority::High,
+            55.0,
+            12.0,
         );
 
         insert_task(&conn, &task)?;
@@ -455,6 +534,8 @@ mod tests {
         assert_eq!(fetched.start_date, start);
         assert_eq!(fetched.due_date, due);
         assert_eq!(fetched.priority, Priority::High);
+        assert_eq!(fetched.progress, 55.0);
+        assert_eq!(fetched.time_spent, 12.0);
 
         Ok(())
     }
@@ -474,6 +555,8 @@ mod tests {
             now,
             now,
             Priority::Low,
+            25.0,
+            5.0,
         );
         insert_task(&conn, &task)?;
 
@@ -504,6 +587,8 @@ mod tests {
             now,
             now,
             Priority::Medium,
+            55.0,
+            12.0,
         );
         // 完了済みタスク
         let task2 = Task::new(
@@ -516,6 +601,8 @@ mod tests {
             now,
             now,
             Priority::Medium,
+            60.0,
+            15.0,
         );
 
         // 完了済みタスク
@@ -529,6 +616,8 @@ mod tests {
             now,
             now,
             Priority::Medium,
+            70.0,
+            16.0,
         );
 
         // 完了済みタスク
@@ -542,6 +631,8 @@ mod tests {
             now,
             now,
             Priority::Medium,
+            80.0,
+            20.0,
         );
 
         insert_task(&conn, &task1)?;
@@ -573,6 +664,8 @@ mod tests {
             now,
             now,
             Priority::Medium,
+            20.0,
+            33.0,
         );
         // 完了済みタスク
         let task2 = Task::new(
@@ -585,6 +678,8 @@ mod tests {
             now,
             now,
             Priority::Medium,
+            20.0,
+            33.0,
         );
 
         insert_task(&conn, &task1)?;
@@ -612,6 +707,8 @@ mod tests {
             now,
             now,
             Priority::Low,
+            20.0,
+            33.0,
         );
         insert_task(&conn, &task)?;
 
@@ -627,6 +724,8 @@ mod tests {
             now,
             updated_time,
             Priority::High,
+            20.0,
+            33.0,
         );
 
         update_task(&conn, &updated_task)?;
@@ -639,6 +738,8 @@ mod tests {
         assert_eq!(fetched.title, "New Title");
         assert_eq!(fetched.due_date, updated_time);
         assert_eq!(fetched.priority, Priority::High);
+        assert_eq!(fetched.progress, 20.0);
+        assert_eq!(fetched.time_spent, 33.0);
 
         // 存在しないIDの更新はエラーになるか確認
         let mut invalid_task = fetched.clone();
@@ -663,6 +764,8 @@ mod tests {
             now,
             now,
             Priority::Medium,
+            20.0,
+            33.0,
         );
         let task2 = Task::new(
             0,
@@ -674,6 +777,8 @@ mod tests {
             now,
             now,
             Priority::Medium,
+            30.0,
+            43.0,
         );
 
         insert_task(&conn, &task1)?;

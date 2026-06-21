@@ -1,5 +1,5 @@
 use eframe::egui;
-use egui::{Color32, Stroke, CornerRadius};
+use egui::{Color32, CornerRadius, Stroke};
 
 pub fn setup_style(ctx: &egui::Context) {
     /* Tweak font and size */
@@ -17,21 +17,21 @@ pub fn setup_style(ctx: &egui::Context) {
     // --- 基本設定 ---
     visuals.dark_mode = true;
     // 水色に馴染む、少し青みがかったクリーンな白
-    visuals.override_text_color = Some(Color32::from_rgb(0, 192, 220)); 
+    visuals.override_text_color = Some(Color32::from_rgb(0, 192, 220));
     // 控えめな水色グレー
-    visuals.weak_text_color = Some(Color32::from_rgb(130, 150, 160)); 
+    visuals.weak_text_color = Some(Color32::from_rgb(130, 150, 160));
     visuals.weak_text_alpha = 0.6;
     visuals.disabled_alpha = 0.5;
 
     // --- 背景・ウィンドウ設定 ---
     // メインパネル：深海のようなダークアクアネイビー
-    visuals.panel_fill = Color32::from_rgb(16, 24, 30); 
+    visuals.panel_fill = Color32::from_rgb(16, 24, 30);
     // ウィンドウ：少し明るいミッドナイトブルー
-    visuals.window_fill = Color32::from_rgb(24, 34, 42); 
+    visuals.window_fill = Color32::from_rgb(24, 34, 42);
     // ストライプや薄い背景：透明感のある水色グレー
-    visuals.faint_bg_color = Color32::from_rgb(30, 44, 54); 
+    visuals.faint_bg_color = Color32::from_rgb(30, 44, 54);
     // テキストエリアなどのくぼんだ背景：引き締まった濃紺
-    visuals.extreme_bg_color = Color32::from_rgb(10, 16, 20); 
+    visuals.extreme_bg_color = Color32::from_rgb(10, 16, 20);
 
     // --- テキスト・コード設定 ---
     visuals.text_edit_bg_color = Some(Color32::from_rgb(10, 16, 20));
@@ -39,14 +39,14 @@ pub fn setup_style(ctx: &egui::Context) {
 
     // --- アクセントカラー ---
     visuals.hyperlink_color = Color32::from_rgb(0, 210, 255); // 明るいクリアな水色
-    visuals.warn_fg_color = Color32::from_rgb(240, 180, 50);  // 警告：少し寒色に合うゴールド
-    visuals.error_fg_color = Color32::from_rgb(255, 90, 120);  // エラー：コーラルピンク
+    visuals.warn_fg_color = Color32::from_rgb(240, 180, 50); // 警告：少し寒色に合うゴールド
+    visuals.error_fg_color = Color32::from_rgb(255, 90, 120); // エラー：コーラルピンク
 
     // --- 形状・枠線・影 ---
-    visuals.window_corner_radius = CornerRadius::same(6); 
+    visuals.window_corner_radius = CornerRadius::same(6);
     visuals.menu_corner_radius = CornerRadius::same(4);
     // 境界線：氷のような薄い青
-    visuals.window_stroke = Stroke::new(1.0, Color32::from_rgb(40, 60, 75)); 
+    visuals.window_stroke = Stroke::new(1.0, Color32::from_rgb(40, 60, 75));
     visuals.window_highlight_topmost = true;
 
     // --- ガジェット・UIの振る舞い ---
@@ -54,7 +54,7 @@ pub fn setup_style(ctx: &egui::Context) {
     visuals.collapsing_header_frame = false;
     visuals.indent_has_left_vline = true;
     visuals.striped = true;
-    visuals.slider_trailing_fill = true; 
+    visuals.slider_trailing_fill = true;
     visuals.image_loading_spinners = true;
 
     visuals.resize_corner_size = 10.0;
