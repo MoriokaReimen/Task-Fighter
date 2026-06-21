@@ -39,14 +39,14 @@ impl App {
             // --- 1. ヘッダーエリア ---
             ui.heading("📋 タスク一覧");
             ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
-                let btn_reset = Button::new("Reset").min_size(vec2(120.0, 28.0));
+                let btn_reset = Button::new("↩ Reset").min_size(vec2(80.0, 28.0));
                 if ui.add(btn_reset).clicked() {
                     info!("Reset Button Pressed");
                     self.scan_pattern.clear();
                     self.output = self.core.fetch_active_tasks();
                 }
                 // 先に右端に Search ボタンを配置
-                let btn_search = Button::new("🔍Search").min_size(vec2(120.0, 28.0));
+                let btn_search = Button::new("🔍Search").min_size(vec2(80.0, 28.0));
                 if ui.add(btn_search).clicked() {
                     info!("Search Button Pressed");
                     self.output = self.core.scan_tasks_by_regex(&self.scan_pattern);

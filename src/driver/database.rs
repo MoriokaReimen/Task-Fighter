@@ -1,9 +1,11 @@
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use jiff::Zoned;
 use jiff::civil::Date;
 use regex::Regex;
 use rusqlite::{Connection, params};
 use tracing::info;
+use std::fs;
+use std::path::Path;
 
 // 優先度を表す Enum
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -84,6 +86,14 @@ impl Task {
 }
 
 pub fn connect() -> Result<Connection> {
+    let path = Path::new("runtime");
+    if path.exists() && !path.is_dir() {
+        bail!("'runtime' はディレクトリではなく、同名のファイルとして既に存在しています。");
+    } else {
+        fs::create_dir_all(path)
+            .context("runtime ディレクトリの作成に失敗しました。")?;
+    }
+
     let conn = Connection::open("./runtime/task_fighter.db")
         .context("データベースファイルのオープンに失敗しました")?;
 
