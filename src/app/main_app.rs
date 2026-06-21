@@ -108,7 +108,7 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
             },
-            CoreOutput::ScanTasksByRegex(rx) => match rx.try_recv() {
+            CoreOutput::ScanTasksByFts(rx) => match rx.try_recv() {
                 Ok(Ok(tasks)) => {
                     self.displayed_tasks = Some(tasks);
                     Some(CoreOutput::Idle)

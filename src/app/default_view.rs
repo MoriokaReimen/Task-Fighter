@@ -49,7 +49,7 @@ impl App {
                 let btn_search = Button::new("🔍Search").min_size(vec2(80.0, 28.0));
                 if ui.add(btn_search).clicked() {
                     info!("Search Button Pressed");
-                    self.output = self.core.scan_tasks_by_regex(&self.scan_pattern);
+                    self.output = self.core.scan_tasks_by_fts(&self.scan_pattern);
                 }
 
                 // 残りの幅すべてを TextEdit に割り当てる

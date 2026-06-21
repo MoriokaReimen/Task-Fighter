@@ -17,7 +17,7 @@ pub enum CoreOutput {
     FetchActiveTasks(oneshot::Receiver<Result<Vec<Task>>>),
     FetchIncompleteTasks(oneshot::Receiver<Result<Vec<Task>>>),
     UpdateTask(oneshot::Receiver<Result<()>>),
-    ScanTasksByRegex(oneshot::Receiver<Result<Vec<Task>>>),
+    ScanTasksByFts(oneshot::Receiver<Result<Vec<Task>>>),
     MailDaily(oneshot::Receiver<Result<()>>),
 }
 
@@ -130,7 +130,7 @@ impl Core {
         CoreOutput::UpdateTask(rx)
     }
 
-    pub fn scan_tasks_by_regex(&self, pattern: &String) -> CoreOutput {
+    pub fn scan_tasks_by_fts(&self, pattern: &String) -> CoreOutput {
         let conn = Arc::clone(&self.conn);
         let pattern = pattern.clone();
         let (tx, rx) = oneshot::channel();
@@ -140,12 +140,12 @@ impl Core {
                 let conn_lock = conn
                     .lock()
                     .map_err(|_| anyhow::anyhow!("Mutexのロックに失敗しました"))?;
-                driver::scan_tasks_by_regex(&conn_lock, &pattern)
+                driver::scan_tasks_by_fts(&conn_lock, &pattern)
             })();
             let _ = tx.send(res);
         });
 
-        CoreOutput::ScanTasksByRegex(rx)
+        CoreOutput::ScanTasksByFts(rx)
     }
 
     pub fn mail_daily(&self, tasks: Vec<Task>) -> CoreOutput {
@@ -255,14 +255,14 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_core_scan_tasks_by_regex() {
+    async fn test_core_scan_tasks_by_fts() {
         let core = Core::new().expect("Coreの初期化に失敗しました");
 
         // 検索パターン（不正な正規表現）によるエラーハンドリングのテスト
         let invalid_pattern = "[A-Z".to_string();
-        let output = core.scan_tasks_by_regex(&invalid_pattern);
+        let output = core.scan_tasks_by_fts(&invalid_pattern);
 
-        if let CoreOutput::ScanTasksByRegex(rx) = output {
+        if let CoreOutput::ScanTasksByFts(rx) = output {
             let result = rx.await.expect("Channel が正常に閉じられませんでした");
             assert!(result.is_err(), "不正な正規表現でエラーになりませんでした");
         } else {

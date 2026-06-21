@@ -13,14 +13,13 @@ pub fn setup_style(ctx: &egui::Context) {
 
     /* Tweak Color */
     ctx.set_theme(egui::Theme::Dark);
-    let mut visuals = egui::Visuals::light();
+    let visuals = egui::Visuals::light();
     ctx.set_visuals(visuals);
-    let mut visuals = egui::Visuals::dark();
+    let visuals = egui::Visuals::dark();
     ctx.set_visuals(visuals);
 }
 
-fn get_visuals(visuals: &mut egui::Visuals)
-{
+fn get_visuals(visuals: &mut egui::Visuals) {
     // --- 基本設定 ---
     visuals.dark_mode = true;
     // 水色に馴染む、少し青みがかったクリーンな白
@@ -92,7 +91,6 @@ fn get_visuals(visuals: &mut egui::Visuals)
     // 4. 選択状態 (Selection) - テキストハイライトなど
     visuals.selection.bg_fill = Color32::from_rgb(0, 100, 140);
     visuals.selection.stroke = Stroke::new(1.0, Color32::from_rgb(160, 235, 255));
-
 }
 
 fn setup_custom_fonts(ctx: &egui::Context) {
