@@ -43,10 +43,9 @@ pub fn create_mail_text(tasks: &Vec<Task>) -> String {
         contents += &format!("- Start Date: {}\n", start_date_str);
         contents += &format!("- Due Date: {}\n", due_date_str);
         contents += &format!("- Progress: {}%\n", task.progress);
-        contents += &format!("- Time Spent: {}%\n\n", task.time_spent);
+        contents += &format!("- Time Spent: {} hrs\n\n", task.time_spent);
         contents += "# Details\n";
 
-        // 詳細が複数行になっても崩れないよう引用スタイルに
         for line in task.detail.lines() {
             contents += &format!("{}\n", line);
         }
