@@ -8,7 +8,10 @@ pub fn create_mail_text(tasks: &Vec<Task>) -> String {
     let mut contents = String::new();
 
     // メールのタイトルや概要をMarkdownのヘッダーで作成
-    contents += "Task Status Report\n";
+    contents += &Zoned::now()
+        .date()
+        .strftime("%Y/%m/%d Task Status Report\n")
+        .to_string();
     contents += "===========================================================================\n";
     contents += &format!("There are currently {} tasks.\n\n", tasks.len());
 
@@ -38,7 +41,9 @@ pub fn create_mail_text(tasks: &Vec<Task>) -> String {
         contents += &format!("- Priority: {}\n", priority_str);
         contents += &format!("- Status: {}\n", status_gfm);
         contents += &format!("- Start Date: {}\n", start_date_str);
-        contents += &format!("- Due Date: {}\n\n", due_date_str);
+        contents += &format!("- Due Date: {}\n", due_date_str);
+        contents += &format!("- Progress: {}%\n", task.progress);
+        contents += &format!("- Time Spent: {}%\n\n", task.time_spent);
         contents += "# Details\n";
 
         // 詳細が複数行になっても崩れないよう引用スタイルに
@@ -80,95 +85,70 @@ pub fn launch_system_mailer(tasks: &Vec<Task>) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{TimeZone, Utc};
+    use jiff::civil::date;
 
-    // テスト用のTaskベクタを作成するヘルパー関数
-    fn create_test_tasks() -> Vec<Task> {
-        let start = Utc.with_ymd_and_hms(2026, 6, 1, 9, 0, 0).unwrap();
-        let due = Utc.with_ymd_and_hms(2026, 6, 10, 18, 0, 0).unwrap();
-
-        vec![
-            Task::new(
-                1,
-                true,
-                false,
-                "Project Alpha".to_string(),
-                "フロントエンドの実装".to_string(),
-                "ログイン画面のUI作成\nバリデーションの追加".to_string(),
-                start,
-                due,
-                Priority::High,
-            ),
-            Task::new(
-                2,
-                true,
-                true,
-                "Project Beta".to_string(),
-                "ドキュメント作成".to_string(),
-                "仕様書の更新".to_string(),
-                start,
-                due,
-                Priority::Low,
-            ),
-        ]
-    }
-
-    #[test]
-    fn test_create_mail_text() {
-        let tasks = create_test_tasks();
-        let mail_text = create_mail_text(&tasks);
-
-        // 1. 全体件数が正しく埋め込まれているか
-        assert!(mail_text.contains("現在、**2件**のタスクがあります。"));
-
-        // 2. タスク1（未完了・High）の内容検証
-        assert!(mail_text.contains("## 1. フロントエンドの実装"));
-        assert!(mail_text.contains("- **プロジェクト**: `Project Alpha`"));
-        assert!(mail_text.contains("- **優先度**: 🔴 高 (High)"));
-        assert!(mail_text.contains("- **ステータス**: - [ ] **未完了**"));
-        assert!(mail_text.contains("- **開始日時**: 2026-06-01 09:00"));
-        assert!(mail_text.contains("- **期限日時**: 2026-06-10 18:00"));
-        // 複数行のディテールが引用（>）になっているか
-        assert!(mail_text.contains("> ログイン画面のUI作成"));
-        assert!(mail_text.contains("> バリデーションの追加"));
-
-        // 3. タスク2（完了・Low）の内容検証
-        assert!(mail_text.contains("## 2. ドキュメント作成"));
-        assert!(mail_text.contains("- **優先度**: 🔵 低 (Low)"));
-        assert!(mail_text.contains("- **ステータス**: - [x] **完了**"));
+    // テスト用のダミータスクを生成するヘルパー関数
+    fn create_test_task(id: i32, title: &str, priority: Priority, done: bool) -> Task {
+        Task {
+            id,
+            active: true,
+            done,
+            project: "TestProject".to_string(),
+            title: title.to_string(),
+            detail: "LINE 1\nLINE 2".to_string(),
+            // テスト結果が固定されるよう、固定の日付を設定
+            start_date: date(2026, 6, 21),
+            due_date: date(2026, 6, 30),
+            priority,
+            progress: 0.0,
+            time_spent: 0.0,
+        }
     }
 
     #[test]
     fn test_create_mail_text_empty() {
         let tasks: Vec<Task> = vec![];
-        let mail_text = create_mail_text(&tasks);
+        let result = create_mail_text(&tasks);
 
-        assert!(mail_text.contains("現在、**0件**のタスクがあります。"));
+        // タスクが0件の場合のヘッダーチェック
+        assert!(result.contains("There are currently 0 tasks."));
     }
 
     #[test]
-    fn test_launch_system_mailer_flow() {
-        let tasks = create_test_tasks();
+    fn test_create_mail_text_with_tasks() {
+        let tasks = vec![
+            create_test_task(1, "未完了タスク", Priority::High, false),
+            create_test_task(2, "完了タスク", Priority::Low, true),
+        ];
 
-        // ※注意: テスト環境にGUI（デフォルトメーラー）がないヘッドレス環境（CIなど）の場合、
-        // open::that はエラーを返す可能性があります。
-        // そのため、ResultがOkであることを盲信するのではなく、関数がクラッシュ（panic）しないこと、
-        // もしくは環境依存のエラーとして安全に処理されることを検証します。
-        let result = launch_system_mailer(&tasks);
+        let result = create_mail_text(&tasks);
 
-        // テストが実行された環境（GUIがあるかないか）によって結果が変わるため、
-        // ここでは match を使って「関数が正しく実行を終えたか（あるいは open のエラーか）」をチェックします。
-        match result {
-            Ok(_) => info!("テスト環境でメーラーが正常に呼び出されました。"),
-            Err(e) => {
-                let err_msg = e.to_string();
-                // 少なくとも「open::that」の手前までのロジック（create_mail_text や encode）が
-                // 正常に動いていることは、パニックが起きないことで保証されます。
-                error!(
-                    "メーラーの起動自体は環境要因でスキップされました: {}",
-                    err_msg
-                );
-            }
-        }
+        // 1. 全体件数のチェック
+        assert!(result.contains("There are currently 2 tasks."));
+
+        // 2. 1件目（未完了・優先度高）の出力チェック
+        assert!(result.contains("Task #1. 未完了タスク"));
+        assert!(result.contains("- Priority: 🔴 High"));
+        assert!(result.contains("- Status: ☐ Incomplete"));
+        assert!(result.contains("- Start Date: 2026/06/21"));
+        assert!(result.contains("- Due Date: 2026/06/30"));
+
+        // 3. 2件目（完了・優先度低）の出力チェック
+        assert!(result.contains("Task #2. 完了タスク"));
+        assert!(result.contains("- Priority: 🔵 Low"));
+        assert!(result.contains("- Status: ☑ Complete"));
+
+        // 4. 詳細（複数行）が正しく展開されているかチェック
+        assert!(result.contains("LINE 1"));
+        assert!(result.contains("LINE 2"));
+    }
+
+    #[test]
+    fn test_create_mail_text_priority_medium() {
+        let tasks = vec![create_test_task(1, "中優先度", Priority::Medium, false)];
+        let result = create_mail_text(&tasks);
+
+        // 優先度 Medium の絵文字チェック
+        assert!(result.contains("- Priority: 🟡 Medium"));
     }
 }

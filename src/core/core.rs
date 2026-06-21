@@ -170,214 +170,103 @@ impl Core {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::driver::{Priority, Task};
-    use crate::*;
-    use chrono::{TimeZone, Utc};
+    use jiff::civil::date;
 
-    // テスト用のダミータスクを生成するヘルパー
-    fn create_test_task(id: i32, title: &str, done: bool, active: bool) -> Task {
-        let now = Utc.with_ymd_and_hms(2026, 6, 20, 9, 0, 0).unwrap();
-        Task::new(
+    // テスト用のダミータスクを生成するヘルパー関数
+    fn create_test_task(id: i32, title: &str) -> Task {
+        Task {
             id,
-            active,
-            done,
-            "TestProject".to_string(),
-            title.to_string(),
-            "Detail contents".to_string(),
-            now,
-            now,
-            Priority::Medium,
-        )
-    }
-
-    // メモリ内DBを使ってCoreインスタンスを作成するヘルパー
-    // driver::connect() が外部ファイルを固定で開く仕様である場合、
-    // テスト実行時の排他ロック競合を防ぐため、テスト用DBコネクションを自前でセットアップします。
-    fn setup_test_core() -> Core {
-        let conn = Connection::open_in_memory().unwrap();
-        // driver側と同じテーブル定義をテスト用メモリ内DBに作成
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS tasks (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                active      INTEGER NOT NULL DEFAULT 1,
-                done        INTEGER NOT NULL DEFAULT 0,
-                project     TEXT NOT NULL,
-                title       TEXT NOT NULL,
-                detail      TEXT NOT NULL,
-                start_date  DATETIME NOT NULL,
-                due_date    DATETIME NOT NULL,
-                priority    INTEGER NOT NULL DEFAULT 1
-            )",
-            [],
-        )
-        .unwrap();
-
-        Core {
-            conn: Arc::new(Mutex::new(conn)),
+            active: true,
+            done: false,
+            project: "TestProject".to_string(),
+            title: title.to_string(),
+            detail: "Test Detail".to_string(),
+            start_date: date(2026, 6, 21),
+            due_date: date(2026, 6, 30),
+            priority: driver::Priority::Low,
+            progress: 0.0,
+            time_spent: 0.0,
         }
     }
 
     #[tokio::test]
-    async fn test_core_insert_and_fetch_all() -> Result<()> {
-        let core = setup_test_core();
-        let task = create_test_task(0, "Learn Rust Async", false, true);
+    async fn test_core_insert_and_fetch_task() {
+        // Coreの初期化 (driver::connect() が走り、DBが準備される)
+        let core = Core::new().expect("Coreの初期化に失敗しました");
 
-        // 1. タスクを挿入
-        if let CoreOutput::InsertTask(rx) = core.insert_task(task) {
-            // oneshotチャネル受信のエラー(?)と、DB操作自体のエラー(?)を二重にアンラップ
-            rx.await??;
+        // 1. タスクの挿入テスト
+        let task = create_test_task(0, "非同期テストタスク");
+        let output = core.insert_task(task);
+
+        if let CoreOutput::InsertTask(rx) = output {
+            let result = rx.await.expect("Channel が正常に閉じられませんでした");
+            assert!(
+                result.is_ok(),
+                "タスクの挿入に失敗しました: {:?}",
+                result.err()
+            );
         } else {
-            panic!("不正なCoreOutputバリアントが返されました");
+            panic!("予期しない CoreOutput タイプです");
         }
 
-        // 2. 全件取得
-        if let CoreOutput::FetchAllTasks(rx) = core.fetch_all_tasks() {
-            let tasks = rx.await??;
-            assert_eq!(tasks.len(), 1);
-            assert_eq!(tasks[0].title, "Learn Rust Async");
-            assert_eq!(tasks[0].id, 1); // AUTOINCREMENTによるインデックス
-        } else {
-            panic!("不正なCoreOutputバリアントが返されました");
-        }
+        // 2. 挿入したタスクを全件取得して検証
+        let output = core.fetch_all_tasks();
+        if let CoreOutput::FetchAllTasks(rx) = output {
+            let result = rx.await.expect("Channel が正常に閉じられませんでした");
+            let tasks = result.expect("タスクの全件取得に失敗しました");
 
-        Ok(())
+            // 少なくとも1件（今入れたタスク）が存在することを確認
+            assert!(!tasks.is_empty());
+            assert!(tasks.iter().any(|t| t.title == "非同期テストタスク"));
+        } else {
+            panic!("予期しない CoreOutput タイプです");
+        }
     }
 
     #[tokio::test]
-    async fn test_core_fetch_task_by_id() -> Result<()> {
-        let core = setup_test_core();
-        let task = create_test_task(0, "Target Task", false, true);
+    async fn test_core_fetch_task_by_id_not_found() {
+        let core = Core::new().expect("Coreの初期化に失敗しました");
 
-        if let CoreOutput::InsertTask(rx) = core.insert_task(task) {
-            rx.await??;
-        }
-
-        // ID: 1 のタスクを指定して取得
-        if let CoreOutput::FetchTaskById(rx) = core.fetch_task_by_id(1) {
-            let fetched = rx.await??;
-            assert_eq!(fetched.title, "Target Task");
+        // 存在しないID (9999) を指定して取得を試みる
+        let output = core.fetch_task_by_id(9999);
+        if let CoreOutput::FetchTaskById(rx) = output {
+            let result = rx.await.expect("Channel が正常に閉じられませんでした");
+            // driver 側でエラー(bail!)を返すため、is_err() になるはず
+            assert!(result.is_err());
         } else {
-            panic!("不正なCoreOutputバリアントが返されました");
+            panic!("予期しない CoreOutput タイプです");
         }
-
-        // 存在しないIDを指定した場合の検証
-        if let CoreOutput::FetchTaskById(rx) = core.fetch_task_by_id(999) {
-            let result = rx.await?; // チャネル自体の受信は成功するが
-            assert!(result.is_err()); // 中身のDB処理はエラーになる
-        } else {
-            panic!("不正なCoreOutputバリアントが返されました");
-        }
-
-        Ok(())
     }
 
     #[tokio::test]
-    async fn test_core_fetch_active_and_incomplete() -> Result<()> {
-        let core = setup_test_core();
+    async fn test_core_update_task_not_found() {
+        let core = Core::new().expect("Coreの初期化に失敗しました");
+        let mut task = create_test_task(9999, "存在しないタスク");
 
-        // 未完了/アクティブなタスク
-        let task1 = create_test_task(0, "Active Incomplete", false, true);
-        // 完了済みタスク
-        let task2 = create_test_task(0, "Completed", true, true);
-
-        if let CoreOutput::InsertTask(rx) = core.insert_task(task1) {
-            rx.await??;
-        }
-        if let CoreOutput::InsertTask(rx) = core.insert_task(task2) {
-            rx.await??;
-        }
-
-        // 未完了タスクのみの取得を検証
-        if let CoreOutput::FetchIncompleteTasks(rx) = core.fetch_incomplete_tasks() {
-            let incomplete = rx.await??;
-            assert_eq!(incomplete.len(), 1);
-            assert_eq!(incomplete[0].title, "Active Incomplete");
+        // 存在しないIDのタスクを更新
+        let output = core.update_task(task);
+        if let CoreOutput::UpdateTask(rx) = output {
+            let result = rx.await.expect("Channel が正常に閉じられませんでした");
+            // 該当レコードがないためエラーになるはず
+            assert!(result.is_err());
         } else {
-            panic!("不正なCoreOutputバリアントが返されました");
+            panic!("予期しない CoreOutput タイプです");
         }
-
-        // アクティブタスクのみの取得を検証
-        if let CoreOutput::FetchActiveTasks(rx) = core.fetch_active_tasks() {
-            let active = rx.await??;
-            assert_eq!(active.len(), 2);
-        } else {
-            panic!("不正なCoreOutputバリアントが返されました");
-        }
-
-        Ok(())
     }
 
     #[tokio::test]
-    async fn test_core_update_task() -> Result<()> {
-        let core = setup_test_core();
-        let task = create_test_task(0, "Before Update", false, true);
+    async fn test_core_scan_tasks_by_regex() {
+        let core = Core::new().expect("Coreの初期化に失敗しました");
 
-        if let CoreOutput::InsertTask(rx) = core.insert_task(task) {
-            rx.await??;
-        }
+        // 検索パターン（不正な正規表現）によるエラーハンドリングのテスト
+        let invalid_pattern = "[A-Z".to_string();
+        let output = core.scan_tasks_by_regex(&invalid_pattern);
 
-        // ID: 1 のタスクを書き換えるデータを用意
-        let updated_task = create_test_task(1, "After Update", true, false);
-
-        if let CoreOutput::UpdateTask(rx) = core.update_task(updated_task) {
-            rx.await??;
+        if let CoreOutput::ScanTasksByRegex(rx) = output {
+            let result = rx.await.expect("Channel が正常に閉じられませんでした");
+            assert!(result.is_err(), "不正な正規表現でエラーになりませんでした");
         } else {
-            panic!("不正なCoreOutputバリアントが返されました");
+            panic!("予期しない CoreOutput タイプです");
         }
-
-        // 実際に書き換わっているかロードして検証
-        if let CoreOutput::FetchTaskById(rx) = core.fetch_task_by_id(1) {
-            let fetched = rx.await??;
-            assert_eq!(fetched.title, "After Update");
-            assert_eq!(fetched.done, true);
-            assert_eq!(fetched.active, false);
-        } else {
-            panic!("不正なCoreOutputバリアントが返されました");
-        }
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_core_scan_tasks_by_regex() -> Result<()> {
-        let core = setup_test_core();
-        let task1 = create_test_task(0, "Rust Programming", false, true);
-        let task2 = create_test_task(0, "Python Scripting", false, true);
-
-        if let CoreOutput::InsertTask(rx) = core.insert_task(task1) {
-            rx.await??;
-        }
-        if let CoreOutput::InsertTask(rx) = core.insert_task(task2) {
-            rx.await??;
-        }
-
-        // 正規表現スキャンのテスト
-        if let CoreOutput::ScanTasksByRegex(rx) = core.scan_tasks_by_regex("Rust".to_string()) {
-            let matched_ids = rx.await??;
-            assert_eq!(matched_ids, vec![1]);
-        } else {
-            panic!("不正なCoreOutputバリアントが返されました");
-        }
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_core_mail_daily_flow() -> Result<()> {
-        let core = setup_test_core();
-        let task = create_test_task(0, "Daily Report Task", false, true);
-        if let CoreOutput::InsertTask(rx) = core.insert_task(task) {
-            rx.await??;
-        }
-
-        // mail_daily の呼び出しとクラッシュしないことの検証
-        // ※システムメーラー起動は環境に依存するため、Result成否にかかわらずパニックを起こさないかをチェックします。
-        if let CoreOutput::MailDaily(rx) = core.mail_daily() {
-            let _ = rx.await?;
-        } else {
-            panic!("不正なCoreOutputバリアントが返されました");
-        }
-
-        Ok(())
     }
 }

@@ -107,6 +107,13 @@ impl App {
                                     }
                                 }
                                 ui.label(task.due_date.strftime("Due Date : %Y/%m/%d").to_string());
+                                let progress_fraction = task.progress / 100.0;
+                                ui.add_sized(
+                                    [100.0, 28.0],
+                                    egui::ProgressBar::new(progress_fraction)
+                                        .show_percentage() // バーの中に「50%」のようにテキストを表示
+                                        .text(format!("{:.1}% Done", task.progress)), // カスタムテキストを表示したい場合
+                                );
 
                                 // 右側：編集ボタン
                                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {

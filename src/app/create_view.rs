@@ -92,6 +92,22 @@ impl App {
                             .id_salt("due_date"),
                     );
                     ui.end_row();
+                    ui.label("進捗:");
+                    let _res = ui.add_sized(
+                        [100.0, 28.0],
+                        egui::Slider::new(&mut self.temp_task.progress, 0.0..=100.0)
+                            .suffix("%")
+                            .step_by(1.0), // 1% 刻みに固定して直感的に操作しやすくする
+                    );
+                    ui.label("工数:");
+                    let _res = ui.add_sized(
+                        [80.0, 28.0],
+                        egui::DragValue::new(&mut self.temp_task.time_spent)
+                            .speed(0.5) // ドラッグしたときの増減のスピード（0.5時間ずつなど）
+                            .range(0.0..=999.0) // 入力可能な最小値と最大値
+                            .suffix(" hrs"), // 数字の後ろに単位を表示（例: 2.5 hrs）
+                    );
+                    ui.end_row();
                 });
             // ラベルと入力欄の縦横を綺麗に揃えつつ、横幅に追従させる
             egui::Grid::new("edit_task_text_grid")

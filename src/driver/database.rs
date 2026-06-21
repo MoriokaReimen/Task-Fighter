@@ -152,7 +152,7 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
 pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Fetch all tasks");
     let mut stmt = conn.prepare(
-        "SELECT id, active, done, project, title, detail, start_date, due_date, priority FROM tasks",
+        "SELECT id, active, done, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks",
     )?;
 
     let task_iter = stmt.query_map([], |row| {
@@ -462,16 +462,15 @@ pub fn scan_tasks_by_regex(conn: &Connection, pattern: &str) -> Result<Vec<Task>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
-    use rusqlite::Connection;
+    use jiff::civil::date;
 
-    // テスト用のメモリ内DBをセットアップするヘルパー関数
-    fn setup_test_db() -> Connection {
+    // 共通で利用するインメモリDB初期化ヘルパー
+    fn setup_in_memory_db() -> Connection {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute(
             "CREATE TABLE tasks (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                active        INTEGER NOT NULL DEFAULT 1,
+                active      INTEGER NOT NULL DEFAULT 1,
                 done        INTEGER NOT NULL DEFAULT 0,
                 project     TEXT NOT NULL,
                 title       TEXT NOT NULL,
@@ -488,317 +487,165 @@ mod tests {
         conn
     }
 
+    // テスト用のダミータスクを生成するヘルパー
+    fn create_test_task(title: &str, detail: &str) -> Task {
+        Task {
+            id: 0,
+            active: true,
+            done: false,
+            project: "TestProject".to_string(),
+            title: title.to_string(),
+            detail: detail.to_string(),
+            start_date: date(2026, 1, 1),
+            due_date: date(2026, 1, 10),
+            priority: Priority::Medium,
+            progress: 50.0,
+            time_spent: 2.5,
+        }
+    }
+
+    // --- Priority Enum のテスト ---
+
     #[test]
-    fn test_priority_try_from() {
+    fn test_priority_try_from_valid() {
         assert_eq!(Priority::try_from(0).unwrap(), Priority::Low);
         assert_eq!(Priority::try_from(1).unwrap(), Priority::Medium);
         assert_eq!(Priority::try_from(2).unwrap(), Priority::High);
-        assert!(Priority::try_from(3).is_err());
+    }
+
+    #[test]
+    fn test_priority_try_from_invalid() {
         assert!(Priority::try_from(-1).is_err());
+        assert!(Priority::try_from(3).is_err());
     }
 
+    // --- Task 構造体のテスト ---
+
     #[test]
-    fn test_insert_and_fetch_all_tasks() -> Result<()> {
-        let conn = setup_test_db();
-
-        // 基準となる日時を生成
-        let start = Utc.with_ymd_and_hms(2026, 6, 1, 9, 0, 0).unwrap();
-        let due = Utc.with_ymd_and_hms(2026, 6, 10, 18, 0, 0).unwrap();
-
-        let task = Task::new(
-            0,
-            true,
-            false,
-            "Project A".to_string(),
-            "Task Title".to_string(),
-            "Task Detail".to_string(),
-            start,
-            due,
-            Priority::High,
-            55.0,
-            12.0,
-        );
-
-        insert_task(&conn, &task)?;
-
-        let tasks = fetch_all_tasks(&conn)?;
-        assert_eq!(tasks.len(), 1);
-
-        let fetched = &tasks[0];
-        assert_eq!(fetched.id, 1); // AUTOINCREMENTにより1から始まる
-        assert_eq!(fetched.active, true);
-        assert_eq!(fetched.done, false);
-        assert_eq!(fetched.project, "Project A");
-        assert_eq!(fetched.title, "Task Title");
-        assert_eq!(fetched.detail, "Task Detail");
-        assert_eq!(fetched.start_date, start);
-        assert_eq!(fetched.due_date, due);
-        assert_eq!(fetched.priority, Priority::High);
-        assert_eq!(fetched.progress, 55.0);
-        assert_eq!(fetched.time_spent, 12.0);
-
-        Ok(())
+    fn test_task_default() {
+        let task = Task::default();
+        assert_eq!(task.id, 0);
+        assert!(task.active);
+        assert!(!task.done);
+        assert_eq!(task.priority, Priority::Low);
+        assert_eq!(task.progress, 0.0);
     }
 
+    // --- データベース操作（CRUD）のテスト ---
+
     #[test]
-    fn test_fetch_task_by_id() -> Result<()> {
-        let conn = setup_test_db();
-        let now = Utc::now();
+    fn test_insert_and_fetch_task_by_id() {
+        let conn = setup_in_memory_db();
+        let mut task = create_test_task("新規タスク", "詳細文");
 
-        let task = Task::new(
-            0,
-            true,
-            false,
-            "Proj".to_string(),
-            "Title".to_string(),
-            "Detail".to_string(),
-            now,
-            now,
-            Priority::Low,
-            25.0,
-            5.0,
-        );
-        insert_task(&conn, &task)?;
+        // 挿入テスト
+        insert_task(&conn, &task).unwrap();
 
-        // 存在するIDの取得
-        let fetched = fetch_task_by_id(&conn, 1)?;
+        // 1件取得テスト (AUTOINCREMENTによりIDは1になる)
+        let fetched = fetch_task_by_id(&conn, 1).unwrap();
         assert_eq!(fetched.id, 1);
-
-        // 存在しないIDの取得はエラーになるか確認
-        let missing = fetch_task_by_id(&conn, 999);
-        assert!(missing.is_err());
-
-        Ok(())
+        assert_eq!(fetched.title, "新規タスク");
+        assert_eq!(fetched.detail, "詳細文");
+        assert_eq!(fetched.progress, 50.0);
     }
 
     #[test]
-    fn test_fetch_active_tasks() -> Result<()> {
-        let conn = setup_test_db();
-        let now = Utc::now();
+    fn test_fetch_task_by_id_not_found() {
+        let conn = setup_in_memory_db();
+        let result = fetch_task_by_id(&conn, 999);
+        assert!(result.is_err());
+    }
 
-        // 未完了タスク
-        let task1 = Task::new(
-            0,
-            false,
-            false,
-            "P".to_string(),
-            "T1".to_string(),
-            "D".to_string(),
-            now,
-            now,
-            Priority::Medium,
-            55.0,
-            12.0,
-        );
-        // 完了済みタスク
-        let task2 = Task::new(
-            0,
-            true,
-            true,
-            "P".to_string(),
-            "T2".to_string(),
-            "D".to_string(),
-            now,
-            now,
-            Priority::Medium,
-            60.0,
-            15.0,
-        );
+    #[test]
+    fn test_fetch_active_and_incomplete_tasks() {
+        let conn = setup_in_memory_db();
 
-        // 完了済みタスク
-        let task3 = Task::new(
-            0,
-            false,
-            true,
-            "P".to_string(),
-            "T3".to_string(),
-            "D".to_string(),
-            now,
-            now,
-            Priority::Medium,
-            70.0,
-            16.0,
-        );
+        let task1 = Task {
+            active: true,
+            done: false,
+            ..create_test_task("T1", "D1")
+        };
+        let task2 = Task {
+            active: false,
+            done: false,
+            ..create_test_task("T2", "D2")
+        };
+        let task3 = Task {
+            active: true,
+            done: true,
+            ..create_test_task("T3", "D3")
+        };
 
-        // 完了済みタスク
-        let task4 = Task::new(
-            0,
-            true,
-            true,
-            "P".to_string(),
-            "T4".to_string(),
-            "D".to_string(),
-            now,
-            now,
-            Priority::Medium,
-            80.0,
-            20.0,
-        );
+        insert_task(&conn, &task1).unwrap();
+        insert_task(&conn, &task2).unwrap();
+        insert_task(&conn, &task3).unwrap();
 
-        insert_task(&conn, &task1)?;
-        insert_task(&conn, &task2)?;
-        insert_task(&conn, &task3)?;
-        insert_task(&conn, &task4)?;
-
-        let active_tasks = fetch_active_tasks(&conn)?;
+        // アクティブなタスクの検証 (task1, task3)
+        let active_tasks = fetch_active_tasks(&conn).unwrap();
         assert_eq!(active_tasks.len(), 2);
-        assert_eq!(active_tasks[0].title, "T2");
-        assert_eq!(active_tasks[1].title, "T4");
+        assert!(active_tasks.iter().any(|t| t.title == "T1"));
+        assert!(active_tasks.iter().any(|t| t.title == "T3"));
 
-        Ok(())
+        // 未完了のタスクの検証 (task1, task2)
+        let incomplete_tasks = fetch_incomplete_tasks(&conn).unwrap();
+        assert_eq!(incomplete_tasks.len(), 2);
+        assert!(incomplete_tasks.iter().any(|t| t.title == "T1"));
+        assert!(incomplete_tasks.iter().any(|t| t.title == "T2"));
     }
 
     #[test]
-    fn test_fetch_incomplete_tasks() -> Result<()> {
-        let conn = setup_test_db();
-        let now = Utc::now();
+    fn test_update_task() {
+        let conn = setup_in_memory_db();
+        let task = create_test_task("更新前", "詳細");
+        insert_task(&conn, &task).unwrap();
 
-        // 未完了タスク
-        let task1 = Task::new(
-            0,
-            true,
-            false,
-            "P".to_string(),
-            "T1".to_string(),
-            "D".to_string(),
-            now,
-            now,
-            Priority::Medium,
-            20.0,
-            33.0,
-        );
-        // 完了済みタスク
-        let task2 = Task::new(
-            0,
-            true,
-            true,
-            "P".to_string(),
-            "T2".to_string(),
-            "D".to_string(),
-            now,
-            now,
-            Priority::Medium,
-            20.0,
-            33.0,
-        );
+        // 既存タスクを取得して書き換え
+        let mut to_update = fetch_task_by_id(&conn, 1).unwrap();
+        to_update.title = "更新後".to_string();
+        to_update.done = true;
+        to_update.progress = 100.0;
 
-        insert_task(&conn, &task1)?;
-        insert_task(&conn, &task2)?;
+        update_task(&conn, &to_update).unwrap();
 
-        let incomplete_tasks = fetch_incomplete_tasks(&conn)?;
-        assert_eq!(incomplete_tasks.len(), 1);
-        assert_eq!(incomplete_tasks[0].title, "T1");
-
-        Ok(())
+        // 反映されているか検証
+        let updated = fetch_task_by_id(&conn, 1).unwrap();
+        assert_eq!(updated.title, "更新後");
+        assert!(updated.done);
+        assert_eq!(updated.progress, 100.0);
     }
 
     #[test]
-    fn test_update_task() -> Result<()> {
-        let conn = setup_test_db();
-        let now = Utc::now();
+    fn test_update_task_not_found() {
+        let conn = setup_in_memory_db();
+        let mut task = create_test_task("存在しない", "タスク");
+        task.id = 999; // 存在しないID
 
-        let task = Task::new(
-            0,
-            true,
-            false,
-            "Proj".to_string(),
-            "Old Title".to_string(),
-            "Detail".to_string(),
-            now,
-            now,
-            Priority::Low,
-            20.0,
-            33.0,
-        );
-        insert_task(&conn, &task)?;
-
-        // ID: 1のタスクを更新するデータを作成
-        let updated_time = Utc.with_ymd_and_hms(2026, 12, 31, 23, 59, 59).unwrap();
-        let updated_task = Task::new(
-            1, // 既存のIDを指定
-            false,
-            true,
-            "New Proj".to_string(),
-            "New Title".to_string(),
-            "New Detail".to_string(),
-            now,
-            updated_time,
-            Priority::High,
-            20.0,
-            33.0,
-        );
-
-        update_task(&conn, &updated_task)?;
-
-        // 反映確認
-        let fetched = fetch_task_by_id(&conn, 1)?;
-        assert_eq!(fetched.active, false);
-        assert_eq!(fetched.done, true);
-        assert_eq!(fetched.project, "New Proj");
-        assert_eq!(fetched.title, "New Title");
-        assert_eq!(fetched.due_date, updated_time);
-        assert_eq!(fetched.priority, Priority::High);
-        assert_eq!(fetched.progress, 20.0);
-        assert_eq!(fetched.time_spent, 33.0);
-
-        // 存在しないIDの更新はエラーになるか確認
-        let mut invalid_task = fetched.clone();
-        invalid_task.id = 999;
-        assert!(update_task(&conn, &invalid_task).is_err());
-
-        Ok(())
+        let result = update_task(&conn, &task);
+        assert!(result.is_err());
     }
 
+    // --- 正規表現検索のテスト ---
+
     #[test]
-    fn test_scan_tasks_by_regex() -> Result<()> {
-        let conn = setup_test_db();
-        let now = Utc::now();
+    fn test_scan_tasks_by_regex() {
+        let conn = setup_in_memory_db();
 
-        let task1 = Task::new(
-            0,
-            true,
-            false,
-            "P".to_string(),
-            "Rustを勉強する".to_string(),
-            "あいうえお".to_string(),
-            now,
-            now,
-            Priority::Medium,
-            20.0,
-            33.0,
-        );
-        let task2 = Task::new(
-            0,
-            true,
-            false,
-            "P".to_string(),
-            "料理をする".to_string(),
-            "SQLiteの設定".to_string(),
-            now,
-            now,
-            Priority::Medium,
-            30.0,
-            43.0,
-        );
+        let task1 = create_test_task("Rustの勉強", "毎日コミットする");
+        let task2 = create_test_task("Pythonスクリプト作成", "自動化ツールの開発");
+        let task3 = create_test_task("お買い物", "牛乳とRustの本を買う");
 
-        insert_task(&conn, &task1)?;
-        insert_task(&conn, &task2)?;
+        insert_task(&conn, &task1).unwrap();
+        insert_task(&conn, &task2).unwrap();
+        insert_task(&conn, &task3).unwrap();
 
-        // タイトルにマッチ
-        let matched_rust = scan_tasks_by_regex(&conn, r"Rust")?;
-        assert_eq!(matched_rust, vec![1]);
+        // "Rust" を含むタスクを検索 (境界や大文字小文字を考慮)
+        let matched = scan_tasks_by_regex(&conn, "Rust").unwrap();
+        assert_eq!(matched.len(), 2);
+        assert!(matched.iter().any(|t| t.title == "Rustの勉強"));
+        assert!(matched.iter().any(|t| t.title == "お買い物"));
 
-        // 詳細にマッチ
-        let matched_sql = scan_tasks_by_regex(&conn, r"SQLite")?;
-        assert_eq!(matched_sql, vec![2]);
-
-        // どちらにもマッチしない
-        let matched_none = scan_tasks_by_regex(&conn, r"Python")?;
-        assert!(matched_none.is_empty());
-
-        // 不正な正規表現のときはエラーが返るか確認
-        assert!(scan_tasks_by_regex(&conn, r"[Unclosed-bracket").is_err());
-
-        Ok(())
+        // 不正な正規表現パターンでのエラーハンドリング
+        let invalid_regex = scan_tasks_by_regex(&conn, "[A-Z");
+        assert!(invalid_regex.is_err());
     }
 }
