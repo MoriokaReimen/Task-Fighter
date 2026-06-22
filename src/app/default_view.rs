@@ -10,7 +10,7 @@ impl App {
         if matches!(self.output, CoreOutput::Idle) && self.displayed_tasks.is_none() {
             self.output = self.core.fetch_active_tasks();
         }
-        egui::TopBottomPanel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
+        egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
             // 全体を縦並びのレイアウトにするため、各行を vertical で囲むか、
             // または horizontal を並べることで自動的に改行させます。
 

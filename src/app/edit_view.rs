@@ -1,12 +1,11 @@
-use super::main_app::App;
-use super::main_app::AppState;
+use super::main_app::{App, AppState};
 use crate::driver::{Priority, Task, TaskStatus};
 use eframe::egui::{self, Ui};
 use tracing::info;
 
 impl App {
     pub fn edit_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
-        egui::TopBottomPanel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
+        egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 // 右寄せ（right_to_left）のため、右端に置きたいボタンから順に配置します
 
@@ -48,27 +47,29 @@ impl App {
                     .spacing([12.0, 8.0])
                     .min_col_width(80.0) // ラベル側の最小幅を固定
                     .show(ui, |ui| {
-                        let items = ["■Pending", "■Work In Progress", "■Complete"];
+                        let items = ["⏳ Pending", "🏃 In Progress", "✅ Complete"];
 
                         // 2. selected_text に RichText を渡す
-                        egui::ComboBox::from_id_salt("状態").show_ui(ui, |ui| {
-                            // 3. 各選択肢のラベルも RichText で色付けする
-                            ui.selectable_value(
-                                &mut task.status,
-                                TaskStatus::Pending,
-                                egui::RichText::new(items[0]),
-                            );
-                            ui.selectable_value(
-                                &mut task.status,
-                                TaskStatus::WorkInProgress,
-                                egui::RichText::new(items[1]),
-                            );
-                            ui.selectable_value(
-                                &mut task.status,
-                                TaskStatus::Complete,
-                                egui::RichText::new(items[2]),
-                            );
-                        });
+                        egui::ComboBox::from_id_salt("状態")
+                            .selected_text(items[task.status as usize])
+                            .show_ui(ui, |ui| {
+                                // 3. 各選択肢のラベルも RichText で色付けする
+                                ui.selectable_value(
+                                    &mut task.status,
+                                    TaskStatus::Pending,
+                                    egui::RichText::new(items[0]),
+                                );
+                                ui.selectable_value(
+                                    &mut task.status,
+                                    TaskStatus::WorkInProgress,
+                                    egui::RichText::new(items[1]),
+                                );
+                                ui.selectable_value(
+                                    &mut task.status,
+                                    TaskStatus::Complete,
+                                    egui::RichText::new(items[2]),
+                                );
+                            });
                         ui.checkbox(&mut task.active, "有効");
                         // 1. 各優先度に対応する色を定義（Color32 を使用）
                         let text_color = match task.priority {

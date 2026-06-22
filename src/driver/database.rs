@@ -1,7 +1,6 @@
 use anyhow::{Context, Result, bail};
 use jiff::Zoned;
 use jiff::civil::Date;
-use rand::prelude::IndexedRandom;
 use rusqlite::{Connection, params};
 use std::fs;
 use std::path::Path;

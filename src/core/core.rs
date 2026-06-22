@@ -1,9 +1,8 @@
-use super::super::driver;
 use anyhow::Result;
-use driver::Task;
 use rusqlite::Connection;
 use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
+use crate::driver::{self, Task};
 
 pub struct Core {
     conn: Arc<Mutex<Connection>>,

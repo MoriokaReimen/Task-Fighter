@@ -1,6 +1,5 @@
 use super::style;
-use crate::core;
-use crate::core::{CoreOutput, Task};
+use crate::core::{self, CoreOutput, Task};
 use anyhow::Result;
 use eframe::egui::Ui;
 use std::sync::Arc;
