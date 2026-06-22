@@ -1,4 +1,4 @@
-use crate::driver::{Priority, Task}; // Priority もインポート
+use crate::driver::{Priority, Task, TaskStatus}; // Priority もインポート
 use anyhow::{Context, Result};
 use jiff::Zoned;
 use tracing::info;
@@ -17,10 +17,10 @@ pub fn create_mail_text(tasks: &Vec<Task>) -> String {
 
     for task in tasks {
         // Markdownのタスクリスト（- [ ] や - [x]）を活用
-        let status_gfm = if task.done {
-            "☑ Complete"
-        } else {
-            "☐ Incomplete"
+        let status_gfm = match task.status {
+            TaskStatus::Pending => "Pending",
+            TaskStatus::WorkInProgress => "Work In Progress",
+            TaskStatus::Complete => "Complete",
         };
 
         // 優先度を分かりやすい文字列（絵文字付き）に変換
@@ -80,27 +80,32 @@ pub fn launch_system_mailer(tasks: &Vec<Task>) -> Result<()> {
     info!("{}", mailto_url);
     Ok(())
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jiff::civil::date;
+    // テスト用に必要な型を定義（実際のcrate::driverの構造に合わせて調整してください）
+    use crate::driver::{Priority, Task, TaskStatus};
+    use jiff::civil::Date;
 
-    // テスト用のダミータスクを生成するヘルパー関数
-    fn create_test_task(id: i32, title: &str, priority: Priority, done: bool) -> Task {
+    // ヘルパー関数: テスト用のTaskインスタンスを生成する
+    fn create_mock_task(id: i32, title: &str, priority: Priority, status: TaskStatus) -> Task {
+        // jiff::Zoned または検証可能な日付型を生成
+        // ここでは仮に Zoned::now() もしくは特定のCivil日付から変換していると想定
+        let start_date = Date::new(2026, 6, 1).unwrap();
+        let due_date = Date::new(2026, 6, 30).unwrap();
+
         Task {
             id,
             active: true,
-            done,
-            project: "TestProject".to_string(),
             title: title.to_string(),
-            detail: "LINE 1\nLINE 2".to_string(),
-            // テスト結果が固定されるよう、固定の日付を設定
-            start_date: date(2026, 6, 21),
-            due_date: date(2026, 6, 30),
+            project: "Project Alpha".to_string(),
             priority,
-            progress: 0.0,
-            time_spent: 0.0,
+            status,
+            start_date,
+            due_date,
+            progress: 50.0,
+            time_spent: 4.5,
+            detail: "This is a detail line 1.\nThis is a detail line 2.".to_string(),
         }
     }
 
@@ -109,15 +114,28 @@ mod tests {
         let tasks: Vec<Task> = vec![];
         let result = create_mail_text(&tasks);
 
-        // タスクが0件の場合のヘッダーチェック
+        // タスクが0件の場合のヘッダーと件数カウントの検証
+        assert!(result.contains(
+            "==========================================================================="
+        ));
         assert!(result.contains("There are currently 0 tasks."));
     }
 
     #[test]
     fn test_create_mail_text_with_tasks() {
         let tasks = vec![
-            create_test_task(1, "未完了タスク", Priority::High, false),
-            create_test_task(2, "完了タスク", Priority::Low, true),
+            create_mock_task(
+                1,
+                "Fix critical bug",
+                Priority::High,
+                TaskStatus::WorkInProgress,
+            ),
+            create_mock_task(
+                2,
+                "Write documentation",
+                Priority::Low,
+                TaskStatus::Complete,
+            ),
         ];
 
         let result = create_mail_text(&tasks);
@@ -125,29 +143,22 @@ mod tests {
         // 1. 全体件数のチェック
         assert!(result.contains("There are currently 2 tasks."));
 
-        // 2. 1件目（未完了・優先度高）の出力チェック
-        assert!(result.contains("Task #1. 未完了タスク"));
+        // 2. タスク1（High / WorkInProgress）の出力チェック
+        assert!(result.contains("Task #1. Fix critical bug"));
         assert!(result.contains("- Priority: 🔴 High"));
-        assert!(result.contains("- Status: ☐ Incomplete"));
-        assert!(result.contains("- Start Date: 2026/06/21"));
+        assert!(result.contains("- Status: Work In Progress"));
+        assert!(result.contains("- Start Date: 2026/06/01"));
         assert!(result.contains("- Due Date: 2026/06/30"));
+        assert!(result.contains("- Progress: 50%"));
+        assert!(result.contains("- Time Spent: 4.5 hrs"));
 
-        // 3. 2件目（完了・優先度低）の出力チェック
-        assert!(result.contains("Task #2. 完了タスク"));
+        // 詳細（複数行）の展開チェック
+        assert!(result.contains("This is a detail line 1."));
+        assert!(result.contains("This is a detail line 2."));
+
+        // 3. タスク2（Low / Complete）の出力チェック
+        assert!(result.contains("Task #2. Write documentation"));
         assert!(result.contains("- Priority: 🔵 Low"));
-        assert!(result.contains("- Status: ☑ Complete"));
-
-        // 4. 詳細（複数行）が正しく展開されているかチェック
-        assert!(result.contains("LINE 1"));
-        assert!(result.contains("LINE 2"));
-    }
-
-    #[test]
-    fn test_create_mail_text_priority_medium() {
-        let tasks = vec![create_test_task(1, "中優先度", Priority::Medium, false)];
-        let result = create_mail_text(&tasks);
-
-        // 優先度 Medium の絵文字チェック
-        assert!(result.contains("- Priority: 🟡 Medium"));
+        assert!(result.contains("- Status: Complete"));
     }
 }

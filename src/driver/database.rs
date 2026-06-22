@@ -29,12 +29,34 @@ impl TryFrom<i32> for Priority {
     }
 }
 
+// 優先度を表す Enum
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum TaskStatus {
+    #[default]
+    Pending = 0,
+    WorkInProgress = 1,
+    Complete = 2,
+}
+
+impl TryFrom<i32> for TaskStatus {
+    type Error = anyhow::Error;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(TaskStatus::Pending),
+            1 => Ok(TaskStatus::WorkInProgress),
+            2 => Ok(TaskStatus::Complete),
+            _ => anyhow::bail!("不正なTaskStatus値です: {}", value),
+        }
+    }
+}
+
 // データベースのレコードに対応する構造体
 #[derive(Debug, Clone, PartialEq)]
 pub struct Task {
     pub id: i32,
     pub active: bool,
-    pub done: bool,
+    pub status: TaskStatus,
     pub project: String,
     pub title: String,
     pub detail: String,
@@ -50,7 +72,7 @@ impl Default for Task {
         Self {
             id: 0,
             active: true,
-            done: false,
+            status: TaskStatus::Pending,
             project: String::new(),
             title: String::new(),
             detail: String::new(),
@@ -67,7 +89,7 @@ impl Task {
     pub fn new(
         id: i32,
         active: bool,
-        done: bool,
+        status: TaskStatus,
         project: String,
         title: String,
         detail: String,
@@ -80,7 +102,7 @@ impl Task {
         Self {
             id,
             active,
-            done,
+            status,
             project,
             title,
             detail,
@@ -109,7 +131,7 @@ pub fn connect() -> Result<Connection> {
         "CREATE TABLE IF NOT EXISTS tasks (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             active      INTEGER NOT NULL DEFAULT 1,
-            done        INTEGER NOT NULL DEFAULT 0,
+            status      INTEGER NOT NULL DEFAULT 0,
             project     TEXT NOT NULL,
             title       TEXT NOT NULL,
             detail      TEXT NOT NULL,
@@ -175,10 +197,10 @@ pub fn connect() -> Result<Connection> {
 pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     info!("Insert task: {:?}", task);
     conn.execute(
-        "INSERT INTO tasks (active, done, project, title, detail, start_date, due_date, priority, progress, time_spent) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+        "INSERT INTO tasks (active, status, project, title, detail, start_date, due_date, priority, progress, time_spent) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
         params![
             task.active as i32,
-            task.done as i32,
+            task.status as i32,
             task.project,
             task.title,
             task.detail,
@@ -197,18 +219,18 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
 pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Fetch all tasks");
     let mut stmt = conn.prepare(
-        "SELECT id, active, done, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks",
+        "SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks",
     )?;
 
     let task_iter = stmt.query_map([], |row| {
         let active_raw: i32 = row.get(1)?;
-        let done_raw: i32 = row.get(2)?;
+        let status_raw: i32 = row.get(2)?;
         let priority_raw: i32 = row.get(8)?;
 
         Ok((
             row.get::<_, i32>(0)?,
             active_raw != 0,
-            done_raw != 0,
+            status_raw,
             row.get::<_, String>(3)?,
             row.get::<_, String>(4)?,
             row.get::<_, String>(5)?,
@@ -225,7 +247,7 @@ pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
         let (
             id,
             active,
-            done,
+            status_raw,
             project,
             title,
             detail,
@@ -238,7 +260,7 @@ pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
         tasks.push(Task {
             id,
             active,
-            done,
+            status: TaskStatus::try_from(status_raw)?,
             project,
             title,
             detail,
@@ -256,17 +278,17 @@ pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
 pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
     info!("Fetch task by id : {}", id);
     let mut stmt = conn
-        .prepare("SELECT id, active, done, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE id = ?1")
+        .prepare("SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE id = ?1")
         .context("クエリの準備に失敗しました")?;
 
     let row_result = stmt.query_row(params![id], |row| {
         let active_raw: i32 = row.get(1)?;
-        let done_raw: i32 = row.get(2)?;
+        let status_raw: i32 = row.get(2)?;
         let priority_raw: i32 = row.get(8)?;
         Ok((
             row.get::<_, i32>(0)?,
             active_raw != 0,
-            done_raw != 0,
+            status_raw,
             row.get::<_, String>(3)?,
             row.get::<_, String>(4)?,
             row.get::<_, String>(5)?,
@@ -283,7 +305,7 @@ pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
             let (
                 id,
                 active,
-                done,
+                status_raw,
                 project,
                 title,
                 detail,
@@ -296,7 +318,7 @@ pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
             Ok(Task {
                 id,
                 active,
-                done,
+                status: TaskStatus::try_from(status_raw)?,
                 project,
                 title,
                 detail,
@@ -320,17 +342,17 @@ pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
 pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Fetch active tasks");
     let mut stmt = conn
-        .prepare("SELECT id, active, done, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE active = 1")
+        .prepare("SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE active = 1")
         .context("クエリの準備に失敗しました")?;
 
     let task_iter = stmt.query_map([], |row| {
         let active_raw: i32 = row.get(1)?;
-        let done_raw: i32 = row.get(2)?;
+        let status_raw: i32 = row.get(2)?;
         let priority_raw: i32 = row.get(8)?;
         Ok((
             row.get::<_, i32>(0)?,
             active_raw != 0,
-            done_raw != 0,
+            status_raw,
             row.get::<_, String>(3)?,
             row.get::<_, String>(4)?,
             row.get::<_, String>(5)?,
@@ -347,7 +369,7 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
         let (
             id,
             active,
-            done,
+            status_raw,
             project,
             title,
             detail,
@@ -360,7 +382,7 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
         tasks.push(Task {
             id,
             active,
-            done,
+            status: TaskStatus::try_from(status_raw)?,
             project,
             title,
             detail,
@@ -375,21 +397,21 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
     Ok(tasks)
 }
 
-// doneがfalse（0）のタスクのみを取得する関数
+// statusがfalse（0）のタスクのみを取得する関数
 pub fn fetch_incomplete_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Fetch incomplete tasks");
     let mut stmt = conn
-        .prepare("SELECT id, active, done, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE done = 0")
+        .prepare("SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE status = 0 OR status = 1")
         .context("クエリの準備に失敗しました")?;
 
     let task_iter = stmt.query_map([], |row| {
         let active_raw: i32 = row.get(1)?;
-        let done_raw: i32 = row.get(2)?;
+        let status_raw: i32 = row.get(2)?;
         let priority_raw: i32 = row.get(8)?;
         Ok((
             row.get::<_, i32>(0)?,
             active_raw != 0,
-            done_raw != 0,
+            status_raw,
             row.get::<_, String>(3)?,
             row.get::<_, String>(4)?,
             row.get::<_, String>(5)?,
@@ -406,7 +428,7 @@ pub fn fetch_incomplete_tasks(conn: &Connection) -> Result<Vec<Task>> {
         let (
             id,
             active,
-            done,
+            status_raw,
             project,
             title,
             detail,
@@ -419,7 +441,7 @@ pub fn fetch_incomplete_tasks(conn: &Connection) -> Result<Vec<Task>> {
         tasks.push(Task {
             id,
             active,
-            done,
+            status: TaskStatus::try_from(status_raw)?,
             project,
             title,
             detail,
@@ -439,7 +461,7 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
     let mut stmt = conn
         .prepare(
             "UPDATE tasks 
-             SET active = ?1, done = ?2, project = ?3, title = ?4, detail = ?5, start_date = ?6, due_date = ?7, priority = ?8, progress = ?9, time_spent = ?10 
+             SET active = ?1, status = ?2, project = ?3, title = ?4, detail = ?5, start_date = ?6, due_date = ?7, priority = ?8, progress = ?9, time_spent = ?10 
              WHERE id = ?11",
         )
         .context("クエリの準備に失敗しました")?;
@@ -447,7 +469,7 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
     let rows_affected = stmt
         .execute(params![
             task.active as i32,
-            task.done as i32,
+            task.status as i32,
             task.project,
             task.title,
             task.detail,
@@ -545,7 +567,7 @@ mod tests {
             "CREATE TABLE tasks (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 active      INTEGER NOT NULL DEFAULT 1,
-                done        INTEGER NOT NULL DEFAULT 0,
+                status      INTEGER NOT NULL DEFAULT 0,
                 project     TEXT NOT NULL,
                 title       TEXT NOT NULL,
                 detail      TEXT NOT NULL,
@@ -563,7 +585,7 @@ mod tests {
             "CREATE TABLE IF NOT EXISTS tasks (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             active      INTEGER NOT NULL DEFAULT 1,
-            done        INTEGER NOT NULL DEFAULT 0,
+            status      INTEGER NOT NULL DEFAULT 0,
             project     TEXT NOT NULL,
             title       TEXT NOT NULL,
             detail      TEXT NOT NULL,
@@ -628,7 +650,7 @@ mod tests {
         Task {
             id: 0,
             active: true,
-            done: false,
+            status: TaskStatus::WorkInProgress,
             project: "TestProject".to_string(),
             title: title.to_string(),
             detail: detail.to_string(),
@@ -763,7 +785,7 @@ mod tests {
         let task = Task::default();
         assert_eq!(task.id, 0);
         assert!(task.active);
-        assert!(!task.done);
+        assert_eq!(task.status, TaskStatus::Pending);
         assert_eq!(task.priority, Priority::Low);
         assert_eq!(task.progress, 0.0);
     }
@@ -799,17 +821,17 @@ mod tests {
 
         let task1 = Task {
             active: true,
-            done: false,
+            status: TaskStatus::WorkInProgress,
             ..create_test_task("T1", "D1")
         };
         let task2 = Task {
             active: false,
-            done: false,
+            status: TaskStatus::Pending,
             ..create_test_task("T2", "D2")
         };
         let task3 = Task {
             active: true,
-            done: true,
+            status: TaskStatus::Complete,
             ..create_test_task("T3", "D3")
         };
 
@@ -839,7 +861,7 @@ mod tests {
         // 既存タスクを取得して書き換え
         let mut to_update = fetch_task_by_id(&conn, 1).unwrap();
         to_update.title = "更新後".to_string();
-        to_update.done = true;
+        to_update.status = TaskStatus::Complete;
         to_update.progress = 100.0;
 
         update_task(&conn, &to_update).unwrap();
@@ -847,7 +869,7 @@ mod tests {
         // 反映されているか検証
         let updated = fetch_task_by_id(&conn, 1).unwrap();
         assert_eq!(updated.title, "更新後");
-        assert!(updated.done);
+        assert_eq!(task.status, TaskStatus::WorkInProgress);
         assert_eq!(updated.progress, 100.0);
     }
 

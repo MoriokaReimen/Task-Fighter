@@ -1,6 +1,6 @@
 use super::super::driver;
 use anyhow::Result;
-use driver::Task;
+use driver::{Task, TaskStatus};
 use rusqlite::Connection;
 use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
@@ -177,7 +177,7 @@ mod tests {
         Task {
             id,
             active: true,
-            done: false,
+            status: TaskStatus::Pending,
             project: "TestProject".to_string(),
             title: title.to_string(),
             detail: "Test Detail".to_string(),

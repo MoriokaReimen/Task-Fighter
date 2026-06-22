@@ -1,6 +1,6 @@
 use super::main_app::App;
 use super::main_app::AppState;
-use crate::driver::{Priority, Task};
+use crate::driver::{Priority, Task, TaskStatus};
 use eframe::egui::{self, Ui};
 use tracing::info;
 
@@ -48,7 +48,27 @@ impl App {
                     .spacing([12.0, 8.0])
                     .min_col_width(80.0) // ラベル側の最小幅を固定
                     .show(ui, |ui| {
-                        ui.checkbox(&mut task.done, "完了");
+                        let items = ["■Pending", "■Work In Progress", "■Complete"];
+
+                        // 2. selected_text に RichText を渡す
+                        egui::ComboBox::from_id_salt("状態").show_ui(ui, |ui| {
+                            // 3. 各選択肢のラベルも RichText で色付けする
+                            ui.selectable_value(
+                                &mut task.status,
+                                TaskStatus::Pending,
+                                egui::RichText::new(items[0]),
+                            );
+                            ui.selectable_value(
+                                &mut task.status,
+                                TaskStatus::WorkInProgress,
+                                egui::RichText::new(items[1]),
+                            );
+                            ui.selectable_value(
+                                &mut task.status,
+                                TaskStatus::Complete,
+                                egui::RichText::new(items[2]),
+                            );
+                        });
                         ui.checkbox(&mut task.active, "有効");
                         // 1. 各優先度に対応する色を定義（Color32 を使用）
                         let text_color = match task.priority {

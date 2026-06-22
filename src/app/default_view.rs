@@ -1,6 +1,6 @@
 use super::main_app::{App, AppState};
 use crate::core::CoreOutput;
-use crate::driver::Priority;
+use crate::driver::{Priority, TaskStatus};
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::info;
 
@@ -81,10 +81,8 @@ impl App {
 
                             ui.allocate_ui_with_layout(row_size, row_layout, |ui| {
                                 // 左側：タイトル
-                                ui.add_enabled(
-                                    false,
-                                    egui::Checkbox::new(&mut task.done.clone(), ""),
-                                );
+                                let mut is_complete: bool = task.status == TaskStatus::Complete;
+                                ui.add_enabled(false, egui::Checkbox::new(&mut is_complete, ""));
                                 ui.label(format!("{}: {}", task.id, task.title));
                                 match task.priority {
                                     Priority::High => {
