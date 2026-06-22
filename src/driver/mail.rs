@@ -78,19 +78,24 @@ pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
         .strftime("%Y/%m/%d Task Status Report")
         .to_string();
 
+    // LinuxでもWindowsでも共通して「.eml」拡張子を使用します
+    let suffix = ".eml";
+
+    // ブラウザのアクセス制限を避けるため、カレントディレクトリに作成
     let mut temp_file = Builder::new()
-        .suffix(".eml")
-        .tempfile()
+        .suffix(suffix)
+        .tempfile_in(".") 
         .context("Failed to allocate transient local storage space for email payload context")?;
 
-    // Windows (Outlook等) のために、改行コードをすべて \r\n (CRLF) に統一します
+    // EMLフォーマットの構築（Windows/Linux共通）
     let mut eml_content = String::new();
     let _ = write!(eml_content, "Subject: {}\r\n", raw_subject);
+    eml_content.push_str("X-Unsent: 1\r\n");
     eml_content.push_str("MIME-Version: 1.0\r\n");
     eml_content.push_str("Content-Type: text/plain; charset=utf-8\r\n");
     eml_content.push_str("Content-Transfer-Encoding: 8bit\r\n\r\n");
 
-    // 本文の改行コードも一念のため CRLF に変換しておくとより安全です
+    // 改行コードをCRLFに統一
     let body_crlf = body_text.replace("\r\n", "\n").replace("\n", "\r\n");
     eml_content.push_str(&body_crlf);
 
@@ -102,21 +107,16 @@ pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
         "Failed flushing operating system write streams buffers onto block devices segments",
     )?;
 
-    // 先にファイルを永続化（自動削除を解除）し、ファイルハンドルを確実に閉じます
-    // Windowsではファイルが開いたままだと、他のプロセス（メーラー）がファイルを開けないことがあります
+    // ファイルロックを解除するために永続化してドロップ
     let (file, path) = temp_file.keep().context(
         "Failed safeguarding local file persistence integrity boundary configurations locks",
     )?;
-
-    // 明示的にドロップしてファイルロックを解除
     drop(file);
 
-    info!(
-        "Synchronized continuous email file sequence artifact: {:?}",
-        path
-    );
+    info!("Synchronized continuous email file sequence artifact: {:?}", path);
 
-    // 完全にフリーになったファイルパスをシステムに渡す
+    // システム既定のアプリで開く
+    // Windowsなら既定のメーラー、Linuxなら既定のウェブブラウザ（または.emlに紐づいたアプリ）が起動します
     open::that(&path).context(
         "Failed invoking native desktop standard protocol handlers to stream target file content",
     )?;
@@ -124,6 +124,7 @@ pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
     info!("Dispatched active call stack processing to localized system default client interface.");
     Ok(())
 }
+
 
 #[cfg(test)]
 mod tests {
