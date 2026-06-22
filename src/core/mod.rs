@@ -1,3 +1,4 @@
+#[allow(clippy::module_inception)]
 mod core;
 pub use super::driver::Task;
 pub use core::Core;

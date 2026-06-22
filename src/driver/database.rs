@@ -2,11 +2,12 @@ use anyhow::{Context, Result, bail};
 use jiff::Zoned;
 use jiff::civil::Date;
 use rusqlite::{Connection, params};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use tracing::info;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
 pub enum Priority {
     #[default]
     Low = 0,
@@ -182,6 +183,7 @@ pub fn connect() -> Result<Connection> {
     ).context("Failed to attach continuous data synchronization hooks for removal bounds")?;
 
     info!("Database and target system schemas synchronized cleanly.");
+
     Ok(conn)
 }
 

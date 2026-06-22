@@ -13,3 +13,6 @@ pub use database::update_task;
 
 mod mail;
 pub use mail::launch_system_mailer;
+
+mod periodic_task;
+pub use periodic_task::initialize_periodic_tasks;

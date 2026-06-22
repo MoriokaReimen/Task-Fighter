@@ -1,0 +1,21 @@
+[[tasks]]
+period = "Daily"
+project = "Daily Task"
+title = "Daily Task Example"
+detail = "Daily Task example. You can edit daily task by editing ./runtime/config.toml"
+priority = "Low"
+
+[[tasks]]
+period = "Weekly"
+project = "Weekly Task"
+title = "Weekly Task Example"
+detail = "Weekly Task example. You can edit weekly task by editing ./runtime/config.toml"
+priority = "Medium"
+
+[[tasks]]
+period = "Monthly"
+project = "Monthly Task"
+title = "Monthly Task Example"
+detail = "Monthly Task example. You can edit monthly task by editing ./runtime/config.toml"
+priority = "High"
+

@@ -39,6 +39,7 @@ impl Core {
     /// Initializes a new Core instance with an established database connection.
     pub fn new() -> Result<Core> {
         let conn = driver::connect()?;
+        driver::initialize_periodic_tasks(&conn)?;
         Ok(Core {
             conn: Arc::new(Mutex::new(conn)),
         })
