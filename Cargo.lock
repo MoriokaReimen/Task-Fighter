@@ -3780,6 +3780,7 @@ dependencies = [
  "rand 0.10.1",
  "regex",
  "rusqlite",
+ "tempfile",
  "tokio",
  "tracing",
  "tracing-subscriber",
