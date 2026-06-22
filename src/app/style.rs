@@ -1,5 +1,5 @@
 use eframe::egui;
-use egui::{Color32, CornerRadius, Stroke};
+use egui::{Color32, CornerRadius, Stroke, Ui};
 
 pub fn setup_style(ctx: &egui::Context) {
     /* Tweak font and size */
@@ -10,16 +10,10 @@ pub fn setup_style(ctx: &egui::Context) {
         style.spacing.item_spacing = egui::vec2(10.0, 10.0);
         style.spacing.window_margin = egui::Margin::same(10);
     });
-
-    /* Tweak Color */
-    ctx.set_theme(egui::Theme::Dark);
-    let visuals = egui::Visuals::light();
-    ctx.set_visuals(visuals);
-    let visuals = egui::Visuals::dark();
-    ctx.set_visuals(visuals);
 }
 
-fn get_visuals(visuals: &mut egui::Visuals) {
+pub fn set_theme(ui: &mut Ui) {
+    let mut visuals = egui::Visuals::dark();
     // --- 基本設定 ---
     visuals.dark_mode = true;
     // 水色に馴染む、少し青みがかったクリーンな白
@@ -91,6 +85,9 @@ fn get_visuals(visuals: &mut egui::Visuals) {
     // 4. 選択状態 (Selection) - テキストハイライトなど
     visuals.selection.bg_fill = Color32::from_rgb(0, 100, 140);
     visuals.selection.stroke = Stroke::new(1.0, Color32::from_rgb(160, 235, 255));
+
+    let ctx: &egui::Context = ui.ctx();
+    ctx.set_visuals(visuals);
 }
 
 fn setup_custom_fonts(ctx: &egui::Context) {

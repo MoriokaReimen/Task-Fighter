@@ -74,6 +74,7 @@ impl App {
 // eframe のライフサイクルに合わせる形で `update` と `CentralPanel` を挟む形に調整しています
 impl eframe::App for App {
     fn ui(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) {
+        style::set_theme(ui);
         self.poll_background_tasks(ui);
         match self.state {
             AppState::Default => self.default_view(ui, frame),
