@@ -32,11 +32,10 @@ impl App {
                     .clicked()
                 {
                     info!("Save Button Pressed");
-                    if let AppState::Edit(ref mut task) = self.state {
-                        self.output = self.core.update_task(task.clone());
-                    }
+                    self.output = self.core.update_task(self.temp_task.clone());
                     self.state = AppState::Default;
                     self.displayed_tasks = None;
+                    self.temp_task = Task::default();
                 }
             });
         });
@@ -46,10 +45,7 @@ impl App {
             ui.heading("✏ Edit Task");
             ui.add_space(10.0);
 
-            // Guard: Flatten nesting depth by returning early if not in Edit state
-            let AppState::Edit(ref mut task) = self.state else {
-                return;
-            };
+            let task = &mut self.temp_task;
 
             // Grid 1: Status, Metadata, Dates, and Workload metrics
             Grid::new("edit_task_date_grid")

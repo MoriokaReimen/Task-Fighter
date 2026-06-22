@@ -140,7 +140,8 @@ impl App {
                     .clicked()
                 {
                     info!("Edit Button Pressed: {:?}", task);
-                    self.state = AppState::Edit(task.clone());
+                    self.temp_task = task.clone();
+                    self.state = AppState::Edit;
                 }
             });
         });
