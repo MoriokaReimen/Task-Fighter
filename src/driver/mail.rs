@@ -83,12 +83,16 @@ pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
         .tempfile()
         .context("Failed to allocate transient local storage space for email payload context")?;
 
+    // Windows (Outlook等) のために、改行コードをすべて \r\n (CRLF) に統一します
     let mut eml_content = String::new();
-    let _ = writeln!(eml_content, "Subject: {}", raw_subject);
-    eml_content.push_str("MIME-Version: 1.0\n");
-    eml_content.push_str("Content-Type: text/plain; charset=utf-8\n");
-    eml_content.push_str("Content-Transfer-Encoding: 8bit\n\n");
-    eml_content.push_str(&body_text);
+    let _ = write!(eml_content, "Subject: {}\r\n", raw_subject);
+    eml_content.push_str("MIME-Version: 1.0\r\n");
+    eml_content.push_str("Content-Type: text/plain; charset=utf-8\r\n");
+    eml_content.push_str("Content-Transfer-Encoding: 8bit\r\n\r\n");
+
+    // 本文の改行コードも一念のため CRLF に変換しておくとより安全です
+    let body_crlf = body_text.replace("\r\n", "\n").replace("\n", "\r\n");
+    eml_content.push_str(&body_crlf);
 
     temp_file.write_all(eml_content.as_bytes()).context(
         "Failed writing compiled structural email buffers down to local transient path descriptors",
@@ -98,17 +102,21 @@ pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
         "Failed flushing operating system write streams buffers onto block devices segments",
     )?;
 
-    let file_path = temp_file.path().to_path_buf();
-    info!(
-        "Synchronized continuous email file sequence artifact: {:?}",
-        file_path
-    );
-
-    // Persist file explicitly to circumvent early automatic cleanups before mailers finish reading
-    let (_file, path) = temp_file.keep().context(
+    // 先にファイルを永続化（自動削除を解除）し、ファイルハンドルを確実に閉じます
+    // Windowsではファイルが開いたままだと、他のプロセス（メーラー）がファイルを開けないことがあります
+    let (file, path) = temp_file.keep().context(
         "Failed safeguarding local file persistence integrity boundary configurations locks",
     )?;
 
+    // 明示的にドロップしてファイルロックを解除
+    drop(file);
+
+    info!(
+        "Synchronized continuous email file sequence artifact: {:?}",
+        path
+    );
+
+    // 完全にフリーになったファイルパスをシステムに渡す
     open::that(&path).context(
         "Failed invoking native desktop standard protocol handlers to stream target file content",
     )?;
