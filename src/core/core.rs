@@ -8,6 +8,7 @@ pub struct Core {
     conn: Arc<Mutex<Connection>>,
 }
 
+#[allow(dead_code)]
 pub enum CoreOutput {
     Idle,
     InsertTask(oneshot::Receiver<Result<()>>),
@@ -49,12 +50,14 @@ impl Core {
         CoreOutput::InsertTask(rx)
     }
 
+    #[allow(dead_code)]
     pub fn fetch_all_tasks(&self) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
         execute_blocking!(self, tx, driver::fetch_all_tasks);
         CoreOutput::FetchAllTasks(rx)
     }
 
+    #[allow(dead_code)]
     pub fn fetch_task_by_id(&self, id: i32) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
         execute_blocking!(self, tx, |conn_lock| driver::fetch_task_by_id(
@@ -69,6 +72,7 @@ impl Core {
         CoreOutput::FetchActiveTasks(rx)
     }
 
+    #[allow(dead_code)]
     pub fn fetch_incomplete_tasks(&self) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
         execute_blocking!(self, tx, driver::fetch_incomplete_tasks);

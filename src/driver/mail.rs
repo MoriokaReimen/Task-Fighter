@@ -5,7 +5,6 @@ use std::fmt::Write as _;
 use std::io::Write as _;
 use tempfile::Builder;
 use tracing::info;
-use urlencoding::encode;
 
 pub fn create_mail_text(tasks: &[Task]) -> String {
     let mut contents = String::new();
@@ -72,7 +71,7 @@ pub fn create_mail_text(tasks: &[Task]) -> String {
     contents
 }
 
-pub fn launch_system_mailer_via_eml(tasks: &[Task]) -> Result<()> {
+pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
     let body_text = create_mail_text(tasks);
     let raw_subject = Zoned::now()
         .date()
@@ -115,25 +114,6 @@ pub fn launch_system_mailer_via_eml(tasks: &[Task]) -> Result<()> {
     )?;
 
     info!("Dispatched active call stack processing to localized system default client interface.");
-    Ok(())
-}
-
-pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
-    let body_text = create_mail_text(tasks);
-    let raw_subject = Zoned::now()
-        .date()
-        .strftime("%Y/%m/%d Task Status Report")
-        .to_string();
-
-    let subject = encode(&raw_subject);
-    let body = encode(&body_text);
-    let mailto_url = format!("mailto:?subject={}&body={}", subject, body);
-
-    open::that(&mailto_url)
-        .context("Failed invoking local default user agent endpoints via mailto scheme channels")?;
-
-    info!("Dispatched active call stack processing to localized system default client interface.");
-    info!("Target scheme transmission resource path: {}", mailto_url);
     Ok(())
 }
 

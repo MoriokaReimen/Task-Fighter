@@ -81,36 +81,6 @@ impl Default for Task {
     }
 }
 
-impl Task {
-    pub fn new(
-        id: i32,
-        active: bool,
-        status: TaskStatus,
-        project: String,
-        title: String,
-        detail: String,
-        start_date: Date,
-        due_date: Date,
-        priority: Priority,
-        progress: f32,
-        time_spent: f32,
-    ) -> Self {
-        Self {
-            id,
-            active,
-            status,
-            project,
-            title,
-            detail,
-            start_date,
-            due_date,
-            priority,
-            progress,
-            time_spent,
-        }
-    }
-}
-
 /// Centralized mapper to convert a database row slice into a Task token instance,
 /// significantly flattening nesting inside fetch functions.
 impl<'a> TryFrom<&'a rusqlite::Row<'a>> for Task {
@@ -656,7 +626,7 @@ mod tests {
     #[test]
     fn test_scan_tasks_by_fts() {
         let mut conn = setup_in_memory_db();
-        generate_random_tasks(&mut conn, 100000);
+        let _ = generate_random_tasks(&mut conn, 100000);
 
         let task1 = create_test_task(
             "Rust Study Milestone Tasks",
