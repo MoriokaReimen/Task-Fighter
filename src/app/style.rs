@@ -24,14 +24,14 @@ pub fn set_theme(ctx: &egui::Context) {
     // --- Base Settings ---
     visuals.dark_mode = true;
     visuals.override_text_color = Some(Color32::from_rgb(0, 192, 220)); // Clean aqua white
-    visuals.weak_text_color = Some(Color32::from_rgb(130, 150, 160));  // Soft slate gray
+    visuals.weak_text_color = Some(Color32::from_rgb(130, 150, 160)); // Soft slate gray
     visuals.weak_text_alpha = 0.6;
     visuals.disabled_alpha = 0.5;
 
     // --- Backgrounds & Panels ---
-    visuals.panel_fill = Color32::from_rgb(16, 24, 30);       // Main panel: deep aqua navy
-    visuals.window_fill = Color32::from_rgb(24, 34, 42);      // Windows: midnight blue
-    visuals.faint_bg_color = Color32::from_rgb(30, 44, 54);   // Zebra stripes / subtle backgrounds
+    visuals.panel_fill = Color32::from_rgb(16, 24, 30); // Main panel: deep aqua navy
+    visuals.window_fill = Color32::from_rgb(24, 34, 42); // Windows: midnight blue
+    visuals.faint_bg_color = Color32::from_rgb(30, 44, 54); // Zebra stripes / subtle backgrounds
     visuals.extreme_bg_color = Color32::from_rgb(10, 16, 20); // Recessed backgrounds (e.g., text edits)
 
     // --- Input & Code Fields ---
@@ -40,8 +40,8 @@ pub fn set_theme(ctx: &egui::Context) {
 
     // --- Accent & Semantic Colors ---
     visuals.hyperlink_color = Color32::from_rgb(0, 210, 255); // Vibrant clear cyan
-    visuals.warn_fg_color = Color32::from_rgb(240, 180, 50);  // Warning: muted amber gold
-    visuals.error_fg_color = Color32::from_rgb(255, 90, 120);  // Error: soft coral pink
+    visuals.warn_fg_color = Color32::from_rgb(240, 180, 50); // Warning: muted amber gold
+    visuals.error_fg_color = Color32::from_rgb(255, 90, 120); // Error: soft coral pink
 
     // --- Geometry, Strokes & Borders ---
     visuals.window_corner_radius = CornerRadius::same(6);

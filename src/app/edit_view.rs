@@ -1,19 +1,23 @@
 use super::main_app::{App, AppState};
 use crate::driver::{Priority, Task, TaskStatus};
-use eframe::egui::{self, Align, Layout, Ui, vec2, Color32, RichText, Button, ComboBox, Grid, ScrollArea, TextEdit, DragValue, Slider};
+use eframe::egui::{
+    self, Align, Button, Color32, ComboBox, DragValue, Grid, Layout, RichText, ScrollArea, Slider,
+    TextEdit, Ui, vec2,
+};
 use tracing::info;
 
 impl App {
     /// Renders the task editing view inside a dedicated panel setup.
     pub fn edit_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
-        
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
             // Right-to-left layout places buttons from rightmost to leftmost
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                
                 // Cancel Button Action
-                if ui.add(Button::new("❌ Cancel").min_size(vec2(90.0, 28.0))).clicked() {
+                if ui
+                    .add(Button::new("❌ Cancel").min_size(vec2(90.0, 28.0)))
+                    .clicked()
+                {
                     info!("Cancel Button Pressed");
                     self.temp_task = Task::default();
                     self.state = AppState::Default;
@@ -23,7 +27,10 @@ impl App {
                 ui.add_space(8.0); // Spacing between action buttons
 
                 // Save Button Action
-                if ui.add(Button::new("💾 Save").min_size(vec2(90.0, 28.0))).clicked() {
+                if ui
+                    .add(Button::new("💾 Save").min_size(vec2(90.0, 28.0)))
+                    .clicked()
+                {
                     info!("Save Button Pressed");
                     if let AppState::Edit(ref mut task) = self.state {
                         self.output = self.core.update_task(task.clone());
@@ -43,7 +50,7 @@ impl App {
             let AppState::Edit(ref mut task) = self.state else {
                 return;
             };
-                
+
             // Grid 1: Status, Metadata, Dates, and Workload metrics
             Grid::new("edit_task_date_grid")
                 .num_columns(4)
@@ -56,9 +63,21 @@ impl App {
                     ComboBox::from_id_salt("status_combo")
                         .selected_text(status_items[task.status as usize])
                         .show_ui(ui, |ui| {
-                            ui.selectable_value(&mut task.status, TaskStatus::Pending, RichText::new(status_items[0]));
-                            ui.selectable_value(&mut task.status, TaskStatus::WorkInProgress, RichText::new(status_items[1]));
-                            ui.selectable_value(&mut task.status, TaskStatus::Complete, RichText::new(status_items[2]));
+                            ui.selectable_value(
+                                &mut task.status,
+                                TaskStatus::Pending,
+                                RichText::new(status_items[0]),
+                            );
+                            ui.selectable_value(
+                                &mut task.status,
+                                TaskStatus::WorkInProgress,
+                                RichText::new(status_items[1]),
+                            );
+                            ui.selectable_value(
+                                &mut task.status,
+                                TaskStatus::Complete,
+                                RichText::new(status_items[2]),
+                            );
                         });
 
                     // Active / Enabled toggle
@@ -73,22 +92,43 @@ impl App {
                     let priority_items = ["■Low", "■Medium", "■High"];
 
                     ComboBox::from_id_salt("priority_combo")
-                        .selected_text(RichText::new(priority_items[task.priority as usize]).color(priority_color))
+                        .selected_text(
+                            RichText::new(priority_items[task.priority as usize])
+                                .color(priority_color),
+                        )
                         .show_ui(ui, |ui| {
-                            ui.selectable_value(&mut task.priority, Priority::Low, RichText::new(priority_items[0]).color(Color32::GREEN));
-                            ui.selectable_value(&mut task.priority, Priority::Medium, RichText::new(priority_items[1]).color(Color32::YELLOW));
-                            ui.selectable_value(&mut task.priority, Priority::High, RichText::new(priority_items[2]).color(Color32::RED));
+                            ui.selectable_value(
+                                &mut task.priority,
+                                Priority::Low,
+                                RichText::new(priority_items[0]).color(Color32::GREEN),
+                            );
+                            ui.selectable_value(
+                                &mut task.priority,
+                                Priority::Medium,
+                                RichText::new(priority_items[1]).color(Color32::YELLOW),
+                            );
+                            ui.selectable_value(
+                                &mut task.priority,
+                                Priority::High,
+                                RichText::new(priority_items[2]).color(Color32::RED),
+                            );
                         });
 
                     ui.end_row();
 
                     // Date Pickers
                     ui.label("Start Date:");
-                    ui.add(egui_extras::DatePickerButton::new(&mut task.start_date).id_salt("edit_start_date"));
-                    
+                    ui.add(
+                        egui_extras::DatePickerButton::new(&mut task.start_date)
+                            .id_salt("edit_start_date"),
+                    );
+
                     ui.label("Due Date:");
-                    ui.add(egui_extras::DatePickerButton::new(&mut task.due_date).id_salt("edit_due_date"));
-                    
+                    ui.add(
+                        egui_extras::DatePickerButton::new(&mut task.due_date)
+                            .id_salt("edit_due_date"),
+                    );
+
                     ui.end_row();
 
                     // Progress Slider
@@ -109,7 +149,7 @@ impl App {
                             .range(0.0..=999.0)
                             .suffix(" hrs"),
                     );
-                    
+
                     ui.end_row();
                 });
 
@@ -121,11 +161,15 @@ impl App {
                 .show(ui, |ui| {
                     ui.label("Project:");
                     // Use available_width to stretch inputs dynamically without sizing loops
-                    ui.add(TextEdit::singleline(&mut task.project).desired_width(ui.available_width()));
+                    ui.add(
+                        TextEdit::singleline(&mut task.project).desired_width(ui.available_width()),
+                    );
                     ui.end_row();
 
                     ui.label("Title:");
-                    ui.add(TextEdit::singleline(&mut task.title).desired_width(ui.available_width()));
+                    ui.add(
+                        TextEdit::singleline(&mut task.title).desired_width(ui.available_width()),
+                    );
                     ui.end_row();
                 });
 
@@ -136,10 +180,7 @@ impl App {
                 .auto_shrink([false; 2]) // Prevent area from resizing down on low content volume
                 .show(ui, |ui| {
                     // Expand TextEdit to fully populate the container's layout size
-                    ui.add_sized(
-                        ui.available_size(),
-                        TextEdit::multiline(&mut task.detail),
-                    );
+                    ui.add_sized(ui.available_size(), TextEdit::multiline(&mut task.detail));
                 });
         });
     }

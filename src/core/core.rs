@@ -51,25 +51,27 @@ impl Core {
 
     pub fn fetch_all_tasks(&self) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
-        execute_blocking!(self, tx, |conn_lock| driver::fetch_all_tasks(conn_lock));
+        execute_blocking!(self, tx, driver::fetch_all_tasks);
         CoreOutput::FetchAllTasks(rx)
     }
 
     pub fn fetch_task_by_id(&self, id: i32) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
-        execute_blocking!(self, tx, |conn_lock| driver::fetch_task_by_id(conn_lock, id));
+        execute_blocking!(self, tx, |conn_lock| driver::fetch_task_by_id(
+            conn_lock, id
+        ));
         CoreOutput::FetchTaskById(rx)
     }
 
     pub fn fetch_active_tasks(&self) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
-        execute_blocking!(self, tx, |conn_lock| driver::fetch_active_tasks(conn_lock));
+        execute_blocking!(self, tx, driver::fetch_active_tasks);
         CoreOutput::FetchActiveTasks(rx)
     }
 
     pub fn fetch_incomplete_tasks(&self) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
-        execute_blocking!(self, tx, |conn_lock| driver::fetch_incomplete_tasks(conn_lock));
+        execute_blocking!(self, tx, driver::fetch_incomplete_tasks);
         CoreOutput::FetchIncompleteTasks(rx)
     }
 
@@ -82,7 +84,9 @@ impl Core {
     pub fn scan_tasks_by_fts(&self, pattern: &str) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
         let pattern = pattern.to_string();
-        execute_blocking!(self, tx, |conn_lock| driver::scan_tasks_by_fts(conn_lock, &pattern));
+        execute_blocking!(self, tx, |conn_lock| driver::scan_tasks_by_fts(
+            conn_lock, &pattern
+        ));
         CoreOutput::ScanTasksByFts(rx)
     }
 
@@ -96,8 +100,8 @@ impl Core {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jiff::civil::date;
     use crate::driver::TaskStatus;
+    use jiff::civil::date;
 
     /// Helper function to construct dummy task tokens for test state evaluations.
     fn create_test_task(id: i32, title: &str) -> Task {
@@ -129,7 +133,9 @@ mod tests {
             panic!("Unexpected CoreOutput variant encountered");
         };
 
-        let result = rx.await.expect("Oneshot communication channel severed prematurely");
+        let result = rx
+            .await
+            .expect("Oneshot communication channel severed prematurely");
         assert!(
             result.is_ok(),
             "Task insertion failed execution pipeline: {:?}",
@@ -142,11 +148,19 @@ mod tests {
             panic!("Unexpected CoreOutput variant encountered");
         };
 
-        let result = rx.await.expect("Oneshot communication channel severed prematurely");
+        let result = rx
+            .await
+            .expect("Oneshot communication channel severed prematurely");
         let tasks = result.expect("Failed to safely resolve all database tasks");
 
-        assert!(!tasks.is_empty(), "Database dataset returned empty after item insertion");
-        assert!(tasks.iter().any(|t| t.title == "Async Test Task"), "Target mock task token not found");
+        assert!(
+            !tasks.is_empty(),
+            "Database dataset returned empty after item insertion"
+        );
+        assert!(
+            tasks.iter().any(|t| t.title == "Async Test Task"),
+            "Target mock task token not found"
+        );
     }
 
     #[tokio::test]
@@ -159,8 +173,13 @@ mod tests {
             panic!("Unexpected CoreOutput variant encountered");
         };
 
-        let result = rx.await.expect("Oneshot communication channel severed prematurely");
-        assert!(result.is_err(), "Expected lookup failure for non-existent primary key identifier");
+        let result = rx
+            .await
+            .expect("Oneshot communication channel severed prematurely");
+        assert!(
+            result.is_err(),
+            "Expected lookup failure for non-existent primary key identifier"
+        );
     }
 
     #[tokio::test]
@@ -174,8 +193,13 @@ mod tests {
             panic!("Unexpected CoreOutput variant encountered");
         };
 
-        let result = rx.await.expect("Oneshot communication channel severed prematurely");
-        assert!(result.is_err(), "Expected execution update constraints violation fallback error");
+        let result = rx
+            .await
+            .expect("Oneshot communication channel severed prematurely");
+        assert!(
+            result.is_err(),
+            "Expected execution update constraints violation fallback error"
+        );
     }
 
     #[tokio::test]
@@ -190,7 +214,12 @@ mod tests {
             panic!("Unexpected CoreOutput variant encountered");
         };
 
-        let result = rx.await.expect("Oneshot communication channel severed prematurely");
-        assert!(result.is_err(), "Malformed execution query syntax did not yield anticipated panic fallback bounds");
+        let result = rx
+            .await
+            .expect("Oneshot communication channel severed prematurely");
+        assert!(
+            result.is_err(),
+            "Malformed execution query syntax did not yield anticipated panic fallback bounds"
+        );
     }
 }

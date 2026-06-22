@@ -12,7 +12,7 @@ fn get_frame_option() -> Result<eframe::NativeOptions> {
     let image = image::load_from_memory(icon_bytes)?.to_rgba8();
     let (width, height) = image.dimensions();
     let rgba_pixels = image.into_raw();
-    
+
     let icon_data = egui::IconData {
         rgba: rgba_pixels,
         width,
@@ -162,7 +162,9 @@ impl App {
                     CoreOutput::InsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
                     CoreOutput::FetchAllTasks(rx) => handle_rx!(rx, "Failed to fetch all tasks"),
                     CoreOutput::FetchTaskById(rx) => handle_rx!(rx, "Failed to fetch task by ID"),
-                    CoreOutput::FetchIncompleteTasks(rx) => handle_rx!(rx, "Failed to fetch incomplete tasks"),
+                    CoreOutput::FetchIncompleteTasks(rx) => {
+                        handle_rx!(rx, "Failed to fetch incomplete tasks")
+                    }
                     CoreOutput::UpdateTask(rx) => handle_rx!(rx, "Failed to update task"),
                     CoreOutput::MailDaily(rx) => handle_rx!(rx, "Failed to send daily report mail"),
                     _ => None,

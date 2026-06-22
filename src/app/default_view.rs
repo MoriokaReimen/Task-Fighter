@@ -15,13 +15,19 @@ impl App {
         // --- Bottom Action Panel ---
         egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                if ui.add(Button::new("➕ Create New").min_size(vec2(110.0, 28.0))).clicked() {
+                if ui
+                    .add(Button::new("➕ Create New").min_size(vec2(110.0, 28.0)))
+                    .clicked()
+                {
                     self.state = AppState::Create;
                 }
 
                 ui.add_space(8.0);
 
-                if ui.add(Button::new("📧 Email Report").min_size(vec2(120.0, 28.0))).clicked() {
+                if ui
+                    .add(Button::new("📧 Email Report").min_size(vec2(120.0, 28.0)))
+                    .clicked()
+                {
                     info!("Email Report Button Pressed");
                     if let Some(ref tasks) = self.displayed_tasks {
                         self.output = self.core.mail_daily(tasks.clone());
@@ -33,16 +39,22 @@ impl App {
         // --- Central Dashboard Content ---
         egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
             ui.heading("📋 Task List");
-            
+
             // Search Control Bar Layout
             ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
-                if ui.add(Button::new("↩ Reset").min_size(vec2(80.0, 28.0))).clicked() {
+                if ui
+                    .add(Button::new("↩ Reset").min_size(vec2(80.0, 28.0)))
+                    .clicked()
+                {
                     info!("Reset Button Pressed");
                     self.scan_pattern.clear();
                     self.output = self.core.fetch_active_tasks();
                 }
-                
-                if ui.add(Button::new("🔍 Search").min_size(vec2(80.0, 28.0))).clicked() {
+
+                if ui
+                    .add(Button::new("🔍 Search").min_size(vec2(80.0, 28.0)))
+                    .clicked()
+                {
                     info!("Search Button Pressed");
                     self.output = self.core.scan_tasks_by_fts(&self.scan_pattern);
                 }
@@ -78,7 +90,7 @@ impl App {
         }
 
         ui.separator();
-        
+
         // Iterate over the cloned vector references securely
         for task in &tasks {
             self.render_task_row(ui, task);
@@ -112,7 +124,7 @@ impl App {
 
             // Date & Progress Metrics UI elements
             ui.label(task.due_date.strftime("Due Date : %Y/%m/%d").to_string());
-            
+
             let progress_fraction = task.progress / 100.0;
             ui.add_sized(
                 [100.0, 28.0],
@@ -123,7 +135,10 @@ impl App {
 
             // Right-aligned edit entry button context
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                if ui.add(Button::new("✏ Edit").min_size(vec2(60.0, 24.0))).clicked() {
+                if ui
+                    .add(Button::new("✏ Edit").min_size(vec2(60.0, 24.0)))
+                    .clicked()
+                {
                     info!("Edit Button Pressed: {:?}", task);
                     self.state = AppState::Edit(task.clone());
                 }
