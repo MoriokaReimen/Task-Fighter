@@ -54,7 +54,7 @@ impl App {
                     .clicked()
                 {
                     info!("Search Button Pressed");
-                    self.output = self.core.scan_tasks_by_fts(&self.scan_pattern);
+                    self.output = self.core.scan_tasks(&self.scan_pattern);
                 }
 
                 ui.add(

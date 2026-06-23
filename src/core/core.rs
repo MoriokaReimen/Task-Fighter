@@ -18,6 +18,7 @@ pub enum CoreOutput {
     FetchIncompleteTasks(oneshot::Receiver<Result<Vec<Task>>>),
     UpdateTask(oneshot::Receiver<Result<()>>),
     ScanTasksByFts(oneshot::Receiver<Result<Vec<Task>>>),
+    ScanTasks(oneshot::Receiver<Result<Vec<Task>>>),
     MailDaily(oneshot::Receiver<Result<()>>),
 }
 
@@ -86,6 +87,7 @@ impl Core {
         CoreOutput::UpdateTask(rx)
     }
 
+    #[allow(dead_code)]
     pub fn scan_tasks_by_fts(&self, pattern: &str) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
         let pattern = pattern.to_string();
@@ -93,6 +95,15 @@ impl Core {
             conn_lock, &pattern
         ));
         CoreOutput::ScanTasksByFts(rx)
+    }
+
+    pub fn scan_tasks(&self, pattern: &str) -> CoreOutput {
+        let (tx, rx) = oneshot::channel();
+        let pattern = pattern.to_string();
+        execute_blocking!(self, tx, |conn_lock| driver::scan_tasks(
+            conn_lock, &pattern
+        ));
+        CoreOutput::ScanTasks(rx)
     }
 
     pub fn mail_daily(&self, tasks: Vec<Task>) -> CoreOutput {

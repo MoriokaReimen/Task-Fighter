@@ -137,6 +137,24 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
             },
+            CoreOutput::ScanTasks(rx) => match rx.try_recv() {
+                Ok(Ok(tasks)) => {
+                    self.displayed_tasks = Some(tasks);
+                    Some(CoreOutput::Idle)
+                }
+                Ok(Err(e)) => {
+                    warn!("Search query failed: {:?}", e);
+                    Some(CoreOutput::Idle)
+                }
+                Err(TryRecvError::Empty) => {
+                    ui.spinner();
+                    None
+                }
+                Err(TryRecvError::Closed) => {
+                    error!("Channel closed unexpectedly (ScanTasks)");
+                    Some(CoreOutput::Idle)
+                }
+            },
 
             // Batch handle simple tasks that just transition back to Idle upon completion
             other_output => {

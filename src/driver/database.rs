@@ -152,7 +152,7 @@ pub fn connect() -> Result<Connection> {
             detail, 
             content='tasks', 
             content_rowid='id',
-            tokenize='trigram'
+            tokenize='trigram' 
         );",
         [],
     )
@@ -168,7 +168,7 @@ pub fn connect() -> Result<Connection> {
     .context("Failed to attach continuous data synchronization hooks for insertion bounds")?;
 
     conn.execute(
-        "CREATE TRIGGER IF NOT EXISTS tasks_au AFTER UPDATE OF title, detail ON tasks BEGIN
+        "CREATE TRIGGER IF NOT EXISTS tasks_au AFTER UPDATE OF title, project, detail ON tasks BEGIN
             INSERT INTO tasks_fts(tasks_fts, rowid, title, project, detail) VALUES('delete', old.id, old.title, old.project, old.detail);
             INSERT INTO tasks_fts(rowid, title, project, detail) VALUES (new.id, new.title, new.project, new.detail);
         END;",
@@ -211,7 +211,7 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
 pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Querying all existing task entry items dataset");
     let mut stmt = conn.prepare(
-        "SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks",
+        "SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks ORDER BY priority DESC",
     )?;
 
     let tasks = stmt
@@ -238,7 +238,7 @@ pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
 pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Querying active tasks sequence state contexts");
     let mut stmt = conn.prepare(
-        "SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE active = 1"
+        "SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE active = 1 ORDER BY priority DESC"
     ).context("Failed compiling relational parameter statements validations queries")?;
 
     let tasks = stmt
@@ -252,7 +252,7 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
 pub fn fetch_incomplete_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Querying pending items sequence state contexts");
     let mut stmt = conn.prepare(
-        "SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE status = 0 OR status = 1"
+        "SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent FROM tasks WHERE status = 0 OR status = 1  ORDER BY priority DESC"
     ).context("Failed compiling relational parameter statements validations queries")?;
 
     let tasks = stmt
@@ -300,6 +300,7 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
     Ok(())
 }
 
+#[allow(unused)]
 pub fn scan_tasks_by_fts(conn: &Connection, pattern: &str) -> Result<Vec<Task>> {
     info!(
         "Executing full text query token matches indexing sequence lookup: {}",
@@ -349,6 +350,35 @@ pub fn scan_tasks_by_fts(conn: &Connection, pattern: &str) -> Result<Vec<Task>> 
     }
 
     Ok(ret)
+}
+
+pub fn scan_tasks(conn: &Connection, pattern: &str) -> Result<Vec<Task>> {
+    info!("Executing text query partial match lookup: {}", pattern);
+
+    let trimmed = pattern.trim();
+    // 検索ワードが空文字の場合は即座に空のベクターを返す
+    if trimmed.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    // 💡 すべての文字数において、標準の LIKE 演算子による部分一致検索を行う
+    let mut stmt = conn.prepare(
+        "SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent \
+         FROM tasks \
+         WHERE title LIKE ?1 OR detail LIKE ?1 OR project LIKE ?1 \
+         ORDER BY priority DESC;"
+    ).context("Failed to prepare partial match database query statement")?;
+
+    // 前後に % を付与して部分一致のワイルドカードパターンを作成
+    let like_pattern = format!("%{}%", trimmed);
+
+    // 💡 1回のクエリで必要なタスク情報を一括取得し、Task構造体にマッピング
+    let tasks = stmt
+        .query_map([like_pattern], |row| Task::try_from(row))?
+        .collect::<Result<Vec<Task>, _>>()
+        .context("Failed parsing query sequences lists mapping constraints rows")?;
+
+    Ok(tasks)
 }
 
 #[cfg(test)]
@@ -675,5 +705,93 @@ mod tests {
                 .iter()
                 .any(|t| t.title == "Grocery Shopping Routines")
         );
+    }
+
+    // テスト用のインメモリ接続とテーブル初期化を行うヘルパー関数
+    fn setup_test_db() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute(
+            "CREATE TABLE tasks (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                active       INTEGER NOT NULL DEFAULT 1,
+                status       INTEGER NOT NULL DEFAULT 0,
+                project      TEXT NOT NULL,
+                title        TEXT NOT NULL,
+                detail       TEXT NOT NULL,
+                start_date   DATETIME NOT NULL,
+                due_date     DATETIME NOT NULL,
+                priority     INTEGER NOT NULL DEFAULT 1,
+                progress     REAL NOT NULL DEFAULT 0.0,
+                time_spent   REAL NOT NULL DEFAULT 0.0
+            );",
+            [],
+        )
+        .unwrap();
+        conn
+    }
+
+    // テスト用のダミーデータ挿入ヘルパー
+    fn insert_dummy_task(conn: &Connection, project: &str, title: &str, detail: &str) {
+        let task = Task {
+            project: project.to_string(),
+            title: title.to_string(),
+            detail: detail.to_string(),
+            start_date: Date::new(2026, 1, 1).unwrap(),
+            due_date: Date::new(2026, 1, 7).unwrap(),
+            ..Default::default()
+        };
+        insert_task(conn, &task).unwrap();
+    }
+
+    #[test]
+    fn test_scan_tasks_empty_pattern() {
+        let conn = setup_test_db();
+        insert_dummy_task(&conn, "Rust", "Fix a bug", "Rust memory leak");
+
+        // 💡 空文字、または空白のみの場合は空のベクターが返るか
+        let results = scan_tasks(&conn, "").unwrap();
+        assert!(results.is_empty());
+
+        let results = scan_tasks(&conn, "   ").unwrap();
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_scan_tasks_match_title() {
+        let conn = setup_test_db();
+        insert_dummy_task(&conn, "Rust", "Fix a memory leak", "Critical issue");
+        insert_dummy_task(&conn, "Go", "Refactor code", "Clean up");
+
+        // 💡 タイトル（title）の部分一致で正しくヒットするか
+        let results = scan_tasks(&conn, "memory").unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].title, "Fix a memory leak");
+    }
+
+    #[test]
+    fn test_scan_tasks_match_project_and_detail() {
+        let conn = setup_test_db();
+        insert_dummy_task(&conn, "Frontend", "UI Design", "Use egui for components");
+        insert_dummy_task(&conn, "Backend", "API Setup", "Database integration");
+
+        // 💡 プロジェクト名（project）での検索
+        let results = scan_tasks(&conn, "Front").unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].project, "Frontend");
+
+        // 💡 詳細欄（detail）での検索
+        let results = scan_tasks(&conn, "egui").unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].title, "UI Design");
+    }
+
+    #[test]
+    fn test_scan_tasks_no_match() {
+        let conn = setup_test_db();
+        insert_dummy_task(&conn, "Rust", "Fix a bug", "Detail");
+
+        // 💡 どこにもヒットしないキーワードの場合、空のベクターが返るか
+        let results = scan_tasks(&conn, "Python").unwrap();
+        assert!(results.is_empty());
     }
 }
