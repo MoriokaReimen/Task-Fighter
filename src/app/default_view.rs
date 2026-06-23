@@ -22,8 +22,6 @@ impl App {
                     self.state = AppState::Create;
                 }
 
-                ui.add_space(8.0);
-
                 if ui
                     .add(Button::new("📧 Email Report").min_size(vec2(120.0, 28.0)))
                     .clicked()
@@ -78,7 +76,6 @@ impl App {
 
     /// Extracted helper to process and render list entries or empty state placeholders.
     fn render_task_list_content(&mut self, ui: &mut Ui) {
-        // FIX: Clone the data out to resolve the aliasing borrow conflict on `self`
         let Some(tasks) = self.displayed_tasks.clone() else {
             return;
         };

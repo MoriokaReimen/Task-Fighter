@@ -34,7 +34,7 @@ impl<'a> TaskTable<'a> {
         let inner_response = ui.scope(|ui| {
             let table = TableBuilder::new(ui)
                 .striped(true)
-                .column(Column::exact(20.0)) // id
+                .column(Column::exact(30.0)) // id
                 .column(Column::remainder()) // title (トリミングされるためremainderが活きます)
                 .column(Column::exact(60.0)) // priority
                 .column(Column::exact(70.0)) // Due Date (日付表示に合わせて少し広めに調整)
@@ -44,22 +44,38 @@ impl<'a> TaskTable<'a> {
             table
                 .header(28.0, |mut header| {
                     header.col(|ui| {
-                        ui.strong("ID");
+                        ui.strong(
+                            egui::RichText::new("ID").color(egui::Color32::from_rgb(0, 240, 255)),
+                        );
                     });
                     header.col(|ui| {
-                        ui.strong("Title");
+                        ui.strong(
+                            egui::RichText::new("Title")
+                                .color(egui::Color32::from_rgb(0, 240, 255)),
+                        );
                     });
                     header.col(|ui| {
-                        ui.strong("Priority");
+                        ui.strong(
+                            egui::RichText::new("Priority")
+                                .color(egui::Color32::from_rgb(0, 240, 255)),
+                        );
                     });
                     header.col(|ui| {
-                        ui.strong("Due Date");
+                        ui.strong(
+                            egui::RichText::new("Due Date")
+                                .color(egui::Color32::from_rgb(0, 240, 255)),
+                        );
                     });
                     header.col(|ui| {
-                        ui.strong("Progress");
+                        ui.strong(
+                            egui::RichText::new("Progress")
+                                .color(egui::Color32::from_rgb(0, 240, 255)),
+                        );
                     });
                     header.col(|ui| {
-                        ui.strong("Edit");
+                        ui.strong(
+                            egui::RichText::new("Edit").color(egui::Color32::from_rgb(0, 240, 255)),
+                        );
                     });
                 })
                 .body(|body| {
