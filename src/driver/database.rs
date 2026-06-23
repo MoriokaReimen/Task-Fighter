@@ -1,86 +1,10 @@
+use crate::driver::Task;
+use crate::driver::{Priority, TaskStatus};
 use anyhow::{Context, Result, bail};
-use jiff::Zoned;
-use jiff::civil::Date;
 use rusqlite::{Connection, params};
-use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use tracing::info;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
-pub enum Priority {
-    #[default]
-    Low = 0,
-    Medium = 1,
-    High = 2,
-}
-
-impl TryFrom<i32> for Priority {
-    type Error = anyhow::Error;
-
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Priority::Low),
-            1 => Ok(Priority::Medium),
-            2 => Ok(Priority::High),
-            _ => bail!("Invalid priority integer state: {}", value),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum TaskStatus {
-    #[default]
-    Pending = 0,
-    WorkInProgress = 1,
-    Complete = 2,
-}
-
-impl TryFrom<i32> for TaskStatus {
-    type Error = anyhow::Error;
-
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(TaskStatus::Pending),
-            1 => Ok(TaskStatus::WorkInProgress),
-            2 => Ok(TaskStatus::Complete),
-            _ => bail!("Invalid task status integer state: {}", value),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Task {
-    pub id: i32,
-    pub active: bool,
-    pub status: TaskStatus,
-    pub project: String,
-    pub title: String,
-    pub detail: String,
-    pub start_date: Date,
-    pub due_date: Date,
-    pub priority: Priority,
-    pub progress: f32,
-    pub time_spent: f32,
-}
-
-impl Default for Task {
-    fn default() -> Self {
-        Self {
-            id: 0,
-            active: true,
-            status: TaskStatus::Pending,
-            project: String::new(),
-            title: String::new(),
-            detail: String::new(),
-            start_date: Zoned::now().date(),
-            due_date: Zoned::now().date(),
-            priority: Priority::Low,
-            progress: 0.0,
-            time_spent: 0.0,
-        }
-    }
-}
 
 /// Centralized mapper to convert a database row slice into a Task token instance,
 /// significantly flattening nesting inside fetch functions.
@@ -393,6 +317,7 @@ pub fn scan_tasks(conn: &Connection, pattern: &str, only_active: bool) -> Result
 mod tests {
     use super::*;
     use jiff::civil::date;
+    use jiff::civil::Date;
     use rand::RngExt;
     use rand::prelude::IndexedRandom;
 

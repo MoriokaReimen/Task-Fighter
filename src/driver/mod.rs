@@ -1,7 +1,9 @@
+mod data;
+pub use data::Priority;
+pub use data::Task;
+pub use data::TaskStatus;
+
 mod database;
-pub use database::Priority;
-pub use database::Task;
-pub use database::TaskStatus;
 pub use database::connect;
 pub use database::fetch_active_tasks;
 pub use database::fetch_all_tasks;
