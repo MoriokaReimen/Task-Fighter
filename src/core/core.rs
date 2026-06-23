@@ -101,7 +101,9 @@ impl Core {
         let (tx, rx) = oneshot::channel();
         let pattern = pattern.to_string();
         execute_blocking!(self, tx, |conn_lock| driver::scan_tasks(
-            conn_lock, &pattern, only_active
+            conn_lock,
+            &pattern,
+            only_active
         ));
         CoreOutput::ScanTasks(rx)
     }

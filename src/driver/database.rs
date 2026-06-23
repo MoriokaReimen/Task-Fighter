@@ -373,9 +373,9 @@ pub fn scan_tasks(conn: &Connection, pattern: &str, only_active: bool) -> Result
          WHERE (title LIKE ?1 OR detail LIKE ?1 OR project LIKE ?1) \
          ORDER BY priority DESC;"
     };
-    let mut stmt = conn.prepare(
-        sql
-    ).context("Failed to prepare partial match database query statement")?;
+    let mut stmt = conn
+        .prepare(sql)
+        .context("Failed to prepare partial match database query statement")?;
 
     // 前後に % を付与して部分一致のワイルドカードパターンを作成
     let like_pattern = format!("%{}%", trimmed);

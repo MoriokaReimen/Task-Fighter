@@ -45,7 +45,6 @@ impl App {
                     .clicked()
                 {
                     info!("Reset Button Pressed");
-                    self.scan_pattern.clear();
                     self.output = self.core.fetch_active_tasks();
                 }
 

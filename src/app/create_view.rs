@@ -19,7 +19,6 @@ impl App {
                     info!("Cancel Button Pressed");
                     self.temp_task = Task::default();
                     self.state = AppState::Default;
-                    self.displayed_tasks = None;
                 }
 
                 // Save Action

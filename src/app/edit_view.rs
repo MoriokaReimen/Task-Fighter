@@ -19,7 +19,6 @@ impl App {
                     info!("Cancel Button Pressed");
                     self.temp_task = Task::default();
                     self.state = AppState::Default;
-                    self.displayed_tasks = None;
                 }
 
                 // Save Button Action
@@ -30,8 +29,8 @@ impl App {
                     info!("Save Button Pressed");
                     self.output = self.core.update_task(self.temp_task.clone());
                     self.state = AppState::Default;
-                    self.displayed_tasks = None;
                     self.temp_task = Task::default();
+                    self.displayed_tasks = None;
                 }
             });
         });

@@ -1,4 +1,4 @@
-use crate::driver::{Priority, Task};
+use crate::driver::{Priority, Task, TaskStatus};
 use egui::{Color32, Label, Response, Ui};
 use egui_extras::{Column, TableBuilder};
 
@@ -34,7 +34,7 @@ impl<'a> TaskTable<'a> {
         let inner_response = ui.scope(|ui| {
             let table = TableBuilder::new(ui)
                 .striped(true)
-                .column(Column::exact(30.0)) // id
+                .column(Column::exact(40.0)) // Checkbox
                 .column(Column::remainder()) // title (トリミングされるためremainderが活きます)
                 .column(Column::exact(60.0)) // priority
                 .column(Column::exact(70.0)) // Due Date (日付表示に合わせて少し広めに調整)
@@ -45,7 +45,7 @@ impl<'a> TaskTable<'a> {
                 .header(28.0, |mut header| {
                     header.col(|ui| {
                         ui.strong(
-                            egui::RichText::new("ID").color(egui::Color32::from_rgb(0, 240, 255)),
+                            egui::RichText::new("Done").color(egui::Color32::from_rgb(0, 240, 255)),
                         );
                     });
                     header.col(|ui| {
@@ -85,7 +85,8 @@ impl<'a> TaskTable<'a> {
                         let task = &self.tasks[row_index];
 
                         row.col(|ui| {
-                            ui.label(format!("{}", task.id));
+                            let mut is_done = task.status == TaskStatus::Complete;
+                            ui.add_enabled(false, egui::Checkbox::new(&mut is_done, ""));
                         });
 
                         // ✨ 変更ポイント: タイトルが長い場合に「...」にする
