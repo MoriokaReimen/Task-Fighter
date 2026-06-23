@@ -1,9 +1,9 @@
 use crate::driver::{Priority, Task, insert_task};
 use anyhow::{Context, Result, bail};
+use duckdb::{Connection, params};
 use jiff::ToSpan;
 use jiff::Zoned;
 use jiff::civil::{Date, Weekday};
-use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
@@ -239,30 +239,33 @@ mod tests {
     use super::*;
     use jiff::civil::Date;
 
-    /// Mock utility to establish a standard transient database table context layout.
-    fn setup_mock_db() -> Result<Connection> {
-        let conn = Connection::open_in_memory()
-            .context("Failed to spin up transient in-memory validation database storage context")?;
+    fn setup_test_db() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
 
+        // 💡 1. 自動インクリメント用のシーケンス（SEQUENCE）を作成
+        conn.execute("CREATE SEQUENCE IF NOT EXISTS tasks_id_seq START 1;", [])
+            .unwrap();
+
+        // 💡 2. テーブル作成時に DEFAULT nextval('tasks_id_seq') を指定
         conn.execute(
-            "CREATE TABLE tasks (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                active      INTEGER NOT NULL DEFAULT 1,
-                status      INTEGER NOT NULL DEFAULT 0,
-                project     TEXT NOT NULL,
-                title       TEXT NOT NULL,
-                detail      TEXT NOT NULL,
-                start_date  DATETIME NOT NULL,
-                due_date    DATETIME NOT NULL,
-                priority    INTEGER NOT NULL DEFAULT 1,
-                progress    REAL NOT NULL DEFAULT 0.0,
-                time_spent  REAL NOT NULL DEFAULT 0.0
-            );",
+            "CREATE TABLE IF NOT EXISTS tasks (
+            id          INTEGER PRIMARY KEY DEFAULT nextval('tasks_id_seq'),
+            active      INTEGER NOT NULL DEFAULT 1,
+            status      INTEGER NOT NULL DEFAULT 0,
+            project     VARCHAR NOT NULL,
+            title       VARCHAR NOT NULL,
+            detail      VARCHAR NOT NULL,
+            start_date  DATE NOT NULL,
+            due_date    DATE NOT NULL,
+            priority    INTEGER NOT NULL DEFAULT 1,
+            progress    FLOAT NOT NULL DEFAULT 0.0 CHECK(progress >= 0.0 AND progress <= 100.0),
+            time_spent  FLOAT NOT NULL DEFAULT 0.0
+        );",
             [],
         )
-        .context("Failed executing transient validation layout table migration sequences")?;
+        .unwrap();
 
-        Ok(conn)
+        conn
     }
 
     /// Prepares a safe temporary directory containing a mock config.toml configuration target payload.
@@ -283,7 +286,7 @@ mod tests {
 
     #[test]
     fn test_initialize_periodic_tasks_missing_config_graceful_skips() -> Result<()> {
-        let conn = setup_mock_db()?;
+        let conn = setup_test_db();
 
         // Temporarily change directory or ensure no file conflicts are present locally.
         // If config.toml is missing, it logs a warning and returns Ok(()) without failure.
@@ -301,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_periodic_tasks_generation_and_idempotency_flow() -> Result<()> {
-        let conn = setup_mock_db()?;
+        let conn = setup_test_db();
 
         // Define a comprehensive mix of periodic configurations
         let mock_toml = r#"
@@ -376,7 +379,7 @@ mod tests {
 
     #[test]
     fn test_internal_date_calculation_subroutines() -> Result<()> {
-        let conn = setup_mock_db()?;
+        let conn = setup_test_db();
 
         let p_task = PeriodicTask {
             period: Period::Weekly,
@@ -391,10 +394,27 @@ mod tests {
 
         initialize_weekly_task(&conn, &p_task, mock_tuesday)?;
 
-        let mut stmt =
-            conn.prepare("SELECT start_date, due_date FROM tasks WHERE project = 'Core'")?;
-        let (start, due): (Date, Date) =
-            stmt.query_row([], |row| Ok((row.get(0)?, row.get(1)?)))?;
+        let mut stmt = conn
+            .prepare("SELECT start_date::TEXT, due_date::TEXT FROM tasks WHERE project = 'Core'")?;
+
+        let (start, due): (Date, Date) = stmt.query_row([], |row| {
+            // 1. 一度 String としてデータベースから取得
+            let start_str: String = row.get(0)?;
+            let due_str: String = row.get(1)?;
+
+            // 2. Jiff の Date 型にパースする
+            // クロージャ内は duckdb::Result を返す必要があるため、
+            // パースエラーは FromSqlConversionFailure にマッピングします
+            let start_date = start_str.parse::<Date>().map_err(|e| {
+                duckdb::Error::FromSqlConversionFailure(0, duckdb::types::Type::Text, e.into())
+            })?;
+
+            let due_date = due_str.parse::<Date>().map_err(|e| {
+                duckdb::Error::FromSqlConversionFailure(1, duckdb::types::Type::Text, e.into())
+            })?;
+
+            Ok((start_date, due_date))
+        })?;
 
         // The week's Monday anchor must correctly point back to June 22
         assert_eq!(start, Date::new(2026, 6, 22).unwrap());

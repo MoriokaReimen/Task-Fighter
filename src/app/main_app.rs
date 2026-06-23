@@ -121,24 +121,6 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
             },
-            CoreOutput::ScanTasksByFts(rx) => match rx.try_recv() {
-                Ok(Ok(tasks)) => {
-                    self.displayed_tasks = Some(tasks);
-                    Some(CoreOutput::Idle)
-                }
-                Ok(Err(e)) => {
-                    warn!("Search query failed: {:?}", e);
-                    Some(CoreOutput::Idle)
-                }
-                Err(TryRecvError::Empty) => {
-                    ui.spinner();
-                    None
-                }
-                Err(TryRecvError::Closed) => {
-                    error!("Channel closed unexpectedly (ScanTasksByFts)");
-                    Some(CoreOutput::Idle)
-                }
-            },
             CoreOutput::ScanTasks(rx) => match rx.try_recv() {
                 Ok(Ok(tasks)) => {
                     self.displayed_tasks = Some(tasks);

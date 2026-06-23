@@ -11,7 +11,6 @@ pub use database::fetch_incomplete_tasks;
 pub use database::fetch_task_by_id;
 pub use database::insert_task;
 pub use database::scan_tasks;
-pub use database::scan_tasks_by_fts;
 pub use database::update_task;
 
 mod mail;

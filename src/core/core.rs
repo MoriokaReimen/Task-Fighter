@@ -1,6 +1,6 @@
 use crate::driver::{self, Task};
 use anyhow::Result;
-use rusqlite::Connection;
+use duckdb::Connection;
 use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
 
@@ -17,7 +17,6 @@ pub enum CoreOutput {
     FetchActiveTasks(oneshot::Receiver<Result<Vec<Task>>>),
     FetchIncompleteTasks(oneshot::Receiver<Result<Vec<Task>>>),
     UpdateTask(oneshot::Receiver<Result<()>>),
-    ScanTasksByFts(oneshot::Receiver<Result<Vec<Task>>>),
     ScanTasks(oneshot::Receiver<Result<Vec<Task>>>),
     MailDaily(oneshot::Receiver<Result<()>>),
 }
@@ -85,16 +84,6 @@ impl Core {
         let (tx, rx) = oneshot::channel();
         execute_blocking!(self, tx, |conn_lock| driver::update_task(conn_lock, &task));
         CoreOutput::UpdateTask(rx)
-    }
-
-    #[allow(dead_code)]
-    pub fn scan_tasks_by_fts(&self, pattern: &str) -> CoreOutput {
-        let (tx, rx) = oneshot::channel();
-        let pattern = pattern.to_string();
-        execute_blocking!(self, tx, |conn_lock| driver::scan_tasks_by_fts(
-            conn_lock, &pattern
-        ));
-        CoreOutput::ScanTasksByFts(rx)
     }
 
     pub fn scan_tasks(&self, pattern: &str, only_active: bool) -> CoreOutput {
@@ -217,27 +206,6 @@ mod tests {
         assert!(
             result.is_err(),
             "Expected execution update constraints violation fallback error"
-        );
-    }
-
-    #[tokio::test]
-    async fn test_core_scan_tasks_by_fts() {
-        let core = Core::new().expect("Failed to initialize Core context");
-
-        // Evaluate operational errors handling with malformed regex constraints inputs
-        let invalid_pattern = "[A-Z".to_string();
-        let output = core.scan_tasks_by_fts(&invalid_pattern);
-
-        let CoreOutput::ScanTasksByFts(rx) = output else {
-            panic!("Unexpected CoreOutput variant encountered");
-        };
-
-        let result = rx
-            .await
-            .expect("Oneshot communication channel severed prematurely");
-        assert!(
-            result.is_err(),
-            "Malformed execution query syntax did not yield anticipated panic fallback bounds"
         );
     }
 }
