@@ -84,7 +84,7 @@ pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
     // ブラウザのアクセス制限を避けるため、カレントディレクトリに作成
     let mut temp_file = Builder::new()
         .suffix(suffix)
-        .tempfile_in(".") 
+        .tempfile_in(".")
         .context("Failed to allocate transient local storage space for email payload context")?;
 
     // EMLフォーマットの構築（Windows/Linux共通）
@@ -113,7 +113,10 @@ pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
     )?;
     drop(file);
 
-    info!("Synchronized continuous email file sequence artifact: {:?}", path);
+    info!(
+        "Synchronized continuous email file sequence artifact: {:?}",
+        path
+    );
 
     // システム既定のアプリで開く
     // Windowsなら既定のメーラー、Linuxなら既定のウェブブラウザ（または.emlに紐づいたアプリ）が起動します
@@ -124,7 +127,6 @@ pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
     info!("Dispatched active call stack processing to localized system default client interface.");
     Ok(())
 }
-
 
 #[cfg(test)]
 mod tests {

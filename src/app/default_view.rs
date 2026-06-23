@@ -1,6 +1,6 @@
 use super::main_app::{App, AppState};
+use crate::app::task_table::TaskTable;
 use crate::core::CoreOutput;
-use crate::driver::{Priority, Task, TaskStatus};
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::info;
 
@@ -90,60 +90,12 @@ impl App {
         }
 
         ui.separator();
-
-        // Iterate over the cloned vector references securely
-        for task in &tasks {
-            self.render_task_row(ui, task);
-            ui.separator();
+        let mut task_table = TaskTable::new(&tasks);
+        task_table.show(ui);
+        if task_table.clicked() {
+            self.temp_task = task_table.clicked_task().clone().unwrap();
+            self.state = AppState::Edit;
+            info!("Edit Button Pressed: {:?}", self.temp_task);
         }
-    }
-
-    /// Renders a single horizontal row for an individual task.
-    fn render_task_row(&mut self, ui: &mut Ui, task: &Task) {
-        let row_size = vec2(ui.available_width(), 28.0);
-        let row_layout = Layout::left_to_right(Align::Center);
-
-        ui.allocate_ui_with_layout(row_size, row_layout, |ui| {
-            // Checkbox status setup
-            let mut is_complete: bool = task.status == TaskStatus::Complete;
-            ui.add_enabled(false, egui::Checkbox::new(&mut is_complete, ""));
-            ui.label(format!("{}: {}", task.id, task.title));
-
-            // Priority Indicator Match Block
-            match task.priority {
-                Priority::High => {
-                    ui.label(egui::RichText::new("🟥").color(Color32::from_rgb(255, 60, 60)));
-                }
-                Priority::Medium => {
-                    ui.label(egui::RichText::new("🟨").color(Color32::from_rgb(255, 215, 0)));
-                }
-                Priority::Low => {
-                    ui.label(egui::RichText::new("🟩").color(Color32::from_rgb(60, 255, 60)));
-                }
-            }
-
-            // Date & Progress Metrics UI elements
-            ui.label(task.due_date.strftime("Due Date : %Y/%m/%d").to_string());
-
-            let progress_fraction = task.progress / 100.0;
-            ui.add_sized(
-                [100.0, 28.0],
-                egui::ProgressBar::new(progress_fraction)
-                    .show_percentage()
-                    .text(format!("{:.1}% Done", task.progress)),
-            );
-
-            // Right-aligned edit entry button context
-            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                if ui
-                    .add(Button::new("✏ Edit").min_size(vec2(60.0, 24.0)))
-                    .clicked()
-                {
-                    info!("Edit Button Pressed: {:?}", task);
-                    self.temp_task = task.clone();
-                    self.state = AppState::Edit;
-                }
-            });
-        });
     }
 }
