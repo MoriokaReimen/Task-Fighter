@@ -97,11 +97,11 @@ impl Core {
         CoreOutput::ScanTasksByFts(rx)
     }
 
-    pub fn scan_tasks(&self, pattern: &str) -> CoreOutput {
+    pub fn scan_tasks(&self, pattern: &str, only_active: bool) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
         let pattern = pattern.to_string();
         execute_blocking!(self, tx, |conn_lock| driver::scan_tasks(
-            conn_lock, &pattern
+            conn_lock, &pattern, only_active
         ));
         CoreOutput::ScanTasks(rx)
     }

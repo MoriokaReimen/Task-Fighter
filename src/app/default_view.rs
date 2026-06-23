@@ -54,8 +54,10 @@ impl App {
                     .clicked()
                 {
                     info!("Search Button Pressed");
-                    self.output = self.core.scan_tasks(&self.scan_pattern);
+                    self.output = self.core.scan_tasks(&self.scan_pattern, self.only_active);
                 }
+                ui.checkbox(&mut self.only_active, "");
+                ui.label("Only Active");
 
                 ui.add(
                     egui::TextEdit::singleline(&mut self.scan_pattern)

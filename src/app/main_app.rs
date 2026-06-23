@@ -61,6 +61,7 @@ pub struct App {
     pub output: core::CoreOutput,
     pub displayed_tasks: Option<Vec<Task>>,
     pub temp_task: Task,
+    pub only_active: bool,
     pub scan_pattern: String,
 }
 
@@ -74,6 +75,7 @@ impl App {
             output: core::CoreOutput::Idle,
             displayed_tasks: None,
             temp_task: Task::default(),
+            only_active: false,
             scan_pattern: String::new(),
         }
     }

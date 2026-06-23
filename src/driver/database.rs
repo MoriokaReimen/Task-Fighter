@@ -352,7 +352,7 @@ pub fn scan_tasks_by_fts(conn: &Connection, pattern: &str) -> Result<Vec<Task>> 
     Ok(ret)
 }
 
-pub fn scan_tasks(conn: &Connection, pattern: &str) -> Result<Vec<Task>> {
+pub fn scan_tasks(conn: &Connection, pattern: &str, only_active: bool) -> Result<Vec<Task>> {
     info!("Executing text query partial match lookup: {}", pattern);
 
     let trimmed = pattern.trim();
@@ -362,11 +362,19 @@ pub fn scan_tasks(conn: &Connection, pattern: &str) -> Result<Vec<Task>> {
     }
 
     // 💡 すべての文字数において、標準の LIKE 演算子による部分一致検索を行う
-    let mut stmt = conn.prepare(
+    let sql = if only_active {
         "SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent \
          FROM tasks \
-         WHERE title LIKE ?1 OR detail LIKE ?1 OR project LIKE ?1 \
+         WHERE (title LIKE ?1 OR detail LIKE ?1 OR project LIKE ?1) AND active = 1 \
          ORDER BY priority DESC;"
+    } else {
+        "SELECT id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent \
+         FROM tasks \
+         WHERE (title LIKE ?1 OR detail LIKE ?1 OR project LIKE ?1) \
+         ORDER BY priority DESC;"
+    };
+    let mut stmt = conn.prepare(
+        sql
     ).context("Failed to prepare partial match database query statement")?;
 
     // 前後に % を付与して部分一致のワイルドカードパターンを作成
@@ -749,10 +757,10 @@ mod tests {
         insert_dummy_task(&conn, "Rust", "Fix a bug", "Rust memory leak");
 
         // 💡 空文字、または空白のみの場合は空のベクターが返るか
-        let results = scan_tasks(&conn, "").unwrap();
+        let results = scan_tasks(&conn, "", false).unwrap();
         assert!(results.is_empty());
 
-        let results = scan_tasks(&conn, "   ").unwrap();
+        let results = scan_tasks(&conn, "   ", false).unwrap();
         assert!(results.is_empty());
     }
 
@@ -763,7 +771,7 @@ mod tests {
         insert_dummy_task(&conn, "Go", "Refactor code", "Clean up");
 
         // 💡 タイトル（title）の部分一致で正しくヒットするか
-        let results = scan_tasks(&conn, "memory").unwrap();
+        let results = scan_tasks(&conn, "memory", false).unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].title, "Fix a memory leak");
     }
@@ -775,12 +783,12 @@ mod tests {
         insert_dummy_task(&conn, "Backend", "API Setup", "Database integration");
 
         // 💡 プロジェクト名（project）での検索
-        let results = scan_tasks(&conn, "Front").unwrap();
+        let results = scan_tasks(&conn, "Front", false).unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].project, "Frontend");
 
         // 💡 詳細欄（detail）での検索
-        let results = scan_tasks(&conn, "egui").unwrap();
+        let results = scan_tasks(&conn, "egui", false).unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].title, "UI Design");
     }
@@ -791,7 +799,7 @@ mod tests {
         insert_dummy_task(&conn, "Rust", "Fix a bug", "Detail");
 
         // 💡 どこにもヒットしないキーワードの場合、空のベクターが返るか
-        let results = scan_tasks(&conn, "Python").unwrap();
+        let results = scan_tasks(&conn, "Python", false).unwrap();
         assert!(results.is_empty());
     }
 }
