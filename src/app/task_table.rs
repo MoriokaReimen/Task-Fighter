@@ -120,10 +120,15 @@ impl<'a> TaskTable<'a> {
                         });
                         row.col(|ui| {
                             let progress_fraction = task.progress / 100.0;
+                            let status_icon = match task.status {
+                                TaskStatus::Pending => "⏳",
+                                TaskStatus::WorkInProgress => "🏃",
+                                TaskStatus::Complete => "✅",
+                            };
                             ui.add(
                                 egui::ProgressBar::new(progress_fraction)
                                     .show_percentage()
-                                    .text(format!("{:.1}% Done", task.progress)),
+                                    .text(format!("{:.0}% {}", task.progress, status_icon)),
                             );
                         });
                         row.col(|ui| {
