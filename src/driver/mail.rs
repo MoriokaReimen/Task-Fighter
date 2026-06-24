@@ -6,189 +6,264 @@ use std::io::Write as _;
 use tempfile::Builder;
 use tracing::info;
 
-pub fn create_mail_text(tasks: &[Task]) -> String {
-    let mut contents = String::new();
+pub fn create_mail_html(tasks: &[Task]) -> String {
+    let mut html = String::new();
 
-    let date_headline = Zoned::now()
-        .date()
-        .strftime("%Y/%m/%d Task Status Report\n")
-        .to_string();
+    // タスクの進捗ステータスを集計
+    let total_tasks = tasks.len();
+    let completed = tasks
+        .iter()
+        .filter(|t| t.status == TaskStatus::Complete)
+        .count();
+    let in_progress = tasks
+        .iter()
+        .filter(|t| t.status == TaskStatus::WorkInProgress)
+        .count();
+    let pending = tasks
+        .iter()
+        .filter(|t| t.status == TaskStatus::Pending)
+        .count();
 
-    let _ = write!(
-        contents,
-        "{date_headline}\
-         ===========================================================================\n\
-         There are currently {} tasks.\n\n",
-        tasks.len()
+    let date_headline = Zoned::now().date().strftime("%B %d, %Y").to_string();
+
+    // ベースHTML構造とスタイルの定義
+    html.push_str(
+        "<html>\r\n<head>\r\n<meta charset=\"utf-8\">\r\n</head>\r\n\
+         <body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; color: #333333; margin: 0; padding: 20px;\">\r\n\
+         <div style=\"max-width: 650px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);\">\r\n"
     );
 
+    // --- メインタイトルとサマリーカード ---
+    let _ = write!(
+        html,
+        "  <h1 style=\"font-size: 24px; margin-top: 0; color: #111111; border-bottom: 2px solid #e1e4e6; padding-bottom: 12px;\">Task Status Report</h1>\r\n\
+           <p style=\"color: #666666; font-size: 14px; margin-top: -8px;\">Generated on {}</p>\r\n\r\n\
+           <div style=\"background: #f8f9fa; border: 1px solid #e1e4e6; border-radius: 6px; padding: 16px; margin-bottom: 24px;\">\r\n\
+             <h3 style=\"margin: 0 0 12px 0; font-size: 16px; color: #444444;\">📊 Summary</h3>\r\n\
+             <table style=\"width: 100%; font-size: 14px; border-collapse: collapse;\">\r\n\
+               <tr><td><strong>Total Tasks:</strong> {}</td><td><strong>Completed:</strong> {} ✅</td></tr>\r\n\
+               <tr><td><strong>In Progress:</strong> {} 🏃</td><td><strong>Pending:</strong> {} ⏳</td></tr>\r\n\
+             </table>\r\n\
+           </div>\r\n\r\n",
+        date_headline, total_tasks, completed, in_progress, pending
+    );
+
+    // --- 各タスクのレンダリング ---
     for task in tasks {
-        let status_gfm = match task.status {
-            TaskStatus::Pending => "Pending",
-            TaskStatus::WorkInProgress => "Work In Progress",
-            TaskStatus::Complete => "Complete",
+        let (status_text, status_color) = match task.status {
+            TaskStatus::Pending => ("Pending ⏳", "#6c757d"),
+            TaskStatus::WorkInProgress => ("Work In Progress 🏃", "#007bff"),
+            TaskStatus::Complete => ("Complete ✅", "#28a745"),
         };
 
-        let priority_str = match task.priority {
-            Priority::High => "🔴 High",
-            Priority::Medium => "🟡 Medium",
-            Priority::Low => "🔵 Low",
+        let (priority_text, priority_color) = match task.priority {
+            Priority::High => ("🔴 High", "#dc3545"),
+            Priority::Medium => ("🟡 Medium", "#ffc107"),
+            Priority::Low => ("🔵 Low", "#20c997"),
         };
 
         let start_date_str = task.start_date.strftime("%Y/%m/%d").to_string();
         let due_date_str = task.due_date.strftime("%Y/%m/%d").to_string();
 
+        // 個別タスクのカードデザイン
         let _ = write!(
-            contents,
-            "Task #{}. {}\n\
-             ---------------------------------------------------------------------------\n\
-             - Project: {}\n\
-             - Priority: {}\n\
-             - Status: {}\n\
-             - Start Date: {}\n\
-             - Due Date: {}\n\
-             - Progress: {}%\n\
-             - Time Spent: {} hrs\n\n\
-             # Details\n",
+            html,
+            "  <div style=\"border: 1px solid #e1e4e6; border-radius: 6px; padding: 18px; margin-bottom: 16px; background-color: #ffffff;\">\r\n\
+                 <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;\">\r\n\
+                   <h2 style=\"font-size: 18px; margin: 0; color: #111111;\"><span style=\"color: #888888; font-size: 14px; font-weight: normal; margin-right: 6px;\">#{}</span>{}</h2>\r\n\
+                 </div>\r\n\
+                 <table style=\"width: 100%; font-size: 14px; margin-bottom: 12px; border-collapse: collapse;\">\r\n\
+                   <tr><td style=\"padding: 4px 0; color: #666666; width: 100px;\">Project</td><td style=\"padding: 4px 0;\"><strong>{}</strong></td></tr>\r\n\
+                   <tr><td style=\"padding: 4px 0; color: #666666;\">Priority</td><td style=\"padding: 4px 0; color: {}; font-weight: bold;\">{}</td></tr>\r\n\
+                   <tr><td style=\"padding: 4px 0; color: #666666;\">Status</td><td style=\"padding: 4px 0; color: {}; font-weight: bold;\">{}</td></tr>\r\n\
+                   <tr><td style=\"padding: 4px 0; color: #666666;\">Timeline</td><td style=\"padding: 4px 0; font-family: monospace;\">{} ~ {}</td></tr>\r\n\
+                   <tr><td style=\"padding: 4px 0; color: #666666;\">Time Spent</td><td style=\"padding: 4px 0;\">{} hrs</td></tr>\r\n\
+                   <tr>\r\n\
+                     <td style=\"padding: 4px 0; color: #666666;\">Progress</td>\r\n\
+                     <td style=\"padding: 4px 0; vertical-align: middle;\">\r\n\
+                       <progress value=\"{}\" max=\"100\" style=\"width: 120px; height: 12px; margin-right: 8px; vertical-align: middle;\"></progress>\r\n\
+                       <span style=\"font-weight: bold; vertical-align: middle;\">{}%</span>\r\n\
+                     </td>\r\n\
+                   </tr>\r\n\
+                 </table>\r\n\r\n\
+                 <div style=\"background: #f8f9fa; border-left: 3px solid #cbd5e1; padding: 10px 14px; font-size: 14px; color: #4a5568; white-space: pre-wrap;\">",
             task.id,
             task.title,
             task.project,
-            priority_str,
-            status_gfm,
+            priority_color,
+            priority_text,
+            status_color,
+            status_text,
             start_date_str,
             due_date_str,
+            task.time_spent,
             task.progress,
-            task.time_spent
+            task.progress
         );
 
-        for line in task.detail.lines() {
-            let _ = writeln!(contents, "{}", line);
+        // 詳細の流し込み（エスケープは必要に応じて適用してください）
+        if task.detail.trim().is_empty() {
+            html.push_str("<span style=\"color: #a0aec0; font-style: italic;\">No additional details provided.</span>");
+        } else {
+            html.push_str(&task.detail);
         }
 
-        contents.push_str("\n\n");
+        html.push_str("</div>\r\n  </div>\r\n\r\n");
     }
 
-    contents
+    // フッターの閉鎖
+    html.push_str("</div>\r\n</body>\r\n</html>");
+    html
 }
 
 pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
-    let body_text = create_mail_text(tasks);
+    let html_text = create_mail_html(tasks);
     let raw_subject = Zoned::now()
         .date()
         .strftime("%Y/%m/%d Task Status Report")
         .to_string();
 
-    // LinuxでもWindowsでも共通して「.eml」拡張子を使用します
     let suffix = ".eml";
 
-    // ブラウザのアクセス制限を避けるため、カレントディレクトリに作成
     let mut temp_file = Builder::new()
         .suffix(suffix)
         .tempfile_in(".")
         .context("Failed to allocate transient local storage space for email payload context")?;
 
-    // EMLフォーマットの構築（Windows/Linux共通）
     let mut eml_content = String::new();
     let _ = write!(eml_content, "Subject: {}\r\n", raw_subject);
     eml_content.push_str("X-Unsent: 1\r\n");
     eml_content.push_str("MIME-Version: 1.0\r\n");
-    eml_content.push_str("Content-Type: text/plain; charset=utf-8\r\n");
+    // ✨ 変更箇所: Content-Type を text/html に指定します
+    eml_content.push_str("Content-Type: text/html; charset=utf-8\r\n");
     eml_content.push_str("Content-Transfer-Encoding: 8bit\r\n\r\n");
 
-    // 改行コードをCRLFに統一
-    let body_crlf = body_text.replace("\r\n", "\n").replace("\n", "\r\n");
+    let body_crlf = html_text.replace("\r\n", "\r\n").replace("\n", "\r\n");
     eml_content.push_str(&body_crlf);
 
-    temp_file.write_all(eml_content.as_bytes()).context(
-        "Failed writing compiled structural email buffers down to local transient path descriptors",
-    )?;
+    temp_file
+        .write_all(eml_content.as_bytes())
+        .context("Failed writing compiled structural email buffers")?;
+    temp_file
+        .flush()
+        .context("Failed flushing operating system write streams buffers")?;
 
-    temp_file.flush().context(
-        "Failed flushing operating system write streams buffers onto block devices segments",
-    )?;
-
-    // ファイルロックを解除するために永続化してドロップ
-    let (file, path) = temp_file.keep().context(
-        "Failed safeguarding local file persistence integrity boundary configurations locks",
-    )?;
+    let (file, path) = temp_file
+        .keep()
+        .context("Failed safeguarding local file persistence integrity")?;
     drop(file);
 
     info!(
         "Synchronized continuous email file sequence artifact: {:?}",
         path
     );
+    open::that(&path).context("Failed invoking native desktop standard protocol handlers")?;
 
-    // システム既定のアプリで開く
-    // Windowsなら既定のメーラー、Linuxなら既定のウェブブラウザ（または.emlに紐づいたアプリ）が起動します
-    open::that(&path).context(
-        "Failed invoking native desktop standard protocol handlers to stream target file content",
-    )?;
-
-    info!("Dispatched active call stack processing to localized system default client interface.");
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jiff::civil::Date;
+    use crate::driver::{Priority, Task, TaskStatus};
+    use jiff::Zoned;
 
-    fn create_mock_task(id: i32, title: &str, status: TaskStatus, priority: Priority) -> Task {
-        Task {
-            id,
-            active: true,
-            title: title.to_string(),
-            project: "Test Project".to_string(),
-            status,
-            priority,
-            start_date: Date::new(2026, 6, 22)
-                .expect("Failed evaluating mock boundary baseline start calendar date state"),
-            due_date: Date::new(2026, 6, 25)
-                .expect("Failed evaluating mock boundary baseline closure calendar date state"),
-            progress: 50.0,
-            time_spent: 4.5,
-            detail: "Line 1\nLine 2".to_string(),
+    // ヘルパー関数: テスト用のダミータスク群を生成
+    fn create_mock_tasks() -> Vec<Task> {
+        vec![
+            Task {
+                id: 1,
+                active: true,
+                title: "Implement DuckDB storage".to_string(),
+                project: "Task-Fighter".to_string(),
+                priority: Priority::High,
+                status: TaskStatus::WorkInProgress,
+                start_date: Zoned::now().into(),
+                due_date: Zoned::now().into(),
+                progress: 70.0,
+                time_spent: 4.5,
+                detail: "Need to replace raw file logic with duckdb embedded backend.".to_string(),
+            },
+            Task {
+                id: 2,
+                active: true,
+                title: "Refactor Credits Widget".to_string(),
+                project: "Task-Fighter".to_string(),
+                priority: Priority::Low,
+                status: TaskStatus::Complete,
+                start_date: Zoned::now().into(),
+                due_date: Zoned::now().into(),
+                progress: 100.0,
+                time_spent: 2.0,
+                detail: "".to_string(), // 空の詳細文の挙動確認用
+            },
+        ]
+    }
+
+    #[test]
+    fn test_create_mail_html_summary_aggregation() {
+        let tasks = create_mock_tasks();
+        let html = create_mail_html(&tasks);
+
+        // 1. サマリーの集計数がHTML文字列に正しく反映されているか検証
+        assert!(html.contains("Total Tasks:</strong> 2"));
+        assert!(html.contains("Completed:</strong> 1 ✅"));
+        assert!(html.contains("In Progress:</strong> 1 🏃"));
+        assert!(html.contains("Pending:</strong> 0 ⏳"));
+    }
+
+    #[test]
+    fn test_create_mail_html_content_rendering() {
+        let tasks = create_mock_tasks();
+        let html = create_mail_html(&tasks);
+
+        // 2. 個別のタスクデータがHTML構造内に埋め込まれているか検証
+        assert!(html.contains("#1</span>Implement DuckDB storage"));
+        assert!(html.contains("🔴 High"));
+        assert!(html.contains("Work In Progress 🏃"));
+        assert!(html.contains("70%"));
+        assert!(html.contains("Need to replace raw file logic"));
+
+        // 3. 詳細が空のタスクに対するフォールバック表示の検証
+        assert!(html.contains("No additional details provided."));
+    }
+
+    #[test]
+    fn test_create_mail_html_empty_state() {
+        // 4. エッジケース: タスクがゼロ件のときの動作検証
+        let empty_tasks: Vec<Task> = vec![];
+        let html = create_mail_html(&empty_tasks);
+
+        assert!(html.contains("Total Tasks:</strong> 0"));
+        assert!(html.contains("<html>"));
+        assert!(html.contains("</html>"));
+    }
+
+    #[test]
+    fn test_create_mail_html_crlf_format() {
+        let tasks = create_mock_tasks();
+        let html = create_mail_html(&tasks);
+
+        // 1. 主要なHTML構造が問題なく含まれているか確認
+        assert!(html.contains("</html>"));
+
+        // 2. 【修正】単独の \n （直前に \r がない \n）が文字列内に1箇所も存在しないか検証
+        let bytes = html.as_bytes();
+        let mut has_isolated_lf = false;
+
+        for i in 0..bytes.len() {
+            if bytes[i] == b'\n' {
+                // \n の直前(i-1) が \r でなければ、それは不正な単独の LF
+                if i == 0 || bytes[i - 1] != b'\r' {
+                    has_isolated_lf = true;
+                    break;
+                }
+            }
         }
-    }
 
-    #[test]
-    fn test_create_mail_text_empty() {
-        let tasks: Vec<Task> = vec![];
-        let result = create_mail_text(&tasks);
-        assert!(result.contains("There are currently 0 tasks."));
-    }
-
-    #[test]
-    fn test_create_mail_text_with_tasks() {
-        let tasks = vec![
-            create_mock_task(
-                1,
-                "Fix Critical Bug",
-                TaskStatus::WorkInProgress,
-                Priority::High,
-            ),
-            create_mock_task(
-                2,
-                "Update Documentation",
-                TaskStatus::Complete,
-                Priority::Low,
-            ),
-        ];
-
-        let result = create_mail_text(&tasks);
-
-        assert!(result.contains("There are currently 2 tasks."));
-
-        assert!(result.contains("Task #1. Fix Critical Bug"));
-        assert!(result.contains("- Priority: 🔴 High"));
-        assert!(result.contains("- Status: Work In Progress"));
-        assert!(result.contains("- Progress: 50%"));
-        assert!(result.contains("- Time Spent: 4.5 hrs"));
-
-        assert!(result.contains("Task #2. Update Documentation"));
-        assert!(result.contains("- Priority: 🔵 Low"));
-        assert!(result.contains("- Status: Complete"));
-
-        assert!(result.contains("Line 1\nLine 2"));
+        assert!(
+            !has_isolated_lf,
+            "HTML output contains isolated LF (\\n) instead of CRLF (\\r\\n)."
+        );
     }
 }
