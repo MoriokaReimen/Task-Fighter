@@ -4759,7 +4759,7 @@ dependencies = [
 
 [[package]]
 name = "task-fighter"
-version = "0.1.0"
+version = "6.0.0"
 dependencies = [
  "anyhow",
  "duckdb",
