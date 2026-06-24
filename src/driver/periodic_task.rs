@@ -174,7 +174,8 @@ fn initialize_monthly_task(
         .context("Failed to compute the last day of the current month")?;
 
     let month_name = current_month_first_day.strftime("%B").to_string();
-    let title_with_month = format!("{} for {}", periodic_task.title, month_name);
+    let year = current_month_first_day.strftime("%Y").to_string();
+    let title_with_month = format!("{} for {} {}", periodic_task.title, month_name, year);
 
     let mut stmt = conn
         .prepare("SELECT COUNT(*) FROM tasks WHERE title = ?1")
