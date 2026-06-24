@@ -35,3 +35,19 @@ cargo run --release
 
 # License
 This project is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for details.
+
+## Third-Party Licenses
+This software bundles or links the following third-party components:
+
+- **Noto Sans JP**
+  - Licensed under the SIL Open Font License, Version 1.1.
+  - Copyright 2015 Google Inc. All Rights Reserved.
+  - For more details, see the [SIL Open Font License](https://openfontlicense.org).
+- **DuckDB**
+  - Licensed under the MIT License.
+  - Copyright 2018-2026 DuckDB Foundation.
+  - For more details, see the [DuckDB Website](https://duckdb.org).
+- **egui / eframe**
+  - Dual-licensed under the MIT License OR Apache License, Version 2.0.
+  - Copyright (c) 2020 Emil Ernerfeldt.
+  - For more details, see the [egui GitHub Repository](https://github.com).
