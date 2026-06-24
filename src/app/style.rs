@@ -96,7 +96,7 @@ fn setup_custom_fonts(ctx: &egui::Context) {
     // Insert Japanese TrueType Font data
     fonts.font_data.insert(
         "japanese_font".to_owned(),
-        egui::FontData::from_static(include_bytes!("../../asset/NotoSansJP-Regular.ttf")).into(),
+        egui::FontData::from_static(include_bytes!("../../assets/NotoSansJP-Regular.ttf")).into(),
     );
 
     // Set Japanese font as top priority for Proportional text

@@ -8,7 +8,7 @@ use tracing::{error, warn};
 
 /// Generates window configuration and initializes the application icon.
 fn get_frame_option() -> Result<eframe::NativeOptions> {
-    let icon_bytes = include_bytes!("../../asset/icon.png");
+    let icon_bytes = include_bytes!("../../assets/icon.png");
     let image = image::load_from_memory(icon_bytes)?.to_rgba8();
     let (width, height) = image.dimensions();
     let rgba_pixels = image.into_raw();
