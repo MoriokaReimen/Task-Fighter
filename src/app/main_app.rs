@@ -85,7 +85,7 @@ impl eframe::App for App {
     /// Main UI update loop called on every frame render.
     fn ui(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) {
         style::set_theme(ui.ctx());
-        self.poll_background_tasks(ui);
+        self.poll_background_tasks();
 
         // Render the appropriate view based on the current application state
         match self.state {
@@ -98,7 +98,7 @@ impl eframe::App for App {
 
 impl App {
     /// Non-blocking check for responses from async background tasks.
-    fn poll_background_tasks(&mut self, ui: &mut Ui) {
+    fn poll_background_tasks(&mut self) {
         let next_output = match &mut self.output {
             CoreOutput::Idle => None,
 
