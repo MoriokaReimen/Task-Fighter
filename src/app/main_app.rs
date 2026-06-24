@@ -112,10 +112,7 @@ impl App {
                     error!("Failed to fetch active tasks: {:?}", e);
                     Some(CoreOutput::Idle)
                 }
-                Err(TryRecvError::Empty) => {
-                    ui.spinner();
-                    None
-                }
+                Err(TryRecvError::Empty) => None,
                 Err(TryRecvError::Closed) => {
                     error!("Channel closed unexpectedly (FetchActiveTasks)");
                     Some(CoreOutput::Idle)
@@ -130,10 +127,7 @@ impl App {
                     warn!("Search query failed: {:?}", e);
                     Some(CoreOutput::Idle)
                 }
-                Err(TryRecvError::Empty) => {
-                    ui.spinner();
-                    None
-                }
+                Err(TryRecvError::Empty) => None,
                 Err(TryRecvError::Closed) => {
                     error!("Channel closed unexpectedly (ScanTasks)");
                     Some(CoreOutput::Idle)
@@ -150,10 +144,7 @@ impl App {
                                 error!("{}: {:?}", $err_msg, e);
                                 Some(CoreOutput::Idle)
                             }
-                            Err(TryRecvError::Empty) => {
-                                ui.spinner();
-                                None
-                            }
+                            Err(TryRecvError::Empty) => None,
                             Err(TryRecvError::Closed) => {
                                 error!("Channel closed unexpectedly ({})", $err_msg);
                                 Some(CoreOutput::Idle)

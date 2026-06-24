@@ -77,6 +77,17 @@ impl App {
 
     /// Extracted helper to process and render list entries or empty state placeholders.
     fn render_task_list_content(&mut self, ui: &mut Ui) {
+        if !matches!(self.output, CoreOutput::Idle) {
+            ui.with_layout(
+                egui::Layout::centered_and_justified(egui::Direction::TopDown),
+                |ui| {
+                    // サイズを大きく設定（例: 64.0 ポイント）して表示
+                    ui.add(egui::Spinner::new().size(64.0));
+                },
+            );
+            return;
+        }
+
         let Some(tasks) = self.displayed_tasks.clone() else {
             return;
         };
