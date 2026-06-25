@@ -30,6 +30,7 @@ pub enum TaskStatus {
     Pending = 0,
     WorkInProgress = 1,
     Complete = 2,
+    Canceled = 3,
 }
 
 impl TryFrom<i32> for TaskStatus {
@@ -40,6 +41,7 @@ impl TryFrom<i32> for TaskStatus {
             0 => Ok(TaskStatus::Pending),
             1 => Ok(TaskStatus::WorkInProgress),
             2 => Ok(TaskStatus::Complete),
+            3 => Ok(TaskStatus::Canceled),
             _ => bail!("Invalid task status integer state: {}", value),
         }
     }
@@ -113,6 +115,7 @@ mod tests {
         assert_eq!(TaskStatus::try_from(0).unwrap(), TaskStatus::Pending);
         assert_eq!(TaskStatus::try_from(1).unwrap(), TaskStatus::WorkInProgress);
         assert_eq!(TaskStatus::try_from(2).unwrap(), TaskStatus::Complete);
+        assert_eq!(TaskStatus::try_from(3).unwrap(), TaskStatus::Canceled);
     }
 
     #[test]

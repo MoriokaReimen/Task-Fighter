@@ -23,6 +23,10 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
         .iter()
         .filter(|t| t.status == TaskStatus::Pending)
         .count();
+    let canceled = tasks
+        .iter()
+        .filter(|t| t.status == TaskStatus::Canceled)
+        .count();
 
     let date_headline = Zoned::now().date().strftime("%B %d, %Y").to_string();
 
@@ -41,11 +45,12 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
            <div style=\"background: #f8f9fa; border: 1px solid #e1e4e6; border-radius: 6px; padding: 16px; margin-bottom: 24px;\">\r\n\
              <h3 style=\"margin: 0 0 12px 0; font-size: 16px; color: #444444;\">📊 Summary</h3>\r\n\
              <table style=\"width: 100%; font-size: 14px; border-collapse: collapse;\">\r\n\
-               <tr><td><strong>Total Tasks:</strong> {}</td><td><strong>Completed:</strong> {} ✅</td></tr>\r\n\
-               <tr><td><strong>In Progress:</strong> {} 🏃</td><td><strong>Pending:</strong> {} ⏳</td></tr>\r\n\
+               <tr><td><strong>Total Tasks:</strong> {}</td></tr>\r\n\
+               <tr><td><strong>Completed:</strong> {} ✅</td><td><strong>In Progress:</strong> {} 🏃</td></tr>\r\n
+               <tr><td><strong>Pending:</strong> {} ⏳</td><td><strong>Canceled:</strong> {} 🚫</td></tr>\r\n\
              </table>\r\n\
            </div>\r\n\r\n",
-        date_headline, total_tasks, completed, in_progress, pending
+        date_headline, total_tasks, completed, in_progress, pending, canceled,
     );
 
     // --- 各タスクのレンダリング ---
@@ -54,6 +59,7 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
             TaskStatus::Pending => ("Pending ⏳", "#6c757d"),
             TaskStatus::WorkInProgress => ("Work In Progress 🏃", "#007bff"),
             TaskStatus::Complete => ("Complete ✅", "#28a745"),
+            TaskStatus::Canceled => ("Canceled 🚫", "#ff5733"),
         };
 
         let (priority_text, priority_color) = match task.priority {

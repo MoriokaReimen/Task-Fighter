@@ -129,6 +129,7 @@ impl<'a> TaskEdit<'a> {
             (TaskStatus::Pending, "⏳ Pending"),
             (TaskStatus::WorkInProgress, "🏃 In Progress"),
             (TaskStatus::Complete, "✅ Complete"),
+            (TaskStatus::Canceled, "🚫 Canceled"),
         ];
 
         ComboBox::from_id_salt("create_status_combo")

@@ -124,6 +124,7 @@ impl<'a> TaskTable<'a> {
                                 TaskStatus::Pending => "⏳",
                                 TaskStatus::WorkInProgress => "🏃",
                                 TaskStatus::Complete => "✅",
+                                TaskStatus::Canceled => "🚫 ",
                             };
                             ui.add(
                                 egui::ProgressBar::new(progress_fraction)
