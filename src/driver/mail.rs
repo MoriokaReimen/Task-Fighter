@@ -1,10 +1,89 @@
 use crate::driver::{Priority, Task, TaskStatus};
 use anyhow::{Context, Result};
 use jiff::Zoned;
+use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
 use std::fmt::Write as _;
 use std::io::Write as _;
+use syntect::highlighting::ThemeSet;
+use syntect::html::highlighted_html_for_string;
+use syntect::parsing::SyntaxSet;
 use tempfile::Builder;
 use tracing::info;
+
+fn md_to_html(markdown_input: &str) -> String {
+    let ps = SyntaxSet::load_defaults_newlines();
+    let ts = ThemeSet::load_defaults();
+    let theme = &ts.themes["base16-ocean.dark"]; // お好みのテーマを選択
+
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_TABLES);
+    options.insert(Options::ENABLE_FOOTNOTES);
+    options.insert(Options::ENABLE_STRIKETHROUGH);
+    options.insert(Options::ENABLE_TASKLISTS);
+    options.insert(Options::ENABLE_SMART_PUNCTUATION);
+    options.insert(Options::ENABLE_HEADING_ATTRIBUTES);
+    options.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
+    options.insert(Options::ENABLE_PLUSES_DELIMITED_METADATA_BLOCKS);
+    options.insert(Options::ENABLE_OLD_FOOTNOTES);
+    options.insert(Options::ENABLE_MATH);
+    options.insert(Options::ENABLE_GFM);
+    let parser = Parser::new_ext(markdown_input, options);
+
+    // 3. イベントストリームを処理するバッファ
+    let mut new_events = Vec::new();
+    let mut in_code_block = false;
+    let mut current_lang = String::new();
+    let mut code_accumulator = String::new();
+
+    for event in parser {
+        match event {
+            // コードブロックの開始を検知
+            Event::Start(Tag::CodeBlock(kind)) => {
+                in_code_block = true;
+                current_lang = match kind {
+                    pulldown_cmark::CodeBlockKind::Fenced(lang) => lang.to_string(),
+                    pulldown_cmark::CodeBlockKind::Indented => String::new(),
+                };
+                code_accumulator.clear();
+            }
+            // コードブロックの終了を検知：ここでハイライト済みのHTMLを生成
+            Event::End(TagEnd::CodeBlock) => {
+                in_code_block = false;
+
+                // 言語の判定（未指定の場合はプレーンテキスト）
+                let syntax = ps
+                    .find_syntax_by_token(&current_lang)
+                    .unwrap_or_else(|| ps.find_syntax_plain_text());
+
+                // syntect を使用してHTML文字列へ変換
+                let highlighted_html =
+                    highlighted_html_for_string(&code_accumulator, &ps, syntax, theme)
+                        .unwrap_or_else(|_| {
+                            format!("<pre><code>{}</code></pre>", code_accumulator)
+                        });
+
+                // 生成された生HTMLを Event::Html としてストリームに挿入
+                new_events.push(Event::Html(highlighted_html.into()));
+            }
+            // コードブロックの内部テキストを蓄積
+            Event::Text(text) if in_code_block => {
+                code_accumulator.push_str(&text);
+            }
+            // それ以外の通常のイベントはそのままスルー
+            _ => {
+                if !in_code_block {
+                    new_events.push(event);
+                }
+            }
+        }
+    }
+
+    // 4. カスタマイズしたイベントストリームをHTML文字列にレンダリング
+    let mut html_output = String::new();
+    html::push_html(&mut html_output, new_events.into_iter());
+
+    html_output
+}
 
 pub fn create_mail_html(tasks: &[Task]) -> String {
     let mut html = String::new();
@@ -32,24 +111,24 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
 
     // ベースHTML構造とスタイルの定義
     html.push_str(
-        "<html>\r\n<head>\r\n<meta charset=\"utf-8\">\r\n</head>\r\n\
-         <body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; color: #333333; margin: 0; padding: 20px;\">\r\n\
-         <div style=\"max-width: 650px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);\">\r\n"
+"<html>\r\n<head>\r\n<meta charset=\"utf-8\">\r\n</head>\r\n\
+<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; color: #333333; margin: 0; padding: 20px;\">\r\n\
+<div style=\"max-width: 650px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);\">\r\n"
     );
 
     // --- メインタイトルとサマリーカード ---
     let _ = write!(
         html,
-        "  <h1 style=\"font-size: 24px; margin-top: 0; color: #111111; border-bottom: 2px solid #e1e4e6; padding-bottom: 12px;\">Task Status Report</h1>\r\n\
-           <p style=\"color: #666666; font-size: 14px; margin-top: -8px;\">Generated on {}</p>\r\n\r\n\
-           <div style=\"background: #f8f9fa; border: 1px solid #e1e4e6; border-radius: 6px; padding: 16px; margin-bottom: 24px;\">\r\n\
-             <h3 style=\"margin: 0 0 12px 0; font-size: 16px; color: #444444;\">📊 Summary</h3>\r\n\
-             <table style=\"width: 100%; font-size: 14px; border-collapse: collapse;\">\r\n\
-               <tr><td><strong>Total Tasks:</strong> {}</td></tr>\r\n\
-               <tr><td><strong>Completed:</strong> {} ✅</td><td><strong>In Progress:</strong> {} 🏃</td></tr>\r\n
-               <tr><td><strong>Pending:</strong> {} ⏳</td><td><strong>Canceled:</strong> {} 🚫</td></tr>\r\n\
-             </table>\r\n\
-           </div>\r\n\r\n",
+        "<h1>Task Status Report</h1>\r\n\
+<p style=\"color: #666666; font-size: 14px; margin-top: -8px;\">Generated on {}</p>\r\n\r\n\
+<div style=\"background: #f8f9fa; border: 1px solid #e1e4e6; border-radius: 6px; padding: 16px; margin-bottom: 24px;\">\r\n\
+<h3 style=\"margin: 0 0 12px 0; font-size: 16px; color: #444444;\">📊 Summary</h3>\r\n\
+<table style=\"width: 100%; font-size: 14px; border-collapse: collapse;\">\r\n\
+<tr><td><strong>Total Tasks:</strong> {}</td></tr>\r\n\
+<tr><td><strong>Completed:</strong> {} ✅</td><td><strong>In Progress:</strong> {} 🏃</td></tr>\r\n\
+<tr><td><strong>Pending:</strong> {} ⏳</td><td><strong>Canceled:</strong> {} 🚫</td></tr>\r\n\
+</table>\r\n\
+</div>\r\n\r\n",
         date_headline, total_tasks, completed, in_progress, pending, canceled,
     );
 
@@ -74,25 +153,25 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
         // 個別タスクのカードデザイン
         let _ = write!(
             html,
-            "  <div style=\"border: 1px solid #e1e4e6; border-radius: 6px; padding: 18px; margin-bottom: 16px; background-color: #ffffff;\">\r\n\
-                 <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;\">\r\n\
-                   <h2 style=\"font-size: 18px; margin: 0; color: #111111;\"><span style=\"color: #888888; font-size: 14px; font-weight: normal; margin-right: 6px;\">#{}</span>{}</h2>\r\n\
-                 </div>\r\n\
-                 <table style=\"width: 100%; font-size: 14px; margin-bottom: 12px; border-collapse: collapse;\">\r\n\
-                   <tr><td style=\"padding: 4px 0; color: #666666; width: 100px;\">Project</td><td style=\"padding: 4px 0;\"><strong>{}</strong></td></tr>\r\n\
-                   <tr><td style=\"padding: 4px 0; color: #666666;\">Priority</td><td style=\"padding: 4px 0; color: {}; font-weight: bold;\">{}</td></tr>\r\n\
-                   <tr><td style=\"padding: 4px 0; color: #666666;\">Status</td><td style=\"padding: 4px 0; color: {}; font-weight: bold;\">{}</td></tr>\r\n\
-                   <tr><td style=\"padding: 4px 0; color: #666666;\">Timeline</td><td style=\"padding: 4px 0; font-family: monospace;\">{} ~ {}</td></tr>\r\n\
-                   <tr><td style=\"padding: 4px 0; color: #666666;\">Time Spent</td><td style=\"padding: 4px 0;\">{} hrs</td></tr>\r\n\
-                   <tr>\r\n\
-                     <td style=\"padding: 4px 0; color: #666666;\">Progress</td>\r\n\
-                     <td style=\"padding: 4px 0; vertical-align: middle;\">\r\n\
-                       <progress value=\"{}\" max=\"100\" style=\"width: 120px; height: 12px; margin-right: 8px; vertical-align: middle;\"></progress>\r\n\
-                       <span style=\"font-weight: bold; vertical-align: middle;\">{}%</span>\r\n\
-                     </td>\r\n\
-                   </tr>\r\n\
-                 </table>\r\n\r\n\
-                 <div style=\"background: #f8f9fa; border-left: 3px solid #cbd5e1; padding: 10px 14px; font-size: 14px; color: #4a5568; white-space: pre-wrap;\">",
+            "<div style=\"border: 1px solid #e1e4e6; border-radius: 6px; padding: 18px; margin-bottom: 16px; background-color: #ffffff;\">\r\n\
+<div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;\">\r\n\
+<h2 style=\"font-size: 18px; margin: 0; color: #111111;\"><span style=\"color: #888888; font-size: 14px; font-weight: normal; margin-right: 6px;\">#{}</span>{}</h2>\r\n\
+</div>\r\n\
+<table style=\"width: 100%; font-size: 14px; margin-bottom: 12px; border-collapse: collapse;\">\r\n\
+<tr><td style=\"padding: 4px 0; color: #666666; width: 100px;\">Project</td><td style=\"padding: 4px 0;\"><strong>{}</strong></td></tr>\r\n\
+<tr><td style=\"padding: 4px 0; color: #666666;\">Priority</td><td style=\"padding: 4px 0; color: {}; font-weight: bold;\">{}</td></tr>\r\n\
+<tr><td style=\"padding: 4px 0; color: #666666;\">Status</td><td style=\"padding: 4px 0; color: {}; font-weight: bold;\">{}</td></tr>\r\n\
+<tr><td style=\"padding: 4px 0; color: #666666;\">Timeline</td><td style=\"padding: 4px 0; font-family: monospace;\">{} ~ {}</td></tr>\r\n\
+<tr><td style=\"padding: 4px 0; color: #666666;\">Time Spent</td><td style=\"padding: 4px 0;\">{} hrs</td></tr>\r\n\
+<tr>\r\n\
+<td style=\"padding: 4px 0; color: #666666;\">Progress</td>\r\n\
+<td style=\"padding: 4px 0; vertical-align: middle;\">\r\n\
+<progress value=\"{}\" max=\"100\" style=\"width: 120px; height: 12px; margin-right: 8px; vertical-align: middle;\"></progress>\r\n\
+<span style=\"font-weight: bold; vertical-align: middle;\">{}%</span>\r\n\
+</td>\r\n\
+</tr>\r\n\
+</table>\r\n\
+<div style=\"background: #f8f9fa; border-left: 3px solid #cbd5e1; padding: 10px 14px; font-size: 14px; color: #4a5568;\">", // 💡 white-space: pre-wrap; を削除
             task.id,
             task.title,
             task.project,
@@ -107,14 +186,14 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
             task.progress
         );
 
-        // 詳細の流し込み（エスケープは必要に応じて適用してください）
+        // 詳細の流し込み
         if task.detail.trim().is_empty() {
             html.push_str("<span style=\"color: #a0aec0; font-style: italic;\">No additional details provided.</span>");
         } else {
-            html.push_str(&task.detail);
+            html.push_str(&md_to_html(&task.detail));
         }
 
-        html.push_str("</div>\r\n  </div>\r\n\r\n");
+        html.push_str("</div>\r\n</div>\r\n\r\n");
     }
 
     // フッターの閉鎖
