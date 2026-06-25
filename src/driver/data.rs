@@ -62,6 +62,12 @@ pub struct Task {
     pub time_spent: f32,
 }
 
+impl Task {
+    pub fn is_saveable(&self) -> bool {
+        !self.project.is_empty() && !self.title.is_empty()
+    }
+}
+
 impl Default for Task {
     fn default() -> Self {
         Self {
@@ -158,5 +164,19 @@ mod tests {
         // 少なくとも不正な日付オブジェクトになっていないことの検証
         // (Jiff の Date 型が正常に生成されているか)
         assert!(task.start_date.year() >= 2026);
+    }
+
+    #[test]
+    fn test_is_saveable() {
+        let mut task = Task::default();
+
+        assert!(!task.is_saveable(), "Default task is not saveable.");
+        task.project = "Project".to_string();
+        assert!(
+            !task.is_saveable(),
+            "task is lacking title and not saveable."
+        );
+        task.title = "Title".to_string();
+        assert!(task.is_saveable(), "task is saveable.");
     }
 }

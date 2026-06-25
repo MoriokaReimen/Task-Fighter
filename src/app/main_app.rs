@@ -1,4 +1,5 @@
 use super::style;
+use crate::app::warning_popup::WarningPopup;
 use crate::app::yes_no_popup::YesNoPopup;
 use crate::core::{self, CoreOutput, Task};
 use anyhow::Result;
@@ -65,6 +66,7 @@ pub struct App {
     pub only_active: bool,
     pub scan_pattern: String,
     pub yes_no_popup: YesNoPopup,
+    pub warning_popup: WarningPopup,
 }
 
 impl App {
@@ -80,6 +82,7 @@ impl App {
             only_active: false,
             scan_pattern: String::new(),
             yes_no_popup: YesNoPopup::new("yes_no"),
+            warning_popup: WarningPopup::new("warning"),
         }
     }
 }

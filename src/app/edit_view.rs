@@ -34,8 +34,18 @@ impl App {
                         .open("Save Task", "Do you want to save task?");
                 }
                 if self.yes_no_popup.show(ui) == PopupResult::Yes {
-                    self.output = self.core.update_task(self.temp_task.clone());
+                    if self.temp_task.is_saveable() {
+                        self.output = self.core.update_task(self.temp_task.clone());
+                    } else {
+                        let message = if self.temp_task.project.is_empty() {
+                            "Project is empty."
+                        } else {
+                            "Title is empty."
+                        };
+                        self.warning_popup.open("⚠ Can not Save Task", message);
+                    }
                 }
+                self.warning_popup.show(ui);
             });
         });
 

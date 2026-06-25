@@ -33,12 +33,22 @@ impl App {
                         .open("Save Task", "Do you want to save task?");
                 }
                 if self.yes_no_popup.show(ui) == PopupResult::Yes {
-                    let task_to_insert = self.temp_task.clone();
-                    self.output = self.core.insert_task(task_to_insert);
-                    self.temp_task = Task::default();
-                    self.state = AppState::Default;
-                    self.displayed_tasks = None;
+                    if self.temp_task.is_saveable() {
+                        let task_to_insert = self.temp_task.clone();
+                        self.output = self.core.insert_task(task_to_insert);
+                        self.temp_task = Task::default();
+                        self.state = AppState::Default;
+                        self.displayed_tasks = None;
+                    } else {
+                        let message = if self.temp_task.project.is_empty() {
+                            "Project is empty."
+                        } else {
+                            "Title is empty."
+                        };
+                        self.warning_popup.open("⚠ Can not Save Task", message);
+                    }
                 }
+                self.warning_popup.show(ui);
             });
         });
 

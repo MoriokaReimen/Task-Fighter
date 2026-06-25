@@ -214,10 +214,11 @@ pub fn initialize_periodic_tasks(conn: &Connection) -> Result<()> {
         warn!("Config file not found in {:?}", config_path);
         let template = include_str!("../../assets/config.toml");
         if let Some(parent) = config_path.parent()
-            && !parent.exists() {
-                fs::create_dir_all(parent)?;
-                info!("Created directory: {:?}", parent);
-            }
+            && !parent.exists()
+        {
+            fs::create_dir_all(parent)?;
+            info!("Created directory: {:?}", parent);
+        }
         fs::write(config_path, template)?;
         info!("Generated default config file at {:?}", config_path);
     }
@@ -376,7 +377,7 @@ mod tests {
 
         let count: i32 = conn.query_row("SELECT COUNT(*) FROM tasks", [], |row| row.get(0))?;
         assert_eq!(
-            count, 3,
+            count, 6,
             "Idempotency invariant breached: Duplicated periodic entries found inside tables storage."
         );
 

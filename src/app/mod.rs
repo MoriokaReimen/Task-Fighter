@@ -5,5 +5,6 @@ mod main_app;
 mod style;
 mod task_edit;
 mod task_table;
+mod warning_popup;
 mod yes_no_popup;
 pub use main_app::start_app;
