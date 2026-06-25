@@ -15,12 +15,13 @@ impl App {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 // Cancel Action
                 if ui
-                    .add(Button::new("❌ Cancel").min_size(vec2(90.0, 28.0)))
+                    .add(Button::new("❌ Close").min_size(vec2(90.0, 28.0)))
                     .clicked()
                 {
                     info!("Cancel Button Pressed");
                     self.temp_task = Task::default();
                     self.state = AppState::Default;
+                    self.displayed_tasks = None;
                 }
 
                 // Save Action
@@ -35,10 +36,7 @@ impl App {
                 if self.yes_no_popup.show(ui) == PopupResult::Yes {
                     if self.temp_task.is_saveable() {
                         let task_to_insert = self.temp_task.clone();
-                        self.output = self.core.insert_task(task_to_insert);
-                        self.temp_task = Task::default();
-                        self.state = AppState::Default;
-                        self.displayed_tasks = None;
+                        self.output = self.core.upsert_task(task_to_insert);
                     } else {
                         let message = if self.temp_task.project.is_empty() {
                             "Project is empty."

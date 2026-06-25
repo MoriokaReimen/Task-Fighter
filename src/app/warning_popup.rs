@@ -25,7 +25,7 @@ impl WarningPopup {
 
     pub fn show(&mut self, ctx: &egui::Context) {
         if !self.is_open {
-            return ;
+            return;
         }
 
         let modal = egui::Modal::new(self.id).show(ctx, |ui| {
@@ -44,7 +44,5 @@ impl WarningPopup {
         if modal.should_close() {
             self.is_open = false;
         }
-
-        
     }
 }

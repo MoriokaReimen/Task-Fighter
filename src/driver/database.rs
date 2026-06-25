@@ -90,56 +90,63 @@ pub fn connect() -> Result<Connection> {
 pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     info!("Inserting task record token: {:?}", task);
 
-    // DuckDBの主キー自動生成のために、idが0（Default値）なら除外、指定があれば明示的に挿入します
-    let sql = if task.id == 0 {
-        // 💡 id を含めずに INSERT することで、SERIAL（SEQUENCE）が働き自動インクリメントされます
-        "INSERT INTO tasks (active, status, project, title, detail, start_date, due_date, priority, progress, time_spent) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)"
-    } else {
-        // 💡 IDを明示的に指定して入れたい場合（マイグレーション等）も、SERIAL 型ならそのまま機能します
-        "INSERT INTO tasks (id, active, status, project, title, detail, start_date, due_date, priority, progress, time_spent) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)"
-    };
+    let sql = "INSERT INTO tasks (active, status, project, title, detail, start_date, due_date, priority, progress, time_spent) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)";
 
-    if task.id == 0 {
-        conn.execute(
-            sql,
-            params![
-                task.active as i32,
-                task.status as i32,
-                task.project,
-                task.title,
-                task.detail,
-                task.start_date.to_string(),
-                task.due_date.to_string(),
-                task.priority as i32,
-                task.progress,
-                task.time_spent
-            ],
-        )
-    } else {
-        conn.execute(
-            sql,
-            params![
-                task.id,
-                task.active as i32,
-                task.status as i32,
-                task.project,
-                task.title,
-                task.detail,
-                task.start_date.to_string(),
-                task.due_date.to_string(),
-                task.priority as i32,
-                task.progress,
-                task.time_spent
-            ],
-        )
-    }
+    conn.execute(
+        sql,
+        params![
+            task.active as i32,
+            task.status as i32,
+            task.project,
+            task.title,
+            task.detail,
+            task.start_date.to_string(),
+            task.due_date.to_string(),
+            task.priority as i32,
+            task.progress,
+            task.time_spent
+        ],
+    )
     .context("Failed to commit novel dataset item to relational datastore row bounds")?;
 
     Ok(())
 }
 
+fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
+    let mut stmt = conn.prepare("SELECT 1 FROM tasks WHERE id = ?;")?;
+    let exists = stmt
+        .exists(duckdb::params![id])
+        .context("Failed to check if task ID exists")?;
+
+    Ok(exists)
+}
+
+pub fn upsert_task(conn: &Connection, task: &Task) -> Result<()> {
+    let exists = exists_id(conn, task.id)?;
+    if exists {
+        info!("ID {} exists. Update task.", task.id);
+        update_task(conn, task)?;
+    } else {
+        info!("ID {} not exists. Create new task.", task.id);
+        insert_task(conn, task)?;
+    }
+
+    Ok(())
+}
+
+pub fn get_next_id(conn: &Connection) -> Result<i32> {
+    let query = "SELECT last_value FROM duckdb_sequences() WHERE sequence_name = 'tasks_id_seq';";
+    let last_value: Option<i64> = conn
+        .query_row(query, [], |row| row.get(0))
+        .context("Failed to query next sequence value from DuckDB catalogs")?;
+    let next_id = last_value.map(|val| (val + 1) as i32).unwrap_or(1);
+    info!("Next task id is {}.", next_id);
+
+    Ok(next_id)
+}
+
 pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
-    info!("Querying all existing task entry items dataset");
+    info!("Querying all existing tasks.");
     let mut stmt = conn.prepare(
         "SELECT id, active, status, project, title, detail, start_date::TEXT, due_date::TEXT, priority, progress, time_spent FROM tasks ORDER BY priority DESC",
     )?;
@@ -148,12 +155,12 @@ pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
         .query_map([], |row| Task::try_from(row))?
         .collect::<Result<Vec<Task>, _>>()
         .context("Failed to extract database mapping parameters sequence loops")?;
-
+    info!("{} tasks queried.", tasks.len());
     Ok(tasks)
 }
 
 pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
-    info!("Querying unique task entry via identifier: {}", id);
+    info!("Querying task entry with identifier: {}", id);
     let mut stmt = conn.prepare(
         "SELECT id, active, status, project, title, detail, start_date::TEXT, due_date::TEXT, priority, progress, time_spent FROM tasks WHERE id = ?1"
     ).context("Failed compiling relational parameter statements validations queries")?;
@@ -161,12 +168,13 @@ pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
     let task = stmt
         .query_row(params![id], |row| Task::try_from(row))
         .with_context(|| format!("Requested unique primary index token record not found or lookup failed: Identity [{}]", id))?;
+    info!("Found task: {:?}", task);
 
     Ok(task)
 }
 
 pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
-    info!("Querying active tasks sequence state contexts");
+    info!("Querying active tasks");
     let mut stmt = conn.prepare(
         "SELECT id, active, status, project, title, detail, start_date::VARCHAR, due_date::VARCHAR, priority, progress, time_spent FROM tasks WHERE active = 1 ORDER BY priority DESC"
     ).context("Failed compiling relational parameter statements validations queries")?;
@@ -175,20 +183,22 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
         .query_map([], |row| Task::try_from(row))?
         .collect::<Result<Vec<Task>, _>>()
         .context("Failed parsing query sequences lists mapping constraints rows")?;
+    info!("{} tasks queried.", tasks.len());
 
     Ok(tasks)
 }
 
 pub fn fetch_incomplete_tasks(conn: &Connection) -> Result<Vec<Task>> {
-    info!("Querying pending items sequence state contexts");
+    info!("Querying incomplete tasks");
     let mut stmt = conn.prepare(
-        "SELECT id, active, status, project, title, detail, start_date::TEXT, due_date::TEXT, priority, progress, time_spent FROM tasks WHERE status = 0 OR status = 1  ORDER BY priority DESC"
+        "SELECT id, active, status, project, title, detail, start_date::TEXT, due_date::TEXT, priority, progress, time_spent FROM tasks WHERE status != 2 ORDER BY priority DESC"
     ).context("Failed compiling relational parameter statements validations queries")?;
 
     let tasks = stmt
         .query_map([], |row| Task::try_from(row))?
         .collect::<Result<Vec<Task>, _>>()
         .context("Failed parsing query sequences lists mapping constraints rows")?;
+    info!("{} tasks queried.", tasks.len());
 
     Ok(tasks)
 }
@@ -223,15 +233,12 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
         );
     }
 
-    info!(
-        "Database fields mutated cleanly for token constraint identifier: {}",
-        task.id
-    );
+    info!("Task {} update success.", task.id);
     Ok(())
 }
 
 pub fn scan_tasks(conn: &Connection, pattern: &str, only_active: bool) -> Result<Vec<Task>> {
-    info!("Executing text query regex match lookup: {}", pattern);
+    info!("Scanning tasks with regex pattern: {}", pattern);
 
     let trimmed = pattern.trim();
     if trimmed.is_empty() {
@@ -262,6 +269,7 @@ pub fn scan_tasks(conn: &Connection, pattern: &str, only_active: bool) -> Result
         .collect::<Result<Vec<Task>, _>>()
         .context("Failed parsing query sequences lists mapping constraints rows")?;
 
+    info!("{} tasks queried.", tasks.len());
     Ok(tasks)
 }
 

@@ -2,7 +2,7 @@ use super::main_app::{App, AppState};
 use crate::app::task_table::TaskTable;
 use crate::core::CoreOutput;
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
-use tracing::info;
+use tracing::{error, info};
 
 impl App {
     /// Renders the default task list dashboard view.
@@ -20,6 +20,12 @@ impl App {
                     .clicked()
                 {
                     self.state = AppState::Create;
+                    if let Ok(id) = self.core.get_next_id() {
+                        self.temp_task.id = id;
+                        info!("The next id is {}", id);
+                    } else {
+                        error!("Failed to get id");
+                    }
                 }
 
                 if ui

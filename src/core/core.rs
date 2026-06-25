@@ -12,6 +12,7 @@ pub struct Core {
 pub enum CoreOutput {
     Idle,
     InsertTask(oneshot::Receiver<Result<()>>),
+    UpsertTask(oneshot::Receiver<Result<()>>),
     FetchAllTasks(oneshot::Receiver<Result<Vec<Task>>>),
     FetchTaskById(oneshot::Receiver<Result<Task>>),
     FetchActiveTasks(oneshot::Receiver<Result<Vec<Task>>>),
@@ -45,10 +46,24 @@ impl Core {
         })
     }
 
+    pub fn get_next_id(&self) -> Result<i32> {
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|_| anyhow::anyhow!("Database mutex lock was poisoned"))?;
+        driver::get_next_id(&conn)
+    }
+
     pub fn insert_task(&self, task: Task) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
         execute_blocking!(self, tx, |conn_lock| driver::insert_task(conn_lock, &task));
         CoreOutput::InsertTask(rx)
+    }
+
+    pub fn upsert_task(&self, task: Task) -> CoreOutput {
+        let (tx, rx) = oneshot::channel();
+        execute_blocking!(self, tx, |conn_lock| driver::upsert_task(conn_lock, &task));
+        CoreOutput::UpsertTask(rx)
     }
 
     #[allow(dead_code)]

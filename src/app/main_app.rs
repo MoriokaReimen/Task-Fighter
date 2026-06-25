@@ -161,6 +161,7 @@ impl App {
 
                 match other_output {
                     CoreOutput::InsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
+                    CoreOutput::UpsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
                     CoreOutput::FetchAllTasks(rx) => handle_rx!(rx, "Failed to fetch all tasks"),
                     CoreOutput::FetchTaskById(rx) => handle_rx!(rx, "Failed to fetch task by ID"),
                     CoreOutput::FetchIncompleteTasks(rx) => {
