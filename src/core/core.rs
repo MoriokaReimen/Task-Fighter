@@ -54,12 +54,6 @@ impl Core {
         driver::get_next_id(&conn)
     }
 
-    pub fn insert_task(&self, task: Task) -> CoreOutput {
-        let (tx, rx) = oneshot::channel();
-        execute_blocking!(self, tx, |conn_lock| driver::insert_task(conn_lock, &task));
-        CoreOutput::InsertTask(rx)
-    }
-
     pub fn upsert_task(&self, task: Task) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
         execute_blocking!(self, tx, |conn_lock| driver::upsert_task(conn_lock, &task));

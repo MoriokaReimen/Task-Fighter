@@ -68,16 +68,16 @@ pub fn connect() -> Result<Connection> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS tasks (
             id          INTEGER PRIMARY KEY DEFAULT nextval('tasks_id_seq'),
-            active      INTEGER NOT NULL DEFAULT 1,
-            status      INTEGER NOT NULL DEFAULT 0,
+            active      BOOL NOT NULL DEFAULT 1,
+            status      UTINYINT NOT NULL DEFAULT 0,
             project     VARCHAR NOT NULL,
             title       VARCHAR NOT NULL,
             detail      VARCHAR NOT NULL,
             start_date  DATE NOT NULL,
             due_date    DATE NOT NULL,
-            priority    INTEGER NOT NULL DEFAULT 1,
-            progress    FLOAT NOT NULL DEFAULT 0.0 CHECK(progress >= 0.0 AND progress <= 100.0),
-            time_spent  FLOAT NOT NULL DEFAULT 0.0
+            priority    UTINYINT NOT NULL DEFAULT 1,
+            progress    REAL NOT NULL DEFAULT 0.0 CHECK(progress >= 0.0 AND progress <= 100.0),
+            time_spent  REAL NOT NULL DEFAULT 0.0
         );",
         [],
     )
@@ -95,7 +95,7 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     conn.execute(
         sql,
         params![
-            task.active as i32,
+            task.active,
             task.status as i32,
             task.project,
             task.title,
@@ -212,7 +212,7 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
 
     let rows_affected = stmt
         .execute(params![
-            task.active as i32,
+            task.active,
             task.status as i32,
             task.project,
             task.title,
@@ -292,7 +292,7 @@ mod tests {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS tasks (
             id          INTEGER PRIMARY KEY DEFAULT nextval('tasks_id_seq'),
-            active      INTEGER NOT NULL DEFAULT 1,
+            active      BOOL NOT NULL DEFAULT 1,
             status      INTEGER NOT NULL DEFAULT 0,
             project     VARCHAR NOT NULL,
             title       VARCHAR NOT NULL,
