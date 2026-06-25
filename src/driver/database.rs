@@ -13,7 +13,6 @@ impl<'a> TryFrom<&'a duckdb::Row<'a>> for Task {
     type Error = duckdb::Error;
 
     fn try_from(row: &'a duckdb::Row<'a>) -> Result<Self, Self::Error> {
-        let active_raw: i32 = row.get(1)?;
         let status_raw: i32 = row.get(2)?;
         let priority_raw: i32 = row.get(8)?;
 
@@ -36,7 +35,7 @@ impl<'a> TryFrom<&'a duckdb::Row<'a>> for Task {
 
         Ok(Task {
             id: row.get(0)?,
-            active: active_raw != 0,
+            active: row.get(1)?,
             status,
             project: row.get(3)?,
             title: row.get(4)?,
@@ -68,7 +67,7 @@ pub fn connect() -> Result<Connection> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS tasks (
             id          INTEGER PRIMARY KEY DEFAULT nextval('tasks_id_seq'),
-            active      BOOL NOT NULL DEFAULT 1,
+            active      BOOL NOT NULL DEFAULT true,
             status      UTINYINT NOT NULL DEFAULT 0,
             project     VARCHAR NOT NULL,
             title       VARCHAR NOT NULL,
@@ -176,7 +175,7 @@ pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
 pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Querying active tasks");
     let mut stmt = conn.prepare(
-        "SELECT id, active, status, project, title, detail, start_date::VARCHAR, due_date::VARCHAR, priority, progress, time_spent FROM tasks WHERE active = 1 ORDER BY priority DESC"
+        "SELECT id, active, status, project, title, detail, start_date::VARCHAR, due_date::VARCHAR, priority, progress, time_spent FROM tasks WHERE active = true ORDER BY priority DESC"
     ).context("Failed compiling relational parameter statements validations queries")?;
 
     let tasks = stmt
@@ -250,7 +249,7 @@ pub fn scan_tasks(conn: &Connection, pattern: &str, only_active: bool) -> Result
     let sql = if only_active {
         "SELECT id, active, status, project, title, detail, start_date::TEXT, due_date::TEXT, priority, progress, time_spent \
          FROM tasks \
-         WHERE (regexp_matches(title, ?1, 'i') OR regexp_matches(detail, ?1, 'i') OR regexp_matches(project, ?1, 'i')) AND active = 1 \
+         WHERE (regexp_matches(title, ?1, 'i') OR regexp_matches(detail, ?1, 'i') OR regexp_matches(project, ?1, 'i')) AND active = true \
          ORDER BY priority DESC;"
     } else {
         "SELECT id, active, status, project, title, detail, start_date::TEXT, due_date::TEXT, priority, progress, time_spent \
