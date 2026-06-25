@@ -1,4 +1,3 @@
-
 fn main() {
     /* Set icon for windows build */
     if cfg!(target_os = "windows") {

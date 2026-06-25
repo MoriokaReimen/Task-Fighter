@@ -1,5 +1,7 @@
 use super::main_app::{App, AppState};
 use crate::app::task_edit::TaskEdit;
+use crate::app::yes_no_popup::PopupResult;
+use crate::core::CoreOutput;
 use crate::driver::Task;
 use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
@@ -22,12 +24,16 @@ impl App {
                     self.displayed_tasks = None;
                 }
 
-                // Save Button Action
+                // Save Action
                 if ui
                     .add(Button::new("💾 Save").min_size(vec2(90.0, 28.0)))
                     .clicked()
                 {
                     info!("Save Button Pressed");
+                    self.yes_no_popup
+                        .open("Save Task", "Do you want to save task?");
+                }
+                if self.yes_no_popup.show(ui) == PopupResult::Yes {
                     self.output = self.core.update_task(self.temp_task.clone());
                 }
             });
@@ -36,6 +42,16 @@ impl App {
         // --- Main Form Content ---
         egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
             ui.heading("✏ Edit Task");
+            if !matches!(self.output, CoreOutput::Idle) {
+                ui.with_layout(
+                    egui::Layout::centered_and_justified(egui::Direction::TopDown),
+                    |ui| {
+                        // サイズを大きく設定（例: 64.0 ポイント）して表示
+                        ui.add(egui::Spinner::new().size(64.0));
+                    },
+                );
+                return;
+            }
             let mut task_edit = TaskEdit::new(&mut self.temp_task);
             task_edit.show(ui);
         });

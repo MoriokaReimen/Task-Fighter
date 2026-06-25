@@ -213,12 +213,11 @@ pub fn initialize_periodic_tasks(conn: &Connection) -> Result<()> {
     if !config_path.is_file() {
         warn!("Config file not found in {:?}", config_path);
         let template = include_str!("../../assets/config.toml");
-        if let Some(parent) = config_path.parent() {
-            if !parent.exists() {
+        if let Some(parent) = config_path.parent()
+            && !parent.exists() {
                 fs::create_dir_all(parent)?;
                 info!("Created directory: {:?}", parent);
             }
-        }
         fs::write(config_path, template)?;
         info!("Generated default config file at {:?}", config_path);
     }

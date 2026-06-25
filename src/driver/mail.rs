@@ -119,7 +119,7 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
 
     // フッターの閉鎖
     html.push_str("</div>\r\n</body>\r\n</html>");
-    html.replace("\r\n", "\r\n").replace("\n", "\r\n")
+    html.replace("\r\n", "\n").replace("\n", "\r\n")
 }
 
 pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
@@ -144,7 +144,7 @@ pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
     eml_content.push_str("Content-Type: text/html; charset=utf-8\r\n");
     eml_content.push_str("Content-Transfer-Encoding: 8bit\r\n\r\n");
 
-    let body_crlf = html_text.replace("\r\n", "\r\n").replace("\n", "\r\n");
+    let body_crlf = html_text.replace("\r\n", "\n").replace("\n", "\r\n");
     eml_content.push_str(&body_crlf);
 
     temp_file

@@ -1,4 +1,5 @@
 use super::style;
+use crate::app::yes_no_popup::YesNoPopup;
 use crate::core::{self, CoreOutput, Task};
 use anyhow::Result;
 use eframe::egui::Ui;
@@ -63,6 +64,7 @@ pub struct App {
     pub temp_task: Task,
     pub only_active: bool,
     pub scan_pattern: String,
+    pub yes_no_popup: YesNoPopup,
 }
 
 impl App {
@@ -77,6 +79,7 @@ impl App {
             temp_task: Task::default(),
             only_active: false,
             scan_pattern: String::new(),
+            yes_no_popup: YesNoPopup::new("yes_no"),
         }
     }
 }
