@@ -119,7 +119,7 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
 
     // フッターの閉鎖
     html.push_str("</div>\r\n</body>\r\n</html>");
-    html
+    html.replace("\r\n", "\r\n").replace("\n", "\r\n")
 }
 
 pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
