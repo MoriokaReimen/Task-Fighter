@@ -3,6 +3,7 @@ use crate::driver::{Priority, TaskStatus};
 use anyhow::{Context, Result, bail};
 use duckdb::{Connection, params};
 use jiff::civil::Date;
+use jiff::Zoned;
 use std::fs;
 use std::path::Path;
 use tracing::info;
@@ -74,6 +75,8 @@ pub fn connect() -> Result<Connection> {
             detail      VARCHAR NOT NULL,
             start_date  DATE NOT NULL,
             due_date    DATE NOT NULL,
+            entry_date  DATE NOT NULL,
+            end_date    DATE,
             priority    UTINYINT NOT NULL DEFAULT 1,
             progress    REAL NOT NULL DEFAULT 0.0 CHECK(progress >= 0.0 AND progress <= 100.0),
             time_spent  REAL NOT NULL DEFAULT 0.0
@@ -89,7 +92,8 @@ pub fn connect() -> Result<Connection> {
 pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     info!("Inserting task record token: {:?}", task);
 
-    let sql = "INSERT INTO tasks (active, status, project, title, detail, start_date, due_date, priority, progress, time_spent) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)";
+    let sql = "INSERT INTO tasks (active, status, project, title, detail, start_date, due_date, priority, progress, time_spent, entry_date) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)";
+    let entry_date =  Zoned::now().date();
 
     conn.execute(
         sql,
@@ -103,7 +107,8 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
             task.due_date.to_string(),
             task.priority as i32,
             task.progress,
-            task.time_spent
+            task.time_spent,
+            entry_date.to_string()
         ],
     )
     .context("Failed to commit novel dataset item to relational datastore row bounds")?;
@@ -144,53 +149,10 @@ pub fn get_next_id(conn: &Connection) -> Result<i32> {
     Ok(next_id)
 }
 
-pub fn fetch_all_tasks(conn: &Connection) -> Result<Vec<Task>> {
-    info!("Querying all existing tasks.");
-    let mut stmt = conn.prepare(
-        "SELECT id, active, status, project, title, detail, start_date::TEXT, due_date::TEXT, priority, progress, time_spent FROM tasks ORDER BY priority DESC",
-    )?;
-
-    let tasks = stmt
-        .query_map([], |row| Task::try_from(row))?
-        .collect::<Result<Vec<Task>, _>>()
-        .context("Failed to extract database mapping parameters sequence loops")?;
-    info!("{} tasks queried.", tasks.len());
-    Ok(tasks)
-}
-
-pub fn fetch_task_by_id(conn: &Connection, id: i32) -> Result<Task> {
-    info!("Querying task entry with identifier: {}", id);
-    let mut stmt = conn.prepare(
-        "SELECT id, active, status, project, title, detail, start_date::TEXT, due_date::TEXT, priority, progress, time_spent FROM tasks WHERE id = ?1"
-    ).context("Failed compiling relational parameter statements validations queries")?;
-
-    let task = stmt
-        .query_row(params![id], |row| Task::try_from(row))
-        .with_context(|| format!("Requested unique primary index token record not found or lookup failed: Identity [{}]", id))?;
-    info!("Found task: {:?}", task);
-
-    Ok(task)
-}
-
 pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
     info!("Querying active tasks");
     let mut stmt = conn.prepare(
         "SELECT id, active, status, project, title, detail, start_date::VARCHAR, due_date::VARCHAR, priority, progress, time_spent FROM tasks WHERE active = true ORDER BY priority DESC"
-    ).context("Failed compiling relational parameter statements validations queries")?;
-
-    let tasks = stmt
-        .query_map([], |row| Task::try_from(row))?
-        .collect::<Result<Vec<Task>, _>>()
-        .context("Failed parsing query sequences lists mapping constraints rows")?;
-    info!("{} tasks queried.", tasks.len());
-
-    Ok(tasks)
-}
-
-pub fn fetch_incomplete_tasks(conn: &Connection) -> Result<Vec<Task>> {
-    info!("Querying incomplete tasks");
-    let mut stmt = conn.prepare(
-        "SELECT id, active, status, project, title, detail, start_date::TEXT, due_date::TEXT, priority, progress, time_spent FROM tasks WHERE status != 2 ORDER BY priority DESC"
     ).context("Failed compiling relational parameter statements validations queries")?;
 
     let tasks = stmt
@@ -208,6 +170,7 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
          SET active = ?1, status = ?2, project = ?3, title = ?4, detail = ?5, start_date = ?6, due_date = ?7, priority = ?8, progress = ?9, time_spent = ?10 
          WHERE id = ?11",
     ).context("Failed compiling database structural mutations modification pipelines statements")?;
+
 
     let rows_affected = stmt
         .execute(params![
@@ -232,8 +195,60 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
         );
     }
 
+    if task.status == TaskStatus::Complete || task.status == TaskStatus::Canceled
+    {
+        let end_date =  Zoned::now().date();
+        let mut stmt = conn.prepare(
+            "UPDATE tasks 
+            SET end_date = ?2
+            WHERE id = ?1",
+        ).context("Failed compiling database structural mutations modification pipelines statements")?;
+
+        let rows_affected = stmt
+            .execute(params![
+                task.id,
+                end_date.to_string()
+            ])
+            .context("Failed executing datastore entity mutations pipelines updates states")?;
+
+        if rows_affected == 0 {
+            bail!(
+                "Target modification bounds target identity token is non-existent: Identity [{}]",
+                task.id
+            );
+        }
+    }
+
     info!("Task {} update success.", task.id);
     Ok(())
+}
+
+fn count_incomplete_tasks_by_date(conn: &Connection, target_date: Date) -> Result<i64> {
+    let sql = r#"
+            SELECT COUNT(*) 
+            FROM your_table_name 
+            WHERE start_date <= ?1 AND (end_date > ?1 OR end_date IS NULL)
+        "#;
+    
+    let count: i64 = conn.query_row(
+        sql,
+        params![target_date.to_string()],
+        |row| row.get(0),
+    )?;
+
+    Ok(count)
+}
+
+fn count_end_tasks_by_date(conn: &Connection, target_date: &Date) -> Result<i64> {
+    let sql = "SELECT COUNT(*) FROM tasks WHERE end_date = ?1";
+    
+    let count: i64 = conn.query_row(
+        sql,
+        params![target_date.to_string()],
+        |row| row.get(0),
+    )?;
+
+    Ok(count)
 }
 
 pub fn scan_tasks(conn: &Connection, pattern: &str, only_active: bool) -> Result<Vec<Task>> {

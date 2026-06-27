@@ -60,33 +60,10 @@ impl Core {
         CoreOutput::UpsertTask(rx)
     }
 
-    #[allow(dead_code)]
-    pub fn fetch_all_tasks(&self) -> CoreOutput {
-        let (tx, rx) = oneshot::channel();
-        execute_blocking!(self, tx, driver::fetch_all_tasks);
-        CoreOutput::FetchAllTasks(rx)
-    }
-
-    #[allow(dead_code)]
-    pub fn fetch_task_by_id(&self, id: i32) -> CoreOutput {
-        let (tx, rx) = oneshot::channel();
-        execute_blocking!(self, tx, |conn_lock| driver::fetch_task_by_id(
-            conn_lock, id
-        ));
-        CoreOutput::FetchTaskById(rx)
-    }
-
     pub fn fetch_active_tasks(&self) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
         execute_blocking!(self, tx, driver::fetch_active_tasks);
         CoreOutput::FetchActiveTasks(rx)
-    }
-
-    #[allow(dead_code)]
-    pub fn fetch_incomplete_tasks(&self) -> CoreOutput {
-        let (tx, rx) = oneshot::channel();
-        execute_blocking!(self, tx, driver::fetch_incomplete_tasks);
-        CoreOutput::FetchIncompleteTasks(rx)
     }
 
     pub fn update_task(&self, task: Task) -> CoreOutput {
