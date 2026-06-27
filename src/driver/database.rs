@@ -222,16 +222,19 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
     Ok(())
 }
 
-fn count_incomplete_tasks_by_date(conn: &Connection, target_date: Date) -> Result<i64> {
+fn count_incomplete_tasks_by_date(conn: &Connection, target_date: Date) -> Result<(i32, i32, i32, i32)> {
     let sql = r#"
             SELECT COUNT(*) 
-            FROM your_table_name 
-            WHERE start_date <= ?1 AND (end_date > ?1 OR end_date IS NULL)
+            FROM tasks
+            WHERE start_date <= ?1 AND (end_date => ?1 OR end_date IS NULL) AND status = ?2
         "#;
 
-    let count: i64 = conn.query_row(sql, params![target_date.to_string()], |row| row.get(0))?;
+    let pending_count: i32 = conn.query_row(sql, params![target_date.to_string(), 0], |row| row.get(0))?;
+    let work_in_progress_count: i32 = conn.query_row(sql, params![target_date.to_string(), 1], |row| row.get(0))?;
+    let complete_count: i32 = conn.query_row(sql, params![target_date.to_string(), 2], |row| row.get(0))?;
+    let canceled_count: i32 = conn.query_row(sql, params![target_date.to_string(), 3], |row| row.get(0))?;
 
-    Ok(count)
+    Ok((pending_count, work_in_progress_count, complete_count, canceled_count))
 }
 
 fn count_end_tasks_by_date(conn: &Connection, target_date: &Date) -> Result<i64> {

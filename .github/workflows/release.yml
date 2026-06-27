@@ -27,14 +27,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 👇 【対策1】Linux (Ubuntu) の Cコンパイラとgettext開発環境を導入
       - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential gettext libasound2-dev
 
-      # 👇 【対策2】macOS の gettext環境を導入
       - name: Install dependencies (macOS)
         if: matrix.os == 'macos-latest'
         run: |
@@ -44,8 +42,8 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      # 👇 【対策3】Windows の Cコンパイラ (MinGW) 環境を導入
-      - name: Setup C Compiler for gettext (Windows)
+      # 👇 Windowsの場合のみ、MSYS2環境（GCC一式含む）を完璧にセットアップ
+      - name: Setup MSYS2 (Windows)
         if: matrix.os == 'windows-latest'
         uses: msys2/setup-msys2@v2
         with:
@@ -55,15 +53,8 @@ jobs:
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-make
             base-devel
-
-      - name: Configure Cargo for MinGW (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          echo "CC=gcc" >> $GITHUB_ENV
-          echo "CXX=g++" >> $GITHUB_ENV
-          echo "C:\msys64\mingw64\bin" >> $GITHUB_PATH
-          echo "C:\msys64\usr\bin" >> $GITHUB_PATH
+            gettext
+            gettext-devel
 
       # Cargoのキャッシュを利用してビルドを高速化
       - name: Cargo cache
@@ -77,12 +68,23 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Build release
+      # 👇 【重要】ビルドステップをOSごとに分離し、WindowsはMSYS2の環境下で実行する
+      - name: Build release (Non-Windows)
+        if: matrix.os != 'windows-latest'
         run: cargo build --release
 
-      # パッケージング処理
+      - name: Build release (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0} # 💡 MSYS2のコンテキストで実行することで、/tmp 内から確実に gcc や gettext にアクセスさせます
+        run: |
+          export CC=gcc
+          export CXX=g++
+          cargo build --release
+
+      # 👇 パッケージング処理（Windowsは標準のPowerShellに戻すため shell: pwsh を明示）
       - name: Package artifacts (Windows)
         if: matrix.os == 'windows-latest'
+        shell: pwsh
         run: |
           $TAG = "${{ github.ref_name }}"
           Compress-Archive -Path target/release/${{ matrix.artifact_name }} -DestinationPath target/release/task-fighter-${TAG}-windows.zip
