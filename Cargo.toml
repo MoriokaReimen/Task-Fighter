@@ -19,7 +19,7 @@ regex = "1.12.4"
 tokio = { version = "^1.0", features = ["full"] }
 egui_extras = { version = "^0.34", features = ["datepicker"] }
 jiff = { version = "^0.2", features = ["serde"] }
-tracing = "^0.1"
+tracing = { version = "^0.1", features = ["log"] }
 tracing-subscriber = "^0.3"
 image = "^0.25"
 rand = "0.10.1"

@@ -1,0 +1,112 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'V[0-9]*.[0-9]*.[0-9]*'
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: task-fighter
+            asset_extension: tar.gz
+          - os: windows-latest
+            artifact_name: task-fighter.exe
+            asset_extension: zip
+          - os: macos-latest
+            artifact_name: task-fighter
+            asset_extension: zip
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 👇 【対策1】Linux (Ubuntu) の Cコンパイラとgettext開発環境を導入
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gettext libasound2-dev
+
+      # 👇 【対策2】macOS の gettext環境を導入
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install gettext
+          echo "PATH=$(brew --prefix gettext)/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      # 👇 【対策3】Windows の Cコンパイラ (MinGW) 環境を導入
+      - name: Setup C Compiler for gettext (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            base-devel
+
+      - name: Configure Cargo for MinGW (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
+          echo "C:\msys64\mingw64\bin" >> $GITHUB_PATH
+          echo "C:\msys64\usr\bin" >> $GITHUB_PATH
+
+      # Cargoのキャッシュを利用してビルドを高速化
+      - name: Cargo cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build release
+        run: cargo build --release
+
+      # パッケージング処理
+      - name: Package artifacts (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          $TAG = "${{ github.ref_name }}"
+          Compress-Archive -Path target/release/${{ matrix.artifact_name }} -DestinationPath target/release/task-fighter-${TAG}-windows.zip
+
+      - name: Package artifacts (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          TAG="${{ github.ref_name }}"
+          cd target/release
+          zip task-fighter-${TAG}-macos.zip ${{ matrix.artifact_name }}
+
+      - name: Package artifacts (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          TAG="${{ github.ref_name }}"
+          cd target/release
+          tar -czvf task-fighter-${TAG}-linux.tar.gz ${{ matrix.artifact_name }}
+
+      # GitHub Releaseに自動アップロード
+      - name: Create and Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/release/*.zip
+            target/release/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
