@@ -5,6 +5,7 @@ pub use data::TaskStatus;
 
 mod database;
 pub use database::connect;
+pub use database::count_tasks_by_date;
 pub use database::fetch_active_tasks;
 pub use database::get_next_id;
 pub use database::insert_task;

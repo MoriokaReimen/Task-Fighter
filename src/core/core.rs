@@ -1,12 +1,15 @@
 use crate::driver::{self, Task};
 use anyhow::Result;
 use duckdb::Connection;
+use jiff::{ToSpan, Zoned};
 use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
 
 pub struct Core {
     conn: Arc<Mutex<Connection>>,
 }
+
+pub type PlotResult = Result<Vec<(i32, i32, i32, i32)>>;
 
 #[allow(dead_code)]
 pub enum CoreOutput {
@@ -20,6 +23,7 @@ pub enum CoreOutput {
     UpdateTask(oneshot::Receiver<Result<()>>),
     ScanTasks(oneshot::Receiver<Result<Vec<Task>>>),
     MailDaily(oneshot::Receiver<Result<()>>),
+    PlotData(oneshot::Receiver<PlotResult>),
 }
 
 /// Helper macro to reduce async database locking boilerplate and flatten nesting depth.
@@ -87,6 +91,22 @@ impl Core {
         let (tx, rx) = oneshot::channel();
         execute_blocking!(self, tx, |_conn_lock| driver::launch_system_mailer(&tasks));
         CoreOutput::MailDaily(rx)
+    }
+
+    pub fn get_plot_data(&self) -> CoreOutput {
+        let (tx, rx) = oneshot::channel();
+
+        execute_blocking!(self, tx, |conn_lock| {
+            let today = Zoned::now().date();
+
+            let days: Vec<jiff::civil::Date> = (0..30).map(|i: i32| today - i.days()).collect();
+
+            days.into_iter()
+                .map(|day| driver::count_tasks_by_date(conn_lock, day))
+                .collect::<Result<Vec<(i32, i32, i32, i32)>, _>>()
+        });
+
+        CoreOutput::PlotData(rx)
     }
 }
 
