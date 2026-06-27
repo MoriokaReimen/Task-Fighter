@@ -1,8 +1,8 @@
 mod create_view;
 mod default_view;
 mod edit_view;
-mod graph_view;
 mod graph;
+mod graph_view;
 mod main_app;
 mod style;
 mod task_edit;

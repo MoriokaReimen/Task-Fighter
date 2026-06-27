@@ -1,6 +1,8 @@
+use crate::fl;
 use eframe::egui;
 use egui_plot::{Legend, Line, Plot, PlotPoints};
 use std::sync::{Arc, Mutex};
+use tracing::log::{error, info};
 
 pub struct Graph {
     // グラフの描画領域（位置とサイズ）を記録する
@@ -32,7 +34,8 @@ impl Graph {
 
         // 2. 外部からのスクリーンショット要求があれば、eguiに撮影コマンドを送信
         if self.check_save_trigger() {
-            ui.ctx().send_viewport_cmd(egui::ViewportCommand::Screenshot(Default::default()));
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::Screenshot(Default::default()));
         }
 
         // 3. 発行されたスクリーンショットイベントのキャッチと保存処理
@@ -44,7 +47,7 @@ impl Graph {
 
     /// コントロールUI（保存ボタンなど）を表示するメソッド
     pub fn show_controls(&self, ui: &mut egui::Ui) -> egui::Response {
-        let response = ui.button("📸 グラフを画像として保存");
+        let response = ui.button(fl!("save-graph"));
         if response.clicked() {
             self.save_screenshot();
         }
@@ -58,7 +61,7 @@ impl Graph {
     fn draw_plot(&mut self, ui: &mut egui::Ui) -> egui::Response {
         let my_plot = Plot::new("My Plot").legend(Legend::default());
         let graph: Vec<[f64; 2]> = vec![[0.0, 1.0], [2.0, 3.0], [3.0, 2.0]];
-        
+
         let inner = my_plot.show(ui, |plot_ui| {
             plot_ui.line(Line::new("curve", PlotPoints::from(graph)));
         });
@@ -69,7 +72,9 @@ impl Graph {
 
     /// 保存要求フラグが立っているか確認し、立っていればリセットして true を返す
     fn check_save_trigger(&self) -> bool {
-        let Ok(mut guard) = self.should_save.lock() else { return false };
+        let Ok(mut guard) = self.should_save.lock() else {
+            return false;
+        };
         if *guard {
             *guard = false;
             return true;
@@ -92,12 +97,16 @@ impl Graph {
         });
 
         // 早期リターン：今フレームでスクリーンショットイベントがなければ終了
-        let Some(screenshot_img) = screenshot else { return };
+        let Some(screenshot_img) = screenshot else {
+            return;
+        };
 
         // 条件が揃ったので保存処理を別スレッドで実行
         let pixels_per_point = ctx.pixels_per_point();
         std::thread::spawn(move || {
-            let Some(mut path) = rfd::FileDialog::new().save_file() else { return };
+            let Some(mut path) = rfd::FileDialog::new().save_file() else {
+                return;
+            };
             path.set_extension("png");
 
             // グラフの領域だけを切り抜いて保存
@@ -111,8 +120,8 @@ impl Graph {
             );
 
             match result {
-                Ok(()) => println!("Image saved to {}", path.display()),
-                Err(err) => eprintln!("Failed to save image: {err}"),
+                Ok(()) => info!("Image saved to {}", path.display()),
+                Err(err) => error!("Failed to save image: {err}"),
             }
         });
     }

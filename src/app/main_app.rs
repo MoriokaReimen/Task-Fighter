@@ -1,4 +1,5 @@
 use super::style;
+use crate::app::graph::Graph;
 use crate::app::warning_popup::WarningPopup;
 use crate::app::yes_no_popup::YesNoPopup;
 use crate::core::{self, CoreOutput, Task};
@@ -7,7 +8,6 @@ use eframe::egui::Ui;
 use std::sync::Arc;
 use tokio::sync::oneshot::error::TryRecvError;
 use tracing::{error, warn};
-use crate::app::graph::Graph;
 
 /// Generates window configuration and initializes the application icon.
 fn get_frame_option() -> Result<eframe::NativeOptions> {

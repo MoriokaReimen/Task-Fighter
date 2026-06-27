@@ -1,9 +1,9 @@
 use super::main_app::{App, AppState};
 use crate::app::task_table::TaskTable;
 use crate::core::CoreOutput;
+use crate::fl;
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
-use crate::fl;
 
 impl App {
     /// Renders the default task list dashboard view.
@@ -19,8 +19,8 @@ impl App {
             let mut go_to_graph = false;
             let mut go_to_create = false;
 
-            egui::containers::Sides::new().show(ui,
-
+            egui::containers::Sides::new().show(
+                ui,
                 |ui| {
                     if ui
                         .add(Button::new(fl!("graph")).min_size(vec2(110.0, 28.0)))
@@ -30,7 +30,6 @@ impl App {
                         go_to_graph = true;
                     }
                 },
-
                 |ui| {
                     if ui
                         .add(Button::new(fl!("email-report")).min_size(vec2(120.0, 28.0)))
@@ -48,14 +47,14 @@ impl App {
                         // ここでもフラグだけを立てる
                         go_to_create = true;
                     }
-                }
+                },
             );
 
             // クロージャの実行が終わった（selfの借用が解除された）後で、安全に状態を更新する
             if go_to_graph {
                 self.state = AppState::Graph;
             }
-            
+
             if go_to_create {
                 self.state = AppState::Create;
                 if let Ok(id) = self.core.get_next_id() {

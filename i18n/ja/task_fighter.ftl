@@ -38,3 +38,4 @@ due_date = 📅 期限日
 edit = ✏ 編集
 status = 📌 ステータス
 graph = 📈 図
+save-graph = "📸 グラフを画像として保存"

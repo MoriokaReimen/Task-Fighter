@@ -3,9 +3,9 @@ use crate::app::task_edit::TaskEdit;
 use crate::app::yes_no_popup::PopupResult;
 use crate::core::CoreOutput;
 use crate::driver::Task;
+use crate::fl;
 use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
-use crate::fl;
 
 impl App {
     /// Renders the task editing view inside a dedicated panel setup.

@@ -2,8 +2,8 @@ use crate::driver::Task;
 use crate::driver::{Priority, TaskStatus};
 use anyhow::{Context, Result, bail};
 use duckdb::{Connection, params};
-use jiff::civil::Date;
 use jiff::Zoned;
+use jiff::civil::Date;
 use std::fs;
 use std::path::Path;
 use tracing::info;
@@ -93,7 +93,7 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     info!("Inserting task record token: {:?}", task);
 
     let sql = "INSERT INTO tasks (active, status, project, title, detail, start_date, due_date, priority, progress, time_spent, entry_date) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)";
-    let entry_date =  Zoned::now().date();
+    let entry_date = Zoned::now().date();
 
     conn.execute(
         sql,
@@ -171,7 +171,6 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
          WHERE id = ?11",
     ).context("Failed compiling database structural mutations modification pipelines statements")?;
 
-
     let rows_affected = stmt
         .execute(params![
             task.active,
@@ -195,20 +194,20 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
         );
     }
 
-    if task.status == TaskStatus::Complete || task.status == TaskStatus::Canceled
-    {
-        let end_date =  Zoned::now().date();
-        let mut stmt = conn.prepare(
-            "UPDATE tasks 
+    if task.status == TaskStatus::Complete || task.status == TaskStatus::Canceled {
+        let end_date = Zoned::now().date();
+        let mut stmt = conn
+            .prepare(
+                "UPDATE tasks 
             SET end_date = ?2
             WHERE id = ?1",
-        ).context("Failed compiling database structural mutations modification pipelines statements")?;
+            )
+            .context(
+                "Failed compiling database structural mutations modification pipelines statements",
+            )?;
 
         let rows_affected = stmt
-            .execute(params![
-                task.id,
-                end_date.to_string()
-            ])
+            .execute(params![task.id, end_date.to_string()])
             .context("Failed executing datastore entity mutations pipelines updates states")?;
 
         if rows_affected == 0 {
@@ -229,24 +228,16 @@ fn count_incomplete_tasks_by_date(conn: &Connection, target_date: Date) -> Resul
             FROM your_table_name 
             WHERE start_date <= ?1 AND (end_date > ?1 OR end_date IS NULL)
         "#;
-    
-    let count: i64 = conn.query_row(
-        sql,
-        params![target_date.to_string()],
-        |row| row.get(0),
-    )?;
+
+    let count: i64 = conn.query_row(sql, params![target_date.to_string()], |row| row.get(0))?;
 
     Ok(count)
 }
 
 fn count_end_tasks_by_date(conn: &Connection, target_date: &Date) -> Result<i64> {
     let sql = "SELECT COUNT(*) FROM tasks WHERE end_date = ?1";
-    
-    let count: i64 = conn.query_row(
-        sql,
-        params![target_date.to_string()],
-        |row| row.get(0),
-    )?;
+
+    let count: i64 = conn.query_row(sql, params![target_date.to_string()], |row| row.get(0))?;
 
     Ok(count)
 }

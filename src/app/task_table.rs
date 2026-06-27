@@ -1,7 +1,7 @@
 use crate::driver::{Priority, Task, TaskStatus};
+use crate::fl;
 use egui::{Color32, Label, Response, Ui};
 use egui_extras::{Column, TableBuilder};
-use crate::fl;
 
 #[derive(Debug)]
 pub struct TaskTable<'a> {
@@ -46,7 +46,8 @@ impl<'a> TaskTable<'a> {
                 .header(28.0, |mut header| {
                     header.col(|ui| {
                         ui.strong(
-                            egui::RichText::new(fl!("done")).color(egui::Color32::from_rgb(0, 240, 255)),
+                            egui::RichText::new(fl!("done"))
+                                .color(egui::Color32::from_rgb(0, 240, 255)),
                         );
                     });
                     header.col(|ui| {
@@ -75,7 +76,8 @@ impl<'a> TaskTable<'a> {
                     });
                     header.col(|ui| {
                         ui.strong(
-                            egui::RichText::new(fl!("edit")).color(egui::Color32::from_rgb(0, 240, 255)),
+                            egui::RichText::new(fl!("edit"))
+                                .color(egui::Color32::from_rgb(0, 240, 255)),
                         );
                     });
                 })

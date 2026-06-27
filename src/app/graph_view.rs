@@ -1,11 +1,10 @@
 use super::main_app::{App, AppState};
 use crate::driver::Task;
+use crate::fl;
 use eframe::egui::{self, Align, Button, Layout, vec2};
 use egui::Ui;
-use egui_plot::{Bar, BarChart, Plot, PlotBounds};
-use rand::{Rng, RngExt}; // 💡 rand 0.8 用のRngトレイトをインポート
+use rand::RngExt; // 💡 rand 0.8 用のRngトレイトをインポート
 use tracing::info;
-use crate::fl;
 
 impl App {
     /// Renders the task editing view inside a dedicated panel setup.
@@ -44,7 +43,5 @@ impl App {
 fn generate_random_30_days() -> Vec<f64> {
     // 💡 修正4: rand 0.8 の thread_rng() に戻します
     let mut rng = rand::rng();
-    (0..30)
-        .map(|_| rng.random_range(10.0..=100.0))
-        .collect()
+    (0..30).map(|_| rng.random_range(10.0..=100.0)).collect()
 }
