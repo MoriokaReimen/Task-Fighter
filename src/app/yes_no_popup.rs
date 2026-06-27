@@ -1,4 +1,5 @@
 use eframe::egui;
+use crate::fl;
 
 /// ポップアップの状態を管理する構造体
 pub struct YesNoPopup {
@@ -60,11 +61,11 @@ impl YesNoPopup {
                 |ui| {
                     ui.horizontal(|ui| {
                         // 2. ボタンクリック時に結果を格納し、直接モーダルを閉じるフラグを立てる
-                        if ui.button("No").clicked() {
+                        if ui.button(fl!("no")).clicked() {
                             result = PopupResult::No;
                             self.is_open = false;
                         }
-                        if ui.button("Yes").clicked() {
+                        if ui.button(fl!("yes")).clicked() {
                             result = PopupResult::Yes;
                             self.is_open = false;
                         }

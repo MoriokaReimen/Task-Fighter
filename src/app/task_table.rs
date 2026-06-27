@@ -1,6 +1,7 @@
 use crate::driver::{Priority, Task, TaskStatus};
 use egui::{Color32, Label, Response, Ui};
 use egui_extras::{Column, TableBuilder};
+use crate::fl;
 
 #[derive(Debug)]
 pub struct TaskTable<'a> {
@@ -36,8 +37,8 @@ impl<'a> TaskTable<'a> {
                 .striped(true)
                 .column(Column::exact(40.0)) // Checkbox
                 .column(Column::remainder()) // title (トリミングされるためremainderが活きます)
-                .column(Column::exact(60.0)) // priority
-                .column(Column::exact(70.0)) // Due Date (日付表示に合わせて少し広めに調整)
+                .column(Column::exact(80.0)) // priority
+                .column(Column::exact(90.0)) // Due Date (日付表示に合わせて少し広めに調整)
                 .column(Column::exact(100.0)) // Progress
                 .column(Column::exact(60.0)); // Edit Button
 
@@ -45,36 +46,36 @@ impl<'a> TaskTable<'a> {
                 .header(28.0, |mut header| {
                     header.col(|ui| {
                         ui.strong(
-                            egui::RichText::new("Done").color(egui::Color32::from_rgb(0, 240, 255)),
+                            egui::RichText::new(fl!("done")).color(egui::Color32::from_rgb(0, 240, 255)),
                         );
                     });
                     header.col(|ui| {
                         ui.strong(
-                            egui::RichText::new("Title")
+                            egui::RichText::new(fl!("title"))
                                 .color(egui::Color32::from_rgb(0, 240, 255)),
                         );
                     });
                     header.col(|ui| {
                         ui.strong(
-                            egui::RichText::new("Priority")
+                            egui::RichText::new(fl!("priority"))
                                 .color(egui::Color32::from_rgb(0, 240, 255)),
                         );
                     });
                     header.col(|ui| {
                         ui.strong(
-                            egui::RichText::new("Due Date")
+                            egui::RichText::new(fl!("due_date"))
                                 .color(egui::Color32::from_rgb(0, 240, 255)),
                         );
                     });
                     header.col(|ui| {
                         ui.strong(
-                            egui::RichText::new("Progress")
+                            egui::RichText::new(fl!("progress"))
                                 .color(egui::Color32::from_rgb(0, 240, 255)),
                         );
                     });
                     header.col(|ui| {
                         ui.strong(
-                            egui::RichText::new("Edit").color(egui::Color32::from_rgb(0, 240, 255)),
+                            egui::RichText::new(fl!("edit")).color(egui::Color32::from_rgb(0, 240, 255)),
                         );
                     });
                 })
@@ -97,19 +98,19 @@ impl<'a> TaskTable<'a> {
                         row.col(|ui| match task.priority {
                             Priority::High => {
                                 ui.label(
-                                    egui::RichText::new("High")
+                                    egui::RichText::new(fl!("high"))
                                         .color(Color32::from_rgb(255, 60, 60)),
                                 );
                             }
                             Priority::Medium => {
                                 ui.label(
-                                    egui::RichText::new("Medium")
+                                    egui::RichText::new(fl!("medium"))
                                         .color(Color32::from_rgb(255, 215, 0)),
                                 );
                             }
                             Priority::Low => {
                                 ui.label(
-                                    egui::RichText::new("Low")
+                                    egui::RichText::new(fl!("low"))
                                         .color(Color32::from_rgb(60, 255, 60)),
                                 );
                             }
@@ -133,7 +134,7 @@ impl<'a> TaskTable<'a> {
                             );
                         });
                         row.col(|ui| {
-                            if ui.button("✏ Edit").clicked() {
+                            if ui.button(fl!("edit")).clicked() {
                                 self.clicked = true;
                                 self.clicked_task = Some(task.clone());
                             }

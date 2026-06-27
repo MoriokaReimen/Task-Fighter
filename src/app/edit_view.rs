@@ -5,6 +5,7 @@ use crate::core::CoreOutput;
 use crate::driver::Task;
 use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
+use crate::fl;
 
 impl App {
     /// Renders the task editing view inside a dedicated panel setup.
@@ -15,7 +16,7 @@ impl App {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 // Cancel Button Action
                 if ui
-                    .add(Button::new("❌ Close").min_size(vec2(90.0, 28.0)))
+                    .add(Button::new(fl!("close")).min_size(vec2(90.0, 28.0)))
                     .clicked()
                 {
                     info!("Close Button Pressed");
@@ -26,23 +27,23 @@ impl App {
 
                 // Save Action
                 if ui
-                    .add(Button::new("💾 Save").min_size(vec2(90.0, 28.0)))
+                    .add(Button::new(fl!("save")).min_size(vec2(90.0, 28.0)))
                     .clicked()
                 {
                     info!("Save Button Pressed");
                     self.yes_no_popup
-                        .open("Save Task", "Do you want to save task?");
+                        .open(fl!("save-task"), fl!("save-task-message"));
                 }
                 if self.yes_no_popup.show(ui) == PopupResult::Yes {
                     if self.temp_task.is_saveable() {
                         self.output = self.core.update_task(self.temp_task.clone());
                     } else {
                         let message = if self.temp_task.project.is_empty() {
-                            "Project is empty."
+                            fl!("project-empty")
                         } else {
-                            "Title is empty."
+                            fl!("title-empty")
                         };
-                        self.warning_popup.open("⚠ Can not Save Task", message);
+                        self.warning_popup.open(fl!("save-fail"), message);
                     }
                 }
                 self.warning_popup.show(ui);
@@ -51,7 +52,7 @@ impl App {
 
         // --- Main Form Content ---
         egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
-            ui.heading("✏ Edit Task");
+            ui.heading(fl!("edit-task"));
             if !matches!(self.output, CoreOutput::Idle) {
                 ui.with_layout(
                     egui::Layout::centered_and_justified(egui::Direction::TopDown),

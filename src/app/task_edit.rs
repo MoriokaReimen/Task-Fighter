@@ -1,4 +1,5 @@
 use crate::driver::{Priority, Task, TaskStatus};
+use crate::fl;
 use eframe::egui::{
     Color32, ComboBox, DragValue, Grid, Response, RichText, ScrollArea, Slider, TextEdit, Ui,
 };
@@ -33,17 +34,17 @@ impl<'a> TaskEdit<'a> {
             .min_col_width(0.0)
             .show(ui, |ui| {
                 self.show_status_combo(ui);
-                ui.label("Active:");
+                ui.label(fl!("active"));
                 ui.checkbox(&mut self.task.active, "");
                 ui.end_row();
                 self.show_priority_combo(ui);
                 ui.end_row();
-                ui.label("Start Date:");
+                ui.label(fl!("start-date"));
                 ui.add(
                     egui_extras::DatePickerButton::new(&mut self.task.start_date)
                         .id_salt("create_start_date"),
                 );
-                ui.label("Due Date:");
+                ui.label(fl!("due-date"));
                 ui.add(
                     egui_extras::DatePickerButton::new(&mut self.task.due_date)
                         .id_salt("create_due_date"),
@@ -51,7 +52,7 @@ impl<'a> TaskEdit<'a> {
                 ui.end_row();
 
                 // 3行目: 進捗スライダー、作業時間
-                ui.label("Progress:");
+                ui.label(fl!("progress"));
 
                 // 💡 【ここがポイント】
                 // グリッド全体の幅から、他の列（ラベルやDragValueなど）の概算幅を差し引いて、
@@ -66,7 +67,7 @@ impl<'a> TaskEdit<'a> {
                         .step_by(1.0),
                 );
 
-                ui.label("Time Spent:");
+                ui.label(fl!("time-spent"));
                 ui.add_sized(
                     [60.0, 28.0],
                     DragValue::new(&mut self.task.time_spent)
@@ -86,7 +87,7 @@ impl<'a> TaskEdit<'a> {
             .spacing([12.0, 8.0])
             .min_col_width(60.0)
             .show(ui, |ui| {
-                ui.label("Project:");
+                ui.label(fl!("project"));
                 // 💡 -30.0 などのハードコードを辞め、現在利用可能な幅いっぱいに広げる
                 ui.add(
                     TextEdit::singleline(&mut self.task.project)
@@ -94,7 +95,7 @@ impl<'a> TaskEdit<'a> {
                 );
                 ui.end_row();
 
-                ui.label("Title:");
+                ui.label(fl!("title"));
                 ui.add(
                     TextEdit::singleline(&mut self.task.title).desired_width(ui.available_width()),
                 );
@@ -104,7 +105,7 @@ impl<'a> TaskEdit<'a> {
 
     /// 詳細説明欄（スクロールエリア）を表示
     fn show_details(&mut self, ui: &mut Ui) {
-        ui.label("Details:");
+        ui.label(fl!("details"));
 
         // 💡 1. 画面の最下部までの残り高さを取得（余白として少し引くと綺麗に収まります）
         let available_height = ui.available_height() - 8.0;
@@ -124,16 +125,16 @@ impl<'a> TaskEdit<'a> {
 
     /// ステータス選択ドロップダウン
     fn show_status_combo(&mut self, ui: &mut Ui) {
-        ui.label("Status:");
+        ui.label(fl!("status"));
         let statuses = [
-            (TaskStatus::Pending, "⏳ Pending"),
-            (TaskStatus::WorkInProgress, "🏃 In Progress"),
-            (TaskStatus::Complete, "✅ Complete"),
-            (TaskStatus::Canceled, "🚫 Canceled"),
+            (TaskStatus::Pending, fl!("pending")),
+            (TaskStatus::WorkInProgress, fl!("work_in_progress")),
+            (TaskStatus::Complete, fl!("complete")),
+            (TaskStatus::Canceled, fl!("canceled")),
         ];
 
         ComboBox::from_id_salt("create_status_combo")
-            .selected_text(statuses[self.task.status as usize].1)
+            .selected_text(statuses[self.task.status as usize].1.clone())
             .show_ui(ui, |ui| {
                 for (status, label) in statuses {
                     ui.selectable_value(&mut self.task.status, status, RichText::new(label));
@@ -143,14 +144,14 @@ impl<'a> TaskEdit<'a> {
 
     /// 優先度選択ドロップダウン
     fn show_priority_combo(&mut self, ui: &mut Ui) {
-        ui.label("Priority:");
+        ui.label(fl!("priority"));
         let priorities = [
-            (Priority::Low, "■Low", Color32::GREEN),
-            (Priority::Medium, "■Medium", Color32::YELLOW),
-            (Priority::High, "■High", Color32::RED),
+            (Priority::Low, fl!("low"), Color32::GREEN),
+            (Priority::Medium, fl!("medium"), Color32::YELLOW),
+            (Priority::High, fl!("high"), Color32::RED),
         ];
 
-        let (_, current_label, current_color) = priorities[self.task.priority as usize];
+        let (_, current_label, current_color) = priorities[self.task.priority as usize].clone();
 
         ComboBox::from_id_salt("create_priority_combo")
             .selected_text(RichText::new(current_label).color(current_color))

@@ -3,6 +3,7 @@ use crate::app::task_table::TaskTable;
 use crate::core::CoreOutput;
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
+use crate::fl;
 
 impl App {
     /// Renders the default task list dashboard view.
@@ -16,7 +17,7 @@ impl App {
         egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 if ui
-                    .add(Button::new("➕ Create New").min_size(vec2(110.0, 28.0)))
+                    .add(Button::new(fl!("create-new")).min_size(vec2(110.0, 28.0)))
                     .clicked()
                 {
                     self.state = AppState::Create;
@@ -29,7 +30,7 @@ impl App {
                 }
 
                 if ui
-                    .add(Button::new("📧 Email Report").min_size(vec2(120.0, 28.0)))
+                    .add(Button::new(fl!("email-report")).min_size(vec2(120.0, 28.0)))
                     .clicked()
                 {
                     info!("Email Report Button Pressed");
@@ -42,12 +43,12 @@ impl App {
 
         // --- Central Dashboard Content ---
         egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
-            ui.heading("📋 Task List");
+            ui.heading(fl!("task-list"));
 
             // Search Control Bar Layout
             ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
                 if ui
-                    .add(Button::new("↩ Reset").min_size(vec2(80.0, 28.0)))
+                    .add(Button::new(fl!("reset")).min_size(vec2(80.0, 28.0)))
                     .clicked()
                 {
                     info!("Reset Button Pressed");
@@ -55,14 +56,14 @@ impl App {
                 }
 
                 if ui
-                    .add(Button::new("🔍 Search").min_size(vec2(80.0, 28.0)))
+                    .add(Button::new(fl!("search")).min_size(vec2(80.0, 28.0)))
                     .clicked()
                 {
                     info!("Search Button Pressed");
                     self.output = self.core.scan_tasks(&self.scan_pattern, self.only_active);
                 }
                 ui.checkbox(&mut self.only_active, "");
-                ui.label("Only Active");
+                ui.label(fl!("only-active"));
 
                 ui.add(
                     egui::TextEdit::singleline(&mut self.scan_pattern)
@@ -87,7 +88,6 @@ impl App {
             ui.with_layout(
                 egui::Layout::centered_and_justified(egui::Direction::TopDown),
                 |ui| {
-                    // サイズを大きく設定（例: 64.0 ポイント）して表示
                     ui.add(egui::Spinner::new().size(64.0));
                 },
             );
@@ -100,7 +100,7 @@ impl App {
 
         // Guard 2: Display informational placeholder if dataset is zero-length
         if tasks.is_empty() {
-            ui.colored_label(Color32::GRAY, "No active tasks found.");
+            ui.colored_label(Color32::GRAY, fl!("no-active"));
             return;
         }
 
