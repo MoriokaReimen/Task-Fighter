@@ -37,3 +37,4 @@ priority = ⚡ 優先度
 due_date = 📅 期限日
 edit = ✏ 編集
 status = 📌 ステータス
+graph = 📈 図

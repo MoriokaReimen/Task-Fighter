@@ -15,30 +15,56 @@ impl App {
 
         // --- Bottom Action Panel ---
         egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
-            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                if ui
-                    .add(Button::new(fl!("create-new")).min_size(vec2(110.0, 28.0)))
-                    .clicked()
-                {
-                    self.state = AppState::Create;
-                    if let Ok(id) = self.core.get_next_id() {
-                        self.temp_task.id = id;
-                        info!("The next id is {}", id);
-                    } else {
-                        error!("Failed to get id");
-                    }
-                }
+            // クリックされたかどうかを記録するフラグを用意する
+            let mut go_to_graph = false;
+            let mut go_to_create = false;
 
-                if ui
-                    .add(Button::new(fl!("email-report")).min_size(vec2(120.0, 28.0)))
-                    .clicked()
-                {
-                    info!("Email Report Button Pressed");
-                    if let Some(ref tasks) = self.displayed_tasks {
-                        self.output = self.core.mail_daily(tasks.clone());
+            egui::containers::Sides::new().show(ui,
+
+                |ui| {
+                    if ui
+                        .add(Button::new(fl!("graph")).min_size(vec2(110.0, 28.0)))
+                        .clicked()
+                    {
+                        // ここではselfを書き換えず、フラグだけを立てる
+                        go_to_graph = true;
+                    }
+                },
+
+                |ui| {
+                    if ui
+                        .add(Button::new(fl!("email-report")).min_size(vec2(120.0, 28.0)))
+                        .clicked()
+                    {
+                        info!("Email Report Button Pressed");
+                        if let Some(ref tasks) = self.displayed_tasks {
+                            self.output = self.core.mail_daily(tasks.clone());
+                        }
+                    }
+                    if ui
+                        .add(Button::new(fl!("create-new")).min_size(vec2(110.0, 28.0)))
+                        .clicked()
+                    {
+                        // ここでもフラグだけを立てる
+                        go_to_create = true;
                     }
                 }
-            });
+            );
+
+            // クロージャの実行が終わった（selfの借用が解除された）後で、安全に状態を更新する
+            if go_to_graph {
+                self.state = AppState::Graph;
+            }
+            
+            if go_to_create {
+                self.state = AppState::Create;
+                if let Ok(id) = self.core.get_next_id() {
+                    self.temp_task.id = id;
+                    info!("The next id is {}", id);
+                } else {
+                    error!("Failed to get id");
+                }
+            }
         });
 
         // --- Central Dashboard Content ---

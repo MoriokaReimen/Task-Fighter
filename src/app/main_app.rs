@@ -7,6 +7,7 @@ use eframe::egui::Ui;
 use std::sync::Arc;
 use tokio::sync::oneshot::error::TryRecvError;
 use tracing::{error, warn};
+use crate::app::graph::Graph;
 
 /// Generates window configuration and initializes the application icon.
 fn get_frame_option() -> Result<eframe::NativeOptions> {
@@ -54,6 +55,7 @@ pub enum AppState {
     Default,
     Edit,
     Create,
+    Graph,
 }
 
 /// Main application state holder.
@@ -67,6 +69,7 @@ pub struct App {
     pub scan_pattern: String,
     pub yes_no_popup: YesNoPopup,
     pub warning_popup: WarningPopup,
+    pub graph: Graph,
 }
 
 impl App {
@@ -83,6 +86,7 @@ impl App {
             scan_pattern: String::new(),
             yes_no_popup: YesNoPopup::new("yes_no"),
             warning_popup: WarningPopup::new("warning"),
+            graph: Graph::new(),
         }
     }
 }
@@ -98,6 +102,7 @@ impl eframe::App for App {
             AppState::Default => self.default_view(ui, frame),
             AppState::Create => self.create_view(ui, frame),
             AppState::Edit => self.edit_view(ui, frame),
+            AppState::Graph => self.graph_view(ui, frame),
         }
     }
 }

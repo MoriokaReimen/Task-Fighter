@@ -37,3 +37,4 @@ priority = ⚡ Priority
 due_date = 📅 Due Date
 edit = ✏ Edit
 status = 📌 Status
+graph = 📈 Graph
