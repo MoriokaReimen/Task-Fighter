@@ -97,12 +97,6 @@ jobs:
           target: armv7-unknown-linux-musleabi
           strip: arm-linux-musleabi-strip
           qemu: qemu-arm
-        - build: stable-s390x
-          os: ubuntu-latest
-          rust: stable
-          target: s390x-unknown-linux-gnu
-          strip: s390x-linux-gnu-strip
-          qemu: qemu-s390x
         - build: macos
           os: macos-latest
           rust: nightly
@@ -146,7 +140,7 @@ jobs:
 
     - name: Install dependencies (Windows)
       if: startsWith(matrix.os, 'windows')
-      run: choco install gettext -y
+      run: vcpkg install gettext:x64-windows-static
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@master
@@ -184,6 +178,8 @@ jobs:
 
     - name: Build release binary
       shell: bash
+      env:
+        VCPKG_ROOT: C:\vcpkg
       run: |
         ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
         if [[ "${{ matrix.os }}" == windows-* ]]; then
