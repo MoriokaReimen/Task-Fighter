@@ -1,43 +1,56 @@
 name: release
 
+# Only do the release on x.y.z tags.
 on:
   push:
     tags:
     - "V[0-9]+.[0-9]+.[0-9]+"
 
+# We need this to be able to create releases.
 permissions:
   contents: write
 
 jobs:
+  # The create-release job runs purely to initialize the GitHub release itself,
+  # and names the release after the `x.y.z` tag that was pushed. It's separate
+  # from building the release so that we only create the release once.
   create-release:
     name: create-release
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.get_version.outputs.VERSION }}
     steps:
       - uses: actions/checkout@v4
-      
       - name: Get the release version from the tag
-        id: get_version
+        if: env.VERSION == ''
+        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+      - name: Show the version
         run: |
-          echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
-          
+          echo "version is: $VERSION"
       - name: Create GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create ${{ env.VERSION }} --draft --verify-tag --title ${{ env.VERSION }}
+        run: gh release create $VERSION --draft --verify-tag --title $VERSION
+    outputs:
+      version: ${{ env.VERSION }}
 
   build-release:
     name: build-release
     needs: ['create-release']
     runs-on: ${{ matrix.os }}
     env:
+      # For some builds, we use cross to test on 32-bit and big-endian
+      # systems.
       CARGO: cargo
-      TARGET_FLAGS: ""
+      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
+      TARGET_FLAGS:
+      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
       TARGET_DIR: ./target
+      # Bump this as appropriate. We pin to a version to make sure CI
+      # continues to work as cross releases in the past have broken things
+      # in subtle ways.
       CROSS_VERSION: v0.2.5
+      # Emit backtraces on panics.
       RUST_BACKTRACE: 1
+      # Build static releases with PCRE2.
       PCRE2_SYS_STATIC: 1
     strategy:
       fail-fast: false
@@ -48,11 +61,53 @@ jobs:
           rust: nightly
           target: x86_64-unknown-linux-musl
           strip: x86_64-linux-musl-strip
-        - build: macos-x86
+        - build: stable-x86
+          os: ubuntu-latest
+          rust: stable
+          target: i686-unknown-linux-gnu
+          strip: x86_64-linux-gnu-strip
+          qemu: i386
+        - build: stable-aarch64
+          os: ubuntu-latest
+          rust: stable
+          target: aarch64-unknown-linux-gnu
+          strip: aarch64-linux-gnu-strip
+          qemu: qemu-aarch64
+        - build: stable-aarch64-musl
+          os: ubuntu-latest
+          rust: stable
+          target: aarch64-unknown-linux-musl
+          strip: aarch64-linux-musl-strip
+          qemu: qemu-aarch64
+        - build: stable-arm-gnueabihf
+          os: ubuntu-latest
+          rust: stable
+          target: armv7-unknown-linux-gnueabihf
+          strip: arm-linux-gnueabihf-strip
+          qemu: qemu-arm
+        - build: stable-arm-musleabihf
+          os: ubuntu-latest
+          rust: stable
+          target: armv7-unknown-linux-musleabihf
+          strip: arm-linux-musleabihf-strip
+          qemu: qemu-arm
+        - build: stable-arm-musleabi
+          os: ubuntu-latest
+          rust: stable
+          target: armv7-unknown-linux-musleabi
+          strip: arm-linux-musleabi-strip
+          qemu: qemu-arm
+        - build: stable-s390x
+          os: ubuntu-latest
+          rust: stable
+          target: s390x-unknown-linux-gnu
+          strip: s390x-linux-gnu-strip
+          qemu: qemu-s390x
+        - build: macos
           os: macos-latest
           rust: nightly
           target: x86_64-apple-darwin
-        - build: macos-arm
+        - build: macos
           os: macos-latest
           rust: nightly
           target: aarch64-apple-darwin
@@ -64,6 +119,14 @@ jobs:
           os: windows-latest
           rust: nightly-x86_64-gnu
           target: x86_64-pc-windows-gnu
+        - build: winaarch64-msvc
+          os: windows-11-arm
+          rust: nightly
+          target: aarch64-pc-windows-msvc
+        - build: win32-msvc
+          os: windows-latest
+          rust: nightly
+          target: i686-pc-windows-msvc
 
     steps:
     - name: Checkout repository
@@ -91,18 +154,39 @@ jobs:
         toolchain: ${{ matrix.rust }}
         target: ${{ matrix.target }}
 
+    - name: Use Cross
+      if: matrix.os == 'ubuntu-latest' && matrix.target != ''
+      shell: bash
+      run: |
+        # In the past, new releases of 'cross' have broken CI. So for now, we
+        # pin it. We also use their pre-compiled binary releases because cross
+        # has over 100 dependencies and takes a bit to compile.
+        dir="$RUNNER_TEMP/cross-download"
+        mkdir "$dir"
+        echo "$dir" >> $GITHUB_PATH
+        cd "$dir"
+        curl -LO "https://github.com/cross-rs/cross/releases/download/$CROSS_VERSION/cross-x86_64-unknown-linux-musl.tar.gz"
+        tar xf cross-x86_64-unknown-linux-musl.tar.gz
+        echo "CARGO=cross" >> $GITHUB_ENV
+
     - name: Set target variables
       shell: bash
       run: |
         echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
         echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
 
+    - name: Show command used for Cargo
+      shell: bash
+      run: |
+        echo "cargo command is: ${{ env.CARGO }}"
+        echo "target flag is: ${{ env.TARGET_FLAGS }}"
+        echo "target dir is: ${{ env.TARGET_DIR }}"
+
     - name: Build release binary
       shell: bash
       run: |
-        ${{ env.CARGO }} ${{ env.TARGET_FLAGS }} build --verbose --profile release-lto --features pcre2
-        
-        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+        ${{ env.CARGO }} build --verbose --profile release-lto --features pcre2 ${{ env.TARGET_FLAGS }}
+        if [[ "${{ matrix.os }}" == windows-* ]]; then
           bin="target/${{ matrix.target }}/release-lto/task-fighter.exe"
         else
           bin="target/${{ matrix.target }}/release-lto/task-fighter"
@@ -113,6 +197,16 @@ jobs:
       if: matrix.os == 'macos-latest'
       shell: bash
       run: strip "$BIN"
+
+    - name: Strip release binary (cross)
+      if: env.CARGO == 'cross'
+      shell: bash
+      run: |
+        docker run --rm -v \
+          "$PWD/target:/target:Z" \
+          "ghcr.io/cross-rs/${{ matrix.target }}:main" \
+          "${{ matrix.strip }}" \
+          "/$BIN"
 
     - name: Determine archive name
       shell: bash
@@ -125,9 +219,8 @@ jobs:
       run: |
         mkdir -p "$ARCHIVE"/doc
         cp "$BIN" "$ARCHIVE"/
-        # 存在するファイルのみコピーしてください（適宜調整）
-        cp README.md "$ARCHIVE"/ 2>/dev/null || true
-        cp LICENSE* "$ARCHIVE"/ 2>/dev/null || true
+        cp {README.md,LICENSE} "$ARCHIVE"/
+        cp assets/*.png "$ARCHIVE"/doc/
 
     - name: Build archive (Windows)
       shell: bash
@@ -136,6 +229,7 @@ jobs:
         7z a "$ARCHIVE.zip" "$ARCHIVE"
         certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
         echo "ASSET=$ARCHIVE.zip" >> $GITHUB_ENV
+        echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> $GITHUB_ENV
 
     - name: Build archive (Unix)
       shell: bash
@@ -144,12 +238,13 @@ jobs:
         tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
         shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
         echo "ASSET=$ARCHIVE.tar.gz" >> $GITHUB_ENV
+        echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> $GITHUB_ENV
 
-    - name: Upload Asset to GitHub Release
-      shell: bash
+    - name: Upload release archive
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VERSION: ${{ needs.create-release.outputs.version }}
+      shell: bash
       run: |
-        gh release upload "$VERSION" "$ASSET"
-        gh release upload "$VERSION" "$ASSET.sha256"
+        version="${{ needs.create-release.outputs.version }}"
+        gh release upload "$version" ${{ env.ASSET }} ${{ env.ASSET_SUM }}
+
