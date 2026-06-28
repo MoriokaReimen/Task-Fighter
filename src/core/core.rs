@@ -99,7 +99,7 @@ impl Core {
         execute_blocking!(self, tx, |conn_lock| {
             let today = Zoned::now().date();
 
-            let days: Vec<jiff::civil::Date> = (0..30).map(|i: i32| today - i.days()).collect();
+            let days: Vec<jiff::civil::Date> = (0..100).map(|i: i32| today - i.days()).collect();
 
             days.into_iter()
                 .map(|day| driver::count_tasks_by_date(conn_lock, day))

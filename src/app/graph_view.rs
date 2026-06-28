@@ -4,7 +4,7 @@ use crate::driver::Task;
 use crate::fl;
 use eframe::egui::{self, Align, Button, Layout, vec2};
 use egui::Ui;
-use rand::RngExt; // 💡 rand 0.8 用のRngトレイトをインポート
+ // 💡 rand 0.8 用のRngトレイトをインポート
 use tracing::info;
 
 impl App {
@@ -50,7 +50,7 @@ impl App {
     fn central_panel(&mut self, ui: &mut egui::Ui) {
         egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
             ui.heading(fl!("graph"));
-            if !matches!(self.output, CoreOutput::Idle) || self.plot_data == None {
+            if !matches!(self.output, CoreOutput::Idle) || self.plot_data.is_none() {
                 ui.with_layout(
                     egui::Layout::centered_and_justified(egui::Direction::TopDown),
                     |ui| {
@@ -60,15 +60,9 @@ impl App {
                 return;
             }
             if let Some(data) = &self.plot_data {
-                info!("{:?}", data);
-                self.graph.show(ui, &data);
+                self.graph.show(ui, data);
             }
         });
     }
 }
 
-fn generate_random_30_days() -> Vec<f64> {
-    // 💡 修正4: rand 0.8 の thread_rng() に戻します
-    let mut rng = rand::rng();
-    (0..30).map(|_| rng.random_range(10.0..=100.0)).collect()
-}

@@ -1,6 +1,5 @@
-use crate::fl;
 use eframe::egui;
-use egui_plot::{Bar, BarChart, Legend, Line, Plot, PlotPoints, GridMark, GridInput};
+use egui_plot::{Bar, BarChart, GridInput, Legend, Plot};
 use jiff::{ToSpan, Zoned};
 use std::sync::{Arc, Mutex};
 use tracing::log::{error, info};
@@ -29,7 +28,7 @@ impl Graph {
 }
 
 impl Graph {
-    pub fn show(&mut self, ui: &mut egui::Ui, data: &Vec<(i32, i32, i32, i32)>) -> egui::Response {
+    pub fn show(&mut self, ui: &mut egui::Ui, data: &[(i32, i32, i32, i32)]) -> egui::Response {
         // 1. グラフの描画
         let response = self.draw_plot(ui, data);
 
@@ -49,7 +48,7 @@ impl Graph {
 
 // --- 内部補助関数（プライベートメソッド） ---
 impl Graph {
-    fn draw_plot(&mut self, ui: &mut egui::Ui, data: &Vec<(i32, i32, i32, i32)>) -> egui::Response {
+    fn draw_plot(&mut self, ui: &mut egui::Ui, data: &[(i32, i32, i32, i32)]) -> egui::Response {
         // 1. x_formatter の引数を GridMark に修正
         let x_formatter = move |mark: egui_plot::GridMark,
                                 _range: &std::ops::RangeInclusive<f64>| {
@@ -62,25 +61,60 @@ impl Graph {
 
             if index >= 0 && index < data.len() as i64 {
                 let date = start_date - days_to_subtract.days(); // 過去へ引き算
-                date.strftime("%Y/%m/%d").to_string()
+                date.strftime("%y/%m/%d").to_string()
             } else {
                 "".to_string()
             }
         };
 
-        let my_plot = Plot::new("Task Plot")
+        let max_x = if data.is_empty() {
+            0.0
+        } else {
+            (data.len() - 1) as f64
+        };
+        let max_y = data
+            .iter()
+            .map(|(p, w, c, ca)| p + w + c + ca)
+            .max()
+            .unwrap_or(10) as f64;
+
+        let task_plot = Plot::new("Task Plot")
             .legend(Legend::default())
-            .clamp_grid(true)
+            .include_y(0.0)
+            .y_axis_label("Number of Tasks")
+            .include_x(-0.5) // 左端の棒が切れないように少し余白を持たせる
+            .include_x(max_x + 0.5) // 右端の棒が切れないように少し余白を持たせる
+            .include_y(0.0) // Y軸の下限を 0 に固定
+            .include_y(max_y * 1.1) // Y軸の上限に10%の余裕（余白）を持たせる
             .x_grid_spacer(move |input: GridInput| {
                 let mut ticks = Vec::new();
                 let start = input.bounds.0.floor() as i64;
                 let end = input.bounds.1.ceil() as i64;
+
+                // 1. 現在画面に表示されている日数の幅を計算
+                let visible_width = input.bounds.1 - input.bounds.0;
+
+                // 2. 表示幅（ズームレベル）に応じてステップ（何日ごとにするか）を動的に決定
+                let step = if visible_width <= 7.0 {
+                    1 // 拡大時（1週間以下）：1日ごと
+                } else if visible_width <= 15.0 {
+                    2 // やや拡大（2週間以下）：2日ごと
+                } else if visible_width <= 45.0 {
+                    5 // 標準（1ヶ月半以下）：5日ごと
+                } else if visible_width <= 90.0 {
+                    10 // 縮小（3ヶ月以下）：10日ごと
+                } else {
+                    30 // 大幅な縮小：30日（約1ヶ月）ごと
+                };
+
                 for i in start..=end {
-                    // 2. egui_plot::GridTick を GridMark に修正
-                    ticks.push(egui_plot::GridMark {
-                        value: i as f64,
-                        step_size: input.base_step_size,
-                    });
+                    // 動的に決まった step ごとに目盛りを打つ
+                    if i % step == 0 {
+                        ticks.push(egui_plot::GridMark {
+                            value: i as f64,
+                            step_size: step as f64,
+                        });
+                    }
                 }
                 ticks
             })
@@ -128,17 +162,16 @@ impl Graph {
         }
 
         // 各ステータスの BarChart を生成し、色を設定
-        let chart_pending = BarChart::new("Pending", pending_bars)
-            .color(egui::Color32::from_rgb(230, 126, 34));
+        let chart_pending =
+            BarChart::new("Pending", pending_bars).color(egui::Color32::from_rgb(52, 152, 219));
 
-        let chart_wip = BarChart::new("WIP", wip_bars)
-            .color(egui::Color32::from_rgb(52, 152, 219));
+        let chart_wip = BarChart::new("WIP", wip_bars).color(egui::Color32::from_rgb(230, 126, 34));
 
-        let chart_complete = BarChart::new("Complete", complete_bars)
-            .color(egui::Color32::from_rgb(46, 204, 113));
+        let chart_complete =
+            BarChart::new("Complete", complete_bars).color(egui::Color32::from_rgb(46, 204, 113));
 
-        let chart_canceled = BarChart::new("Canceled", canceled_bars)
-            .color(egui::Color32::from_rgb(149, 165, 166));
+        let chart_canceled =
+            BarChart::new("Canceled", canceled_bars).color(egui::Color32::from_rgb(180, 0, 0));
 
         // 積み上げの順番を設定
         let chart_complete = chart_complete.stack_on(&[&chart_canceled]);
@@ -146,7 +179,14 @@ impl Graph {
         let chart_pending = chart_pending.stack_on(&[&chart_canceled, &chart_complete, &chart_wip]);
 
         // プロットを表示して描画
-        let inner = my_plot.show(ui, |plot_ui| {
+        let inner = task_plot.show(ui, |plot_ui| {
+            let current_bounds = plot_ui.plot_bounds();
+            let min_x = current_bounds.min()[0];
+            let max_x = current_bounds.max()[0];
+            let max_y = current_bounds.max()[1];
+            let new_bounds = egui_plot::PlotBounds::from_min_max([min_x, 0.0], [max_x, max_y]);
+            plot_ui.set_plot_bounds(new_bounds);
+
             plot_ui.bar_chart(chart_canceled);
             plot_ui.bar_chart(chart_complete);
             plot_ui.bar_chart(chart_wip);
