@@ -5,6 +5,9 @@ on:
     tags:
       - 'V[0-9]*.[0-9]*.[0-9]*'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build for ${{ matrix.os }}
@@ -42,7 +45,7 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      # 👇 Windowsの場合のみ、MSYS2環境（GCC一式含む）を完璧にセットアップ
+      # Windowsの場合のみ、MSYS2環境をセットアップ
       - name: Setup MSYS2 (Windows)
         if: matrix.os == 'windows-latest'
         uses: msys2/setup-msys2@v2
@@ -68,20 +71,17 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      # 👇 【重要】ビルドステップをOSごとに分離し、WindowsはMSYS2の環境下で実行する
-      - name: Build release (Non-Windows)
-        if: matrix.os != 'windows-latest'
-        run: cargo build --release
-
-      - name: Build release (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: msys2 {0} # 💡 MSYS2のコンテキストで実行することで、/tmp 内から確実に gcc や gettext にアクセスさせます
+      # ビルドステップ（Windowsのみ環境変数を適用してビルド）
+      - name: Build release
+        shell: bash
         run: |
-          export CC=gcc
-          export CXX=g++
           cargo build --release
+        env:
+          CC: ${{ matrix.os == 'windows-latest' && 'C:/msys64/mingw64/bin/gcc.exe' || '' }}
+          CXX: ${{ matrix.os == 'windows-latest' && 'C:/msys64/mingw64/bin/g++.exe' || '' }}
+          PATH: ${{ matrix.os == 'windows-latest' && 'C:\msys64\mingw64\bin;C:\msys64\usr\bin;C:\msys64\bin;' || '' }}${{ env.PATH }}
 
-      # 👇 パッケージング処理（Windowsは標準のPowerShellに戻すため shell: pwsh を明示）
+      # パッケージング処理
       - name: Package artifacts (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
@@ -103,12 +103,10 @@ jobs:
           cd target/release
           tar -czvf task-fighter-${TAG}-linux.tar.gz ${{ matrix.artifact_name }}
 
-      # GitHub Releaseに自動アップロード
+      # 👇 【修正】OSごとの拡張子に合わせて、自分が生成したファイルだけをピンポイントにアップロード
       - name: Create and Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            target/release/*.zip
-            target/release/*.tar.gz
+          files: target/release/*.${{ matrix.asset_extension }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
