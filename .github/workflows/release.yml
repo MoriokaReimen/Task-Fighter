@@ -76,16 +76,17 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: cargo build --release
 
-      # ビルドステップ（Windowsのみ環境変数を適用してビルド）
-      - name: Build release
+      - name: Build release (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
+          # 💡 Bash環境下で、元のPATHの先頭にMSYS2のパスを結合して環境変数を更新する
+          export PATH="C:\msys64\mingw64\bin;C:\msys64\usr\bin;C:\msys64\bin;$PATH"
           cargo build --release
         env:
-          CC: ${{ matrix.os == 'windows-latest' && 'C:/msys64/mingw64/bin/gcc.exe' || '' }}
-          CXX: ${{ matrix.os == 'windows-latest' && 'C:/msys64/mingw64/bin/g++.exe' || '' }}
-          PATH: ${{ matrix.os == 'windows-latest' && 'C:\msys64\mingw64\bin;C:\msys64\usr\bin;C:\msys64\bin;' || '' }}${{ env.PATH }}
+          # Windows環境の時だけ、MSYS2のGCCとツールへの絶対パスを強制指定
+          CC: 'C:/msys64/mingw64/bin/gcc.exe'
+          CXX: 'C:/msys64/mingw64/bin/g++.exe'
 
       # パッケージング処理
       - name: Package artifacts (Windows)
