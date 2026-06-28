@@ -1,4 +1,5 @@
 use super::main_app::{App, AppState};
+use crate::core::CoreOutput;
 use crate::driver::Task;
 use crate::fl;
 use eframe::egui::{self, Align, Button, Layout, vec2};
@@ -9,6 +10,11 @@ use tracing::info;
 impl App {
     /// Renders the task editing view inside a dedicated panel setup.
     pub fn graph_view(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
+        self.bottom_panel(ui);
+        self.central_panel(ui);
+    }
+
+    fn bottom_panel(&mut self, ui: &mut egui::Ui) {
         let mut should_close = false;
 
         // --- Bottom Action Bar ---
@@ -23,7 +29,14 @@ impl App {
                     info!("Close Button Pressed");
                     should_close = true;
                 }
-                self.graph.show_controls(ui);
+
+                if ui
+                    .add(Button::new(fl!("save-graph")).min_size(vec2(180.0, 28.0)))
+                    .clicked()
+                {
+                    info!("Save Screenshot Button Pressed");
+                    self.graph.save_screenshot();
+                }
             });
         });
 
@@ -32,10 +45,24 @@ impl App {
             self.state = AppState::Default;
             self.displayed_tasks = None;
         }
+    }
 
+    fn central_panel(&mut self, ui: &mut egui::Ui) {
         egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
             ui.heading(fl!("graph"));
-            self.graph.show(ui);
+            if !matches!(self.output, CoreOutput::Idle) || self.plot_data == None {
+                ui.with_layout(
+                    egui::Layout::centered_and_justified(egui::Direction::TopDown),
+                    |ui| {
+                        ui.add(egui::Spinner::new().size(64.0));
+                    },
+                );
+                return;
+            }
+            if let Some(data) = &self.plot_data {
+                info!("{:?}", data);
+                self.graph.show(ui, &data);
+            }
         });
     }
 }

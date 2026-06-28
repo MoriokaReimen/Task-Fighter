@@ -226,7 +226,7 @@ pub fn count_tasks_by_date(conn: &Connection, target_date: Date) -> Result<(i32,
     let sql = r#"
             SELECT COUNT(*) 
             FROM tasks
-            WHERE start_date <= ?1 AND (end_date => ?1 OR end_date IS NULL) AND status = ?2
+            WHERE start_date <= ?1 AND (end_date >= ?1 OR end_date IS NULL) AND status = ?2
         "#;
 
     let pending_count: i32 =

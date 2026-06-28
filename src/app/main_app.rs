@@ -64,6 +64,7 @@ pub struct App {
     pub core: core::Core,
     pub output: core::CoreOutput,
     pub displayed_tasks: Option<Vec<Task>>,
+    pub plot_data: Option<Vec<(i32, i32, i32, i32)>>,
     pub temp_task: Task,
     pub only_active: bool,
     pub scan_pattern: String,
@@ -81,6 +82,7 @@ impl App {
             core: core::Core::new().unwrap(),
             output: core::CoreOutput::Idle,
             displayed_tasks: None,
+            plot_data: None,
             temp_task: Task::default(),
             only_active: false,
             scan_pattern: String::new(),
@@ -141,6 +143,21 @@ impl App {
                 Err(TryRecvError::Empty) => None,
                 Err(TryRecvError::Closed) => {
                     error!("Channel closed unexpectedly (ScanTasks)");
+                    Some(CoreOutput::Idle)
+                }
+            },
+            CoreOutput::PlotData(rx) => match rx.try_recv() {
+                Ok(Ok(data)) => {
+                    self.plot_data = Some(data);
+                    Some(CoreOutput::Idle)
+                }
+                Ok(Err(e)) => {
+                    warn!("Plot Data failed: {:?}", e);
+                    Some(CoreOutput::Idle)
+                }
+                Err(TryRecvError::Empty) => None,
+                Err(TryRecvError::Closed) => {
+                    error!("Channel closed unexpectedly (plot_data)");
                     Some(CoreOutput::Idle)
                 }
             },

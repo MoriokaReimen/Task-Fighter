@@ -1,6 +1,7 @@
 use crate::fl;
 use eframe::egui;
-use egui_plot::{Legend, Line, Plot, PlotPoints};
+use egui_plot::{Bar, BarChart, Legend, Line, Plot, PlotPoints, GridMark, GridInput};
+use jiff::{ToSpan, Zoned};
 use std::sync::{Arc, Mutex};
 use tracing::log::{error, info};
 
@@ -28,9 +29,9 @@ impl Graph {
 }
 
 impl Graph {
-    pub fn show(&mut self, ui: &mut egui::Ui) -> egui::Response {
+    pub fn show(&mut self, ui: &mut egui::Ui, data: &Vec<(i32, i32, i32, i32)>) -> egui::Response {
         // 1. グラフの描画
-        let response = self.draw_plot(ui);
+        let response = self.draw_plot(ui, data);
 
         // 2. 外部からのスクリーンショット要求があれば、eguiに撮影コマンドを送信
         if self.check_save_trigger() {
@@ -44,26 +45,112 @@ impl Graph {
 
         response
     }
-
-    /// コントロールUI（保存ボタンなど）を表示するメソッド
-    pub fn show_controls(&self, ui: &mut egui::Ui) -> egui::Response {
-        let response = ui.button(fl!("save-graph"));
-        if response.clicked() {
-            self.save_screenshot();
-        }
-        response
-    }
 }
 
 // --- 内部補助関数（プライベートメソッド） ---
 impl Graph {
-    /// グラフの定義と描画を行い、描画領域を記録する
-    fn draw_plot(&mut self, ui: &mut egui::Ui) -> egui::Response {
-        let my_plot = Plot::new("My Plot").legend(Legend::default());
-        let graph: Vec<[f64; 2]> = vec![[0.0, 1.0], [2.0, 3.0], [3.0, 2.0]];
+    fn draw_plot(&mut self, ui: &mut egui::Ui, data: &Vec<(i32, i32, i32, i32)>) -> egui::Response {
+        // 1. x_formatter の引数を GridMark に修正
+        let x_formatter = move |mark: egui_plot::GridMark,
+                                _range: &std::ops::RangeInclusive<f64>| {
+            let index = mark.value.round() as i64;
 
+            // ループ側で .rev() しているため、index 0 は「データの一番後ろ（過去）」になります。
+            // 今日の日付から (データ数 - 1 - index) 日を引くことで、カレンダー通りの正しい日付になります。
+            let start_date = Zoned::now().date();
+            let days_to_subtract = (data.len() as i64 - 1) - index;
+
+            if index >= 0 && index < data.len() as i64 {
+                let date = start_date - days_to_subtract.days(); // 過去へ引き算
+                date.strftime("%Y/%m/%d").to_string()
+            } else {
+                "".to_string()
+            }
+        };
+
+        let my_plot = Plot::new("Task Plot")
+            .legend(Legend::default())
+            .clamp_grid(true)
+            .x_grid_spacer(move |input: GridInput| {
+                let mut ticks = Vec::new();
+                let start = input.bounds.0.floor() as i64;
+                let end = input.bounds.1.ceil() as i64;
+                for i in start..=end {
+                    // 2. egui_plot::GridTick を GridMark に修正
+                    ticks.push(egui_plot::GridMark {
+                        value: i as f64,
+                        step_size: input.base_step_size,
+                    });
+                }
+                ticks
+            })
+            .x_axis_formatter(x_formatter);
+
+        // ステータスごとの棒（Bar）を格納するベクタを準備
+        let mut pending_bars = Vec::new();
+        let mut wip_bars = Vec::new();
+        let mut complete_bars = Vec::new();
+        let mut canceled_bars = Vec::new();
+
+        // 過去30日分のデータを古い順（.rev()）にループ処理
+        for (i, d) in data.iter().rev().enumerate() {
+            let x = i as f64;
+
+            // グラフのホバー時（ツールチップ）に表示する正しい日付を計算
+            let start_date = Zoned::now().date();
+            let days_to_subtract = (data.len() as i64 - 1) - i as i64;
+            let current_date = start_date - days_to_subtract.days();
+            let date_str = current_date.strftime("%Y/%m/%d").to_string();
+
+            pending_bars.push(
+                Bar::new(x, d.0 as f64)
+                    .name(format!("{}: Pending: {}", date_str, d.0))
+                    .width(0.6),
+            );
+
+            wip_bars.push(
+                Bar::new(x, d.1 as f64)
+                    .name(format!("{}: WIP: {}", date_str, d.1))
+                    .width(0.6),
+            );
+
+            complete_bars.push(
+                Bar::new(x, d.2 as f64)
+                    .name(format!("{}: Complete: {}", date_str, d.2))
+                    .width(0.6),
+            );
+
+            canceled_bars.push(
+                Bar::new(x, d.3 as f64)
+                    .name(format!("{}: Canceled: {}", date_str, d.3))
+                    .width(0.6),
+            );
+        }
+
+        // 各ステータスの BarChart を生成し、色を設定
+        let chart_pending = BarChart::new("Pending", pending_bars)
+            .color(egui::Color32::from_rgb(230, 126, 34));
+
+        let chart_wip = BarChart::new("WIP", wip_bars)
+            .color(egui::Color32::from_rgb(52, 152, 219));
+
+        let chart_complete = BarChart::new("Complete", complete_bars)
+            .color(egui::Color32::from_rgb(46, 204, 113));
+
+        let chart_canceled = BarChart::new("Canceled", canceled_bars)
+            .color(egui::Color32::from_rgb(149, 165, 166));
+
+        // 積み上げの順番を設定
+        let chart_complete = chart_complete.stack_on(&[&chart_canceled]);
+        let chart_wip = chart_wip.stack_on(&[&chart_canceled, &chart_complete]);
+        let chart_pending = chart_pending.stack_on(&[&chart_canceled, &chart_complete, &chart_wip]);
+
+        // プロットを表示して描画
         let inner = my_plot.show(ui, |plot_ui| {
-            plot_ui.line(Line::new("curve", PlotPoints::from(graph)));
+            plot_ui.bar_chart(chart_canceled);
+            plot_ui.bar_chart(chart_complete);
+            plot_ui.bar_chart(chart_wip);
+            plot_ui.bar_chart(chart_pending);
         });
 
         self.plot_rect = Some(inner.response.rect);

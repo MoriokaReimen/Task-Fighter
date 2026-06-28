@@ -32,6 +32,13 @@ impl App {
                 },
                 |ui| {
                     if ui
+                        .add(Button::new(fl!("create-new")).min_size(vec2(110.0, 28.0)))
+                        .clicked()
+                    {
+                        // ここでもフラグだけを立てる
+                        go_to_create = true;
+                    }
+                    if ui
                         .add(Button::new(fl!("email-report")).min_size(vec2(120.0, 28.0)))
                         .clicked()
                     {
@@ -40,19 +47,13 @@ impl App {
                             self.output = self.core.mail_daily(tasks.clone());
                         }
                     }
-                    if ui
-                        .add(Button::new(fl!("create-new")).min_size(vec2(110.0, 28.0)))
-                        .clicked()
-                    {
-                        // ここでもフラグだけを立てる
-                        go_to_create = true;
-                    }
                 },
             );
 
             // クロージャの実行が終わった（selfの借用が解除された）後で、安全に状態を更新する
             if go_to_graph {
                 self.state = AppState::Graph;
+                self.output = self.core.get_plot_data();
             }
 
             if go_to_create {
