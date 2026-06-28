@@ -78,6 +78,7 @@ jobs:
 
       # ビルドステップ（Windowsのみ環境変数を適用してビルド）
       - name: Build release
+        if: matrix.os == 'windows-latest'
         shell: bash
         run: |
           cargo build --release
