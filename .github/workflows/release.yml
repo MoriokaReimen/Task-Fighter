@@ -1,119 +1,163 @@
-name: Release Build
+name: release
 
 on:
   push:
     tags:
-      - 'V[0-9]*.[0-9]*.[0-9]*'
+    - "V[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build for ${{ matrix.os }}
+  create-release:
+    name: create-release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get the release version from the tag
+        id: get_version
+        run: |
+          echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+          
+      - name: Check that tag version and Cargo.toml version are the same
+        shell: bash
+        run: |
+          if ! grep -q "version = \"$VERSION\"" Cargo.toml; then
+            echo "version does not match Cargo.toml" >&2
+            exit 1
+          fi
+          
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create ${{ env.VERSION }} --draft --verify-tag --title ${{ env.VERSION }}
+
+  build-release:
+    name: build-release
+    needs: ['create-release']
     runs-on: ${{ matrix.os }}
+    env:
+      CARGO: cargo
+      TARGET_FLAGS: ""
+      TARGET_DIR: ./target
+      CROSS_VERSION: v0.2.5
+      RUST_BACKTRACE: 1
+      PCRE2_SYS_STATIC: 1
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            artifact_name: task-fighter
-            asset_extension: tar.gz
-          - os: windows-latest
-            artifact_name: task-fighter.exe
-            asset_extension: zip
-          - os: macos-latest
-            artifact_name: task-fighter
-            asset_extension: zip
+        - build: linux
+          os: ubuntu-latest
+          rust: nightly
+          target: x86_64-unknown-linux-musl
+          strip: x86_64-linux-musl-strip
+        - build: macos-x86
+          os: macos-latest
+          rust: nightly
+          target: x86_64-apple-darwin
+        - build: macos-arm
+          os: macos-latest
+          rust: nightly
+          target: aarch64-apple-darwin
+        - build: win-msvc
+          os: windows-latest
+          rust: nightly
+          target: x86_64-pc-windows-msvc
+        - build: win-gnu
+          os: windows-latest
+          rust: nightly-x86_64-gnu
+          target: x86_64-pc-windows-gnu
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Install dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential gettext libasound2-dev
+    - name: Install packages (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential gettext libasound2-dev
 
-      - name: Install dependencies (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install gettext
-          echo "PATH=$(brew --prefix gettext)/bin:$PATH" >> $GITHUB_ENV
+    - name: Install dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install gettext
+        echo "PATH=$(brew --prefix gettext)/bin:$PATH" >> $GITHUB_ENV
 
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+    - name: Install dependencies (Windows)
+      if: startsWith(matrix.os, 'windows')
+      run: choco install gettext -y
 
-      # Windowsの場合のみ、MSYS2環境をセットアップ
-      - name: Setup MSYS2 (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-make
-            base-devel
-            gettext
-            gettext-devel
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
+        target: ${{ matrix.target }}
 
-      - name: Cargo cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
+    - name: Set target variables
+      shell: bash
+      run: |
+        echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
+        echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
 
-      - name: Build release (Non-Windows)
-        if: matrix.os != 'windows-latest'
-        run: cargo build --release
+    - name: Build release binary
+      shell: bash
+      run: |
+        ${{ env.CARGO }} ${{ env.TARGET_FLAGS }} build --verbose --profile release-lto --features pcre2
+        
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          bin="target/${{ matrix.target }}/release-lto/task-fighter.exe"
+        else
+          bin="target/${{ matrix.target }}/release-lto/task-fighter"
+        fi
+        echo "BIN=$bin" >> $GITHUB_ENV
 
-      - name: Build release (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          # 💡 Bash環境下で、元のPATHの先頭にMSYS2のパスを結合して環境変数を更新する
-          export PATH="C:\msys64\mingw64\bin;C:\msys64\usr\bin;C:\msys64\bin;$PATH"
-          cargo build --release
-        env:
-          # Windows環境の時だけ、MSYS2のGCCとツールへの絶対パスを強制指定
-          CC: 'C:/msys64/mingw64/bin/gcc.exe'
-          CXX: 'C:/msys64/mingw64/bin/g++.exe'
+    - name: Strip release binary (macos)
+      if: matrix.os == 'macos-latest'
+      shell: bash
+      run: strip "$BIN"
 
-      # パッケージング処理
-      - name: Package artifacts (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          $TAG = "${{ github.ref_name }}"
-          Compress-Archive -Path target/release/${{ matrix.artifact_name }} -DestinationPath target/release/task-fighter-${TAG}-windows.zip
+    - name: Determine archive name
+      shell: bash
+      run: |
+        version="${{ needs.create-release.outputs.version }}"
+        echo "ARCHIVE=task-fighter-$version-${{ matrix.target }}" >> $GITHUB_ENV
 
-      - name: Package artifacts (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          TAG="${{ github.ref_name }}"
-          cd target/release
-          zip task-fighter-${TAG}-macos.zip ${{ matrix.artifact_name }}
+    - name: Creating directory for archive
+      shell: bash
+      run: |
+        mkdir -p "$ARCHIVE"/doc
+        cp "$BIN" "$ARCHIVE"/
+        # 存在するファイルのみコピーしてください（適宜調整）
+        cp README.md "$ARCHIVE"/ 2>/dev/null || true
+        cp LICENSE* "$ARCHIVE"/ 2>/dev/null || true
 
-      - name: Package artifacts (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          TAG="${{ github.ref_name }}"
-          cd target/release
-          tar -czvf task-fighter-${TAG}-linux.tar.gz ${{ matrix.artifact_name }}
+    - name: Build archive (Windows)
+      shell: bash
+      if: startsWith(matrix.os, 'windows')
+      run: |
+        7z a "$ARCHIVE.zip" "$ARCHIVE"
+        certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
+        echo "ASSET=$ARCHIVE.zip" >> $GITHUB_ENV
 
-      # 👇 【修正】OSごとの拡張子に合わせて、自分が生成したファイルだけをピンポイントにアップロード
-      - name: Create and Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: target/release/*.${{ matrix.asset_extension }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build archive (Unix)
+      shell: bash
+      if: ${{ !startsWith(matrix.os, 'windows') }}
+      run: |
+        tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+        shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+        echo "ASSET=$ARCHIVE.tar.gz" >> $GITHUB_ENV
+
+    - name: Upload Asset to GitHub Release
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VERSION: ${{ needs.create-release.outputs.version }}
+      run: |
+        gh release upload "$VERSION" "$ASSET"
+        gh release upload "$VERSION" "$ASSET.sha256"
