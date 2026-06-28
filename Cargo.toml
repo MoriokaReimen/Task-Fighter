@@ -11,6 +11,9 @@ keywords = ["todo", "task-manager", "egui", "duckdb", "productivity", "desktop-a
 categories = ["gui", "productivity"]
 
 [dependencies]
+fluent-templates = "0.9"
+unic-langid = "0.9"
+sys-locale = "0.3"  # DesktopLanguageRequester の代わりにOSの言語を取得する用
 anyhow = "1.0.102"
 eframe = "^0.34"
 egui = "^0.34"
@@ -29,11 +32,8 @@ toml = "^1.1"
 duckdb = { version = "^1.10504", features = ["bundled"] }
 pulldown-cmark = { version = "^0.13", default-features = false, features = ["html"] }
 syntect = "5.3.0"
-i18n-embed-fl = "^0.10"
 lazy_static = "1.5.0"
 fluent = "0.17.0"
-cargo-i18n = "0.2.13"
-i18n-embed = { version = "^0.16", features = ["fluent-system", "rust-embed", "desktop-requester"] }
 rust-embed = "8.11.0"
 egui_plot = "^0.35"
 rfd = "0.17.2"
