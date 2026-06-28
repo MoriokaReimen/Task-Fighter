@@ -67,24 +67,12 @@ jobs:
           target: i686-unknown-linux-gnu
           strip: x86_64-linux-gnu-strip
           qemu: i386
-        - build: stable-aarch64
-          os: ubuntu-latest
-          rust: stable
-          target: aarch64-unknown-linux-gnu
-          strip: aarch64-linux-gnu-strip
-          qemu: qemu-aarch64
         - build: stable-aarch64-musl
           os: ubuntu-latest
           rust: stable
           target: aarch64-unknown-linux-musl
           strip: aarch64-linux-musl-strip
           qemu: qemu-aarch64
-        - build: stable-arm-gnueabihf
-          os: ubuntu-latest
-          rust: stable
-          target: armv7-unknown-linux-gnueabihf
-          strip: arm-linux-gnueabihf-strip
-          qemu: qemu-arm
         - build: stable-arm-musleabihf
           os: ubuntu-latest
           rust: stable
