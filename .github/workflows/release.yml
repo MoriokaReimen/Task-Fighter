@@ -185,11 +185,11 @@ jobs:
     - name: Build release binary
       shell: bash
       run: |
-        ${{ env.CARGO }} build --verbose --profile release-lto --features pcre2 ${{ env.TARGET_FLAGS }}
+        ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
         if [[ "${{ matrix.os }}" == windows-* ]]; then
-          bin="target/${{ matrix.target }}/release-lto/task-fighter.exe"
+          bin="target/${{ matrix.target }}/release/task-fighter.exe"
         else
-          bin="target/${{ matrix.target }}/release-lto/task-fighter"
+          bin="target/${{ matrix.target }}/release/task-fighter"
         fi
         echo "BIN=$bin" >> $GITHUB_ENV
 
