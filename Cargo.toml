@@ -15,7 +15,7 @@ fluent-templates = "0.9"
 unic-langid = "0.9"
 sys-locale = "0.3"  # DesktopLanguageRequester の代わりにOSの言語を取得する用
 anyhow = "1.0.102"
-eframe = "^0.34"
+eframe = { version = "^0.34", features = ["default", "wayland", "x11"] }
 egui = "^0.34"
 open = "5.3.5"
 regex = "1.12.4"

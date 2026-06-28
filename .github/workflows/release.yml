@@ -114,7 +114,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential gettext libasound2-dev
-
+        sudo apt-get install -y libx11-dev libxcursor-dev libxi-dev libxrandr-dev libxinerama-dev libxkbcommon-dev pkg-config
     - name: Install dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |

@@ -1,4 +1,4 @@
-use fluent_templates::{static_loader, Loader}; // ← これがマクロ内部で明示的に必要になります
+use fluent_templates::static_loader; // ← これがマクロ内部で明示的に必要になります
 use std::sync::OnceLock;
 use unic_langid::LanguageIdentifier;
 
