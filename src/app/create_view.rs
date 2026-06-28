@@ -19,25 +19,18 @@ impl App {
                     .add(Button::new(fl!("close")).min_size(vec2(90.0, 28.0)))
                     .clicked()
                 {
-                    info!("Cancel Button Pressed");
-                    self.temp_task = Task::default();
-                    self.state = AppState::Default;
-                    self.displayed_tasks = None;
-                }
-
-                // Save Action
-                if ui
-                    .add(Button::new(fl!("save")).min_size(vec2(90.0, 28.0)))
-                    .clicked()
-                {
-                    info!("Save Button Pressed");
+                    info!("Close Button Pressed");
                     self.yes_no_popup
                         .open(fl!("save-task"), fl!("save-task-message"));
                 }
+
                 if self.yes_no_popup.show(ui) == PopupResult::Yes {
                     if self.temp_task.is_saveable() {
                         let task_to_insert = self.temp_task.clone();
                         self.output = self.core.upsert_task(task_to_insert);
+                        self.temp_task = Task::default();
+                        self.state = AppState::Default;
+                        self.displayed_tasks = None;
                     } else {
                         let message = if self.temp_task.project.is_empty() {
                             fl!("project-empty")
