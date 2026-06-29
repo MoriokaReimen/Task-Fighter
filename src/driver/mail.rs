@@ -1,14 +1,18 @@
 use crate::driver::{Priority, Task, TaskStatus};
 use anyhow::{Context, Result};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
+use image::{ImageFormat, open};
 use jiff::Zoned;
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
 use std::fmt::Write as _;
+use std::io::Cursor;
 use std::io::Write as _;
+use std::path::Path;
 use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
 use syntect::parsing::SyntaxSet;
 use tempfile::Builder;
-use tracing::info;
+use tracing::{error, info};
 
 fn md_to_html(markdown_input: &str) -> String {
     let ps = SyntaxSet::load_defaults_newlines();
@@ -116,11 +120,38 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
 <div style=\"max-width: 650px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);\">\r\n"
     );
 
+    let _ = write!(html, "<h1>Task Status Report</h1>\r\n");
+    let image_path = Path::new("./.plot.png");
+    match open(image_path) {
+        Ok(image) => {
+            // 1. メモリ上に書き出すためのバッファを用意
+            let mut buffer = Cursor::new(Vec::new());
+
+            // 2. 画像データをPNGフォーマットとしてバッファに書き込む
+            image.write_to(&mut buffer, ImageFormat::Png);
+
+            // 3. バッファからPNG形式のバイト列を取り出してBase64エンコード
+            let png_bytes = buffer.into_inner();
+            let base64_image = STANDARD.encode(png_bytes);
+
+            let img_src = format!("data:image/png;base64,{}", base64_image);
+            let _ = write!(
+                html,
+                "<div style=\"text-align: center; margin-bottom: 16px;\">\r\n\
+            <img src=\"{}\" alt=\"Report Header\" style=\"max-width: 100%; height: auto; border-radius: 4px;\">\r\n\
+            </div>\r\n\r\n",
+                img_src
+            );
+        }
+        Err(e) => {
+            error!("Failed to read file {}", e);
+        }
+    }
+
     // --- メインタイトルとサマリーカード ---
     let _ = write!(
         html,
-        "<h1>Task Status Report</h1>\r\n\
-<p style=\"color: #666666; font-size: 14px; margin-top: -8px;\">Generated on {}</p>\r\n\r\n\
+        "<p style=\"color: #666666; font-size: 14px; margin-top: -8px;\">Generated on {}</p>\r\n\r\n\
 <div style=\"background: #f8f9fa; border: 1px solid #e1e4e6; border-radius: 6px; padding: 16px; margin-bottom: 24px;\">\r\n\
 <h3 style=\"margin: 0 0 12px 0; font-size: 16px; color: #444444;\">📊 Summary</h3>\r\n\
 <table style=\"width: 100%; font-size: 14px; border-collapse: collapse;\">\r\n\

@@ -1,9 +1,9 @@
+use crate::fl;
 use eframe::egui;
 use egui_plot::{Bar, BarChart, GridInput, Legend, Plot};
 use jiff::{ToSpan, Zoned};
 use std::sync::{Arc, Mutex};
 use tracing::log::{error, info};
-use crate::fl;
 
 pub struct Graph {
     // グラフの描画領域（位置とサイズ）を記録する
@@ -49,155 +49,6 @@ impl Graph {
 
 // --- 内部補助関数（プライベートメソッド） ---
 impl Graph {
-    fn draw_plot(&mut self, ui: &mut egui::Ui, data: &[(i32, i32, i32, i32)]) -> egui::Response {
-        // 1. x_formatter の引数を GridMark に修正
-        let x_formatter = move |mark: egui_plot::GridMark,
-                                _range: &std::ops::RangeInclusive<f64>| {
-            let index = mark.value.round() as i64;
-
-            // ループ側で .rev() しているため、index 0 は「データの一番後ろ（過去）」になります。
-            // 今日の日付から (データ数 - 1 - index) 日を引くことで、カレンダー通りの正しい日付になります。
-            let start_date = Zoned::now().date();
-            let days_to_subtract = (data.len() as i64 - 1) - index;
-
-            if index >= 0 && index < data.len() as i64 {
-                let date = start_date - days_to_subtract.days(); // 過去へ引き算
-                date.strftime("%y/%m/%d").to_string()
-            } else {
-                "".to_string()
-            }
-        };
-
-        let max_x = if data.is_empty() {
-            0.0
-        } else {
-            (data.len() - 1) as f64
-        };
-        let max_y = data
-            .iter()
-            .map(|(p, w, c, ca)| p + w + c + ca)
-            .max()
-            .unwrap_or(10) as f64;
-
-        let task_plot = Plot::new(fl!("task-plot"))
-            .legend(Legend::default())
-            .include_y(0.0)
-            .y_axis_label(fl!("number-of-tasks"))
-            .include_x(-0.5) // 左端の棒が切れないように少し余白を持たせる
-            .include_x(max_x + 0.5) // 右端の棒が切れないように少し余白を持たせる
-            .include_y(0.0) // Y軸の下限を 0 に固定
-            .include_y(max_y * 1.1) // Y軸の上限に10%の余裕（余白）を持たせる
-            .x_grid_spacer(move |input: GridInput| {
-                let mut ticks = Vec::new();
-                let start = input.bounds.0.floor() as i64;
-                let end = input.bounds.1.ceil() as i64;
-
-                // 1. 現在画面に表示されている日数の幅を計算
-                let visible_width = input.bounds.1 - input.bounds.0;
-
-                // 2. 表示幅（ズームレベル）に応じてステップ（何日ごとにするか）を動的に決定
-                let step = if visible_width <= 7.0 {
-                    1 // 拡大時（1週間以下）：1日ごと
-                } else if visible_width <= 15.0 {
-                    2 // やや拡大（2週間以下）：2日ごと
-                } else if visible_width <= 45.0 {
-                    5 // 標準（1ヶ月半以下）：5日ごと
-                } else if visible_width <= 90.0 {
-                    10 // 縮小（3ヶ月以下）：10日ごと
-                } else {
-                    30 // 大幅な縮小：30日（約1ヶ月）ごと
-                };
-
-                for i in start..=end {
-                    // 動的に決まった step ごとに目盛りを打つ
-                    if i % step == 0 {
-                        ticks.push(egui_plot::GridMark {
-                            value: i as f64,
-                            step_size: step as f64,
-                        });
-                    }
-                }
-                ticks
-            })
-            .x_axis_formatter(x_formatter);
-
-        // ステータスごとの棒（Bar）を格納するベクタを準備
-        let mut pending_bars = Vec::new();
-        let mut wip_bars = Vec::new();
-        let mut complete_bars = Vec::new();
-        let mut canceled_bars = Vec::new();
-
-        // 過去30日分のデータを古い順（.rev()）にループ処理
-        for (i, d) in data.iter().rev().enumerate() {
-            let x = i as f64;
-
-            // グラフのホバー時（ツールチップ）に表示する正しい日付を計算
-            let start_date = Zoned::now().date();
-            let days_to_subtract = (data.len() as i64 - 1) - i as i64;
-            let current_date = start_date - days_to_subtract.days();
-            let date_str = current_date.strftime("%Y/%m/%d").to_string();
-
-            pending_bars.push(
-                Bar::new(x, d.0 as f64)
-                    .name(format!("{}: {}: {}", date_str, fl!("pending"), d.0))
-                    .width(0.6),
-            );
-
-            wip_bars.push(
-                Bar::new(x, d.1 as f64)
-                    .name(format!("{}: {}: {}", date_str, fl!("work_in_progress"), d.1))
-                    .width(0.6),
-            );
-
-            complete_bars.push(
-                Bar::new(x, d.2 as f64)
-                    .name(format!("{}: {}: {}", date_str, fl!("complete"), d.2))
-                    .width(0.6),
-            );
-
-            canceled_bars.push(
-                Bar::new(x, d.3 as f64)
-                    .name(format!("{}: {}: {}", date_str, fl!("canceled"), d.3))
-                    .width(0.6),
-            );
-        }
-
-        // 各ステータスの BarChart を生成し、色を設定
-        let chart_pending =
-            BarChart::new(fl!("pending"), pending_bars).color(egui::Color32::from_rgb(52, 152, 219));
-
-        let chart_wip = BarChart::new(fl!("work_in_progress"), wip_bars).color(egui::Color32::from_rgb(230, 126, 34));
-
-        let chart_complete =
-            BarChart::new(fl!("complete"), complete_bars).color(egui::Color32::from_rgb(46, 204, 113));
-
-        let chart_canceled =
-            BarChart::new(fl!("canceled"), canceled_bars).color(egui::Color32::from_rgb(180, 0, 0));
-
-        // 積み上げの順番を設定
-        let chart_complete = chart_complete.stack_on(&[&chart_canceled]);
-        let chart_wip = chart_wip.stack_on(&[&chart_canceled, &chart_complete]);
-        let chart_pending = chart_pending.stack_on(&[&chart_canceled, &chart_complete, &chart_wip]);
-
-        // プロットを表示して描画
-        let inner = task_plot.show(ui, |plot_ui| {
-            let current_bounds = plot_ui.plot_bounds();
-            let min_x = current_bounds.min()[0];
-            let max_x = current_bounds.max()[0];
-            let max_y = current_bounds.max()[1];
-            let new_bounds = egui_plot::PlotBounds::from_min_max([min_x, 0.0], [max_x, max_y]);
-            plot_ui.set_plot_bounds(new_bounds);
-
-            plot_ui.bar_chart(chart_canceled);
-            plot_ui.bar_chart(chart_complete);
-            plot_ui.bar_chart(chart_wip);
-            plot_ui.bar_chart(chart_pending);
-        });
-
-        self.plot_rect = Some(inner.response.rect);
-        inner.response
-    }
-
     /// 保存要求フラグが立っているか確認し、立っていればリセットして true を返す
     fn check_save_trigger(&self) -> bool {
         let Ok(mut guard) = self.should_save.lock() else {
@@ -252,5 +103,148 @@ impl Graph {
                 Err(err) => error!("Failed to save image: {err}"),
             }
         });
+    }
+    fn draw_plot(&mut self, ui: &mut egui::Ui, data: &[(i32, i32, i32, i32)]) -> egui::Response {
+        // 1. x_formatter の引数を GridMark に修正
+        let x_formatter = move |mark: egui_plot::GridMark,
+                                _range: &std::ops::RangeInclusive<f64>| {
+            let index = mark.value.round() as i64;
+
+            let start_date = Zoned::now().date();
+            let days_to_subtract = (data.len() as i64 - 1) - index;
+
+            if index >= 0 && index < data.len() as i64 {
+                let date = start_date - days_to_subtract.days();
+                date.strftime("%y/%m/%d").to_string()
+            } else {
+                "".to_string()
+            }
+        };
+
+        let max_x = if data.is_empty() {
+            0.0
+        } else {
+            (data.len() - 1) as f64
+        };
+        let max_y = data
+            .iter()
+            .map(|(p, w, c, ca)| p + w + c + ca)
+            .max()
+            .unwrap_or(10) as f64;
+
+        // 【修正ポイント】可変な変数として定義し、メソッドチェーンの後に設定を流し込む
+        let mut task_plot = Plot::new(fl!("task-plot"))
+            .legend(Legend::default().position(egui_plot::Corner::LeftTop))
+            .y_axis_label(fl!("number-of-tasks"))
+            .include_x(-0.5)
+            .include_x(max_x + 0.5)
+            .include_y(0.0)
+            .include_y(max_y * 1.1)
+            .x_grid_spacer(move |input: GridInput| {
+                let mut ticks = Vec::new();
+                let start = input.bounds.0.floor() as i64;
+                let end = input.bounds.1.ceil() as i64;
+                let visible_width = input.bounds.1 - input.bounds.0;
+
+                let step = if visible_width <= 7.0 {
+                    1
+                } else if visible_width <= 15.0 {
+                    2
+                } else if visible_width <= 45.0 {
+                    5
+                } else if visible_width <= 90.0 {
+                    10
+                } else {
+                    30
+                };
+
+                for i in start..=end {
+                    if i % step == 0 {
+                        ticks.push(egui_plot::GridMark {
+                            value: i as f64,
+                            step_size: step as f64,
+                        });
+                    }
+                }
+                ticks
+            })
+            .x_axis_formatter(x_formatter);
+
+        // クレートの仕様に合わせて確実に有効化
+        task_plot = task_plot.allow_double_click_reset(true);
+
+        // ステータスごとの棒（Bar）を格納するベクタを準備
+        let mut pending_bars = Vec::new();
+        let mut wip_bars = Vec::new();
+        let mut complete_bars = Vec::new();
+        let mut canceled_bars = Vec::new();
+
+        for (i, d) in data.iter().rev().enumerate() {
+            let x = i as f64;
+            let start_date = Zoned::now().date();
+            let days_to_subtract = (data.len() as i64 - 1) - i as i64;
+            let current_date = start_date - days_to_subtract.days();
+            let date_str = current_date.strftime("%Y/%m/%d").to_string();
+
+            pending_bars.push(
+                Bar::new(x, d.0 as f64)
+                    .name(format!("{}: {}: {}", date_str, fl!("pending"), d.0))
+                    .width(0.6),
+            );
+
+            wip_bars.push(
+                Bar::new(x, d.1 as f64)
+                    .name(format!(
+                        "{}: {}: {}",
+                        date_str,
+                        fl!("work_in_progress"),
+                        d.1
+                    ))
+                    .width(0.6),
+            );
+
+            complete_bars.push(
+                Bar::new(x, d.2 as f64)
+                    .name(format!("{}: {}: {}", date_str, fl!("complete"), d.2))
+                    .width(0.6),
+            );
+
+            canceled_bars.push(
+                Bar::new(x, d.3 as f64)
+                    .name(format!("{}: {}: {}", date_str, fl!("canceled"), d.3))
+                    .width(0.6),
+            );
+        }
+
+        let chart_pending = BarChart::new(fl!("pending"), pending_bars)
+            .color(egui::Color32::from_rgb(140, 160, 180)); // 先ほどのスタイリッシュカラーを適用
+
+        let chart_wip = BarChart::new(fl!("work_in_progress"), wip_bars)
+            .color(egui::Color32::from_rgb(246, 160, 84));
+
+        let chart_complete = BarChart::new(fl!("complete"), complete_bars)
+            .color(egui::Color32::from_rgb(78, 205, 151));
+
+        let chart_canceled = BarChart::new(fl!("canceled"), canceled_bars)
+            .color(egui::Color32::from_rgb(234, 110, 110));
+
+        let chart_complete = chart_complete.stack_on(&[&chart_canceled]);
+        let chart_wip = chart_wip.stack_on(&[&chart_canceled, &chart_complete]);
+        let chart_pending = chart_pending.stack_on(&[&chart_canceled, &chart_complete, &chart_wip]);
+
+        // プロットを表示して描画
+        let inner = task_plot.show(ui, |plot_ui| {
+            // 【修正ポイント】強制固定していた set_plot_bounds を削除
+            // 代わりに include_y(0.0) をビルダー側で呼んでいるため、初期状態やダブルクリック時は自動で下が0になります。
+
+            plot_ui.bar_chart(chart_canceled);
+            plot_ui.bar_chart(chart_complete);
+            plot_ui.bar_chart(chart_wip);
+            plot_ui.bar_chart(chart_pending);
+        });
+
+        self.plot_rect = Some(inner.response.rect);
+
+        inner.response
     }
 }

@@ -89,7 +89,13 @@ impl Core {
 
     pub fn mail_daily(&self, tasks: Vec<Task>) -> CoreOutput {
         let (tx, rx) = oneshot::channel();
-        execute_blocking!(self, tx, |_conn_lock| driver::launch_system_mailer(&tasks));
+        execute_blocking!(self, tx, |conn_lock| {
+            let today = Zoned::now().date();
+            let start_date = today - 99.days();
+            let data = driver::count_tasks_by_date(conn_lock, start_date, today)?;
+            driver::export_to_png("./.plot.png", &data)?;
+            driver::launch_system_mailer(&tasks)
+        });
         CoreOutput::MailDaily(rx)
     }
 

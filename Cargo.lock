@@ -5456,6 +5456,7 @@ name = "task-fighter"
 version = "7.0.15"
 dependencies = [
  "anyhow",
+ "base64",
  "duckdb",
  "eframe",
  "egui",
