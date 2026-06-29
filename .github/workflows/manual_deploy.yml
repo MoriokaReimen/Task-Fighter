@@ -3,38 +3,44 @@ name: Manual Deploy
 on:
   workflow_dispatch:
     inputs:
-      # --- ここからターゲット選択用のUIインプット ---
       build_macos_arm:
         type: boolean
         description: "Build: aarch64-apple-darwin (macOS ARM)"
-        default: false
+        default: true
       build_macos_intel:
         type: boolean
         description: "Build: x86_64-apple-darwin (macOS Intel)"
-        default: false
+        default: true
       build_linux_arm:
         type: boolean
         description: "Build: arm-unknown-linux-musleabihf"
-        default: false
+        default: true
       build_linux_armv7:
         type: boolean
         description: "Build: armv7-unknown-linux-musleabihf"
-        default: false
+        default: true
       build_linux_x86:
         type: boolean
         description: "Build: x86_64-unknown-linux-musl"
-        default: false
+        default: true
       build_windows:
         type: boolean
         description: "Build: x86_64-pc-windows-msvc"
-        default: false
+        default: true
+      message:
+        required: true
+        default: "Write some message here"
+      dryrun:
+        type: boolean
+        description: Is dryrun?
+        default: true
 
 jobs:
   create-release:
     name: create-release
     runs-on: ubuntu-latest
     permissions:
-          contents: write
+      contents: write
     outputs:
       version: ${{ steps.set-version.outputs.VERSION }}
     steps:
@@ -55,53 +61,73 @@ jobs:
             --target main \
             --draft \
             --title $VERSION \
-            --notes "Manual test release from main branch."
+            --notes "Manual test release from main branch." \
+            --overwrite
 
   build:
     name: Build for ${{ matrix.TARGET }}
     needs: create-release
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: macos-latest
             TARGET: aarch64-apple-darwin
-            if: $build_macos_arm # UIの入力IDと紐付け
+            id: build_macos_arm
           - os: macos-latest
             TARGET: x86_64-apple-darwin
-            if: $build_macos_intel
+            id: build_macos_intel
           - os: ubuntu-latest
             TARGET: arm-unknown-linux-musleabihf
-            if: $build_linux_arm
+            id: build_linux_arm
           - os: ubuntu-latest
             TARGET: armv7-unknown-linux-musleabihf
-            if: $build_linux_armv7
+            id: build_linux_armv7
           - os: ubuntu-latest
             TARGET: x86_64-unknown-linux-musl
-            if: $build_linux_x86
+            id: build_linux_x86
           - os: windows-latest
             TARGET: x86_64-pc-windows-msvc
             EXTENSION: .exe
-            if: $build_windows
+            id: build_windows
 
     steps:
+      # --- 確実な修正ポイント1：GitHub Actions独自の構文で判定して変数を書き出す ---
+      - name: Check if build is enabled
+        id: check
+        # UIの入力が 'true'（チェックあり）なら SKIP=false、それ以外なら SKIP=true を確実に出力
+        run: |
+          if ${{ github.event.inputs[matrix.id] == 'true' }}; then
+            echo "SKIP=false" >> $GITHUB_OUTPUT
+          else
+            echo "Skipping this target..."
+            echo "SKIP=true" >> $GITHUB_OUTPUT
+          fi
+
+      # --- 修正ポイント2：以降のステップはすべて出力を厳密にチェック ---
       - name: Checkout repository
+        if: steps.check.outputs.SKIP == 'true'
         uses: actions/checkout@v4
 
       - name: Building ${{ matrix.TARGET }}
+        if: steps.check.outputs.SKIP == 'true'
         run: echo "${{ matrix.TARGET }}"
 
       - name: Setup Rust toolchain
+        if: steps.check.outputs.SKIP == 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.TARGET }}
 
       - name: Install Cross
-        if: contains(matrix.TARGET, 'linux')
+        if: steps.check.outputs.SKIP == 'true' && contains(matrix.TARGET, 'linux')
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Cargo Build
+        if: steps.check.outputs.SKIP == 'true'
         run: |
           if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
             cross build --verbose --release --target=${{ matrix.TARGET }}
@@ -111,6 +137,7 @@ jobs:
         shell: bash
 
       - name: Determine archive name
+        if: steps.check.outputs.SKIP == 'true'
         shell: bash
         run: |
           version="${{ needs.create-release.outputs.version }}"
@@ -118,6 +145,7 @@ jobs:
           echo "BIN=target/${{ matrix.TARGET }}/release/task-fighter${{ matrix.EXTENSION }}" >> $GITHUB_ENV
 
       - name: Creating directory for archive
+        if: steps.check.outputs.SKIP == 'true'
         shell: bash
         run: |
           mkdir -p "$ARCHIVE"/doc
@@ -127,7 +155,7 @@ jobs:
 
       - name: Build archive (Windows)
         shell: bash
-        if: startsWith(matrix.os, 'windows')
+        if: steps.check.outputs.SKIP == 'true' && startsWith(matrix.os, 'windows')
         run: |
           7z a "$ARCHIVE.zip" "$ARCHIVE"
           certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
@@ -136,7 +164,7 @@ jobs:
 
       - name: Build archive (Unix)
         shell: bash
-        if: ${{ !startsWith(matrix.os, 'windows') }}
+        if: steps.check.outputs.SKIP == 'true' && !startsWith(matrix.os, 'windows')
         run: |
           tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
           shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
@@ -144,9 +172,11 @@ jobs:
           echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> $GITHUB_ENV
 
       - name: Upload release archive
+        if: steps.check.outputs.SKIP == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           version="${{ needs.create-release.outputs.version }}"
-          gh release upload "$version" ${{ env.ASSET }} ${{ env.ASSET_SUM }} --clobber
+          gh release upload "$VERSION" ${{ env.ASSET }} ${{ env.ASSET_SUM }} --clobber
+
