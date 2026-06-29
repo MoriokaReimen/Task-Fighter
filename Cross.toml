@@ -2,18 +2,18 @@
 pre-build = [
     "dpkg --add-architecture armhf",
     "apt-get update",
-    "apt-get install -y libfontconfig-dev libx11-dev libxcb1-dev libasound2-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev"
+    "apt-get install -y libfontconfig-dev libx11-dev libxcb1-dev libasound2-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libfontconfig1-dev"
 ]
 
 [target.armv7-unknown-linux-gnueabihf]
 pre-build = [
     "dpkg --add-architecture armhf",
     "apt-get update",
-    "apt-get install -y libfontconfig-dev libx11-dev libxcb1-dev libasound2-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev"
+    "apt-get install -y libfontconfig-dev libx11-dev libxcb1-dev libasound2-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libfontconfig1-dev"
 ]
 
 [target.x86_64-unknown-linux-gnu]
 pre-build = [
     "apt-get update",
-    "apt-get install -y libfontconfig-dev libx11-dev libxcb1-dev libasound2-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev"
+    "apt-get install -y libfontconfig-dev libx11-dev libxcb1-dev libasound2-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libfontconfig1-dev"
 ]
