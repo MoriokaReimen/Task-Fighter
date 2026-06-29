@@ -15,10 +15,12 @@ on:
         type: boolean
         description: "Build: arm-unknown-linux-gnueabihf"
         default: false
+        PKG_CONFIG_ALLOW_CROSS: "1"
       build_linux_armv7:
         type: boolean
         description: "Build: armv7-unknown-linux-gnueabihf"
         default: false
+        PKG_CONFIG_ALLOW_CROSS: "1"
       build_linux_x86:
         type: boolean
         description: "Build: x86_64-unknown-linux-gnu"
@@ -133,6 +135,11 @@ jobs:
         - name: Cargo Build
           if: steps.check.outputs.SHOULD_BUILD == 'true' && startsWith(matrix.TARGET, 'arm')
           env:
+            CROSS_CONTAINER_ENV_PASS: "RUSTFLAGS FONTCONFIG_SYS_STATIC FREETYPE_SYS_STATIC DUCKDB_NO_PKG_CONFIG"
+            DUCKDB_NO_PKG_CONFIG: "1"
+            FONTCONFIG_SYS_STATIC: "1"
+            FREETYPE_SYS_STATIC: "1"
+            PKG_CONFIG_ALLOW_CROSS: ${{ matrix.PKG_CONFIG_ALLOW_CROSS }}
             RUSTFLAGS: "-C link-arg=-latomic"
           run: |
             if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then

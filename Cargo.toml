@@ -9,6 +9,7 @@ repository = "https://github.com/MoriokaReimen/task-fighter"
 readme = "README.md"
 keywords = ["todo", "task-manager", "egui", "duckdb", "productivity", "desktop-app"]
 categories = ["gui", "productivity"]
+freetype-sys = { version = "*", features = ["vendored"] }
 
 [dependencies]
 fluent-templates = "0.9"
