@@ -9,7 +9,7 @@ pre-build = [
 pre-build = [
     "dpkg --add-architecture armhf",
     "apt-get update",
-    "DEBIAN_FRONTEND=noninteractive apt-get install -y libx11-dev:armhf libxcb1-dev:armhf libasound2-dev:armhf libxcb-render0-dev:armhf libxcb-shape0-dev:armhf libxcb-xfixes0-dev:armhf libfontconfig1-dev:armhf libfreetype6-dev:armhf"
+    "DEBIAN_FRONTEND=noninteractive apt-get install -y libx11-dev libxcb1-dev libasound2-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libfontconfig1-dev libfreetype6-dev"
 ]
 
 [target.x86_64-unknown-linux-gnu]

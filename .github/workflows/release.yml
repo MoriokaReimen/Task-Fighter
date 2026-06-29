@@ -67,6 +67,10 @@ jobs:
               TARGET: x86_64-pc-windows-msvc
               EXTENSION: .exe
               id: build_windows
+            - os: windows-latest
+              TARGET: i686-pc-windows-msvc
+              EXTENSION: .exe
+              id: build_windows
 
       steps:
         - name: Checkout repository
