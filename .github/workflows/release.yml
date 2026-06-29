@@ -85,7 +85,7 @@ jobs:
           run: cargo install cross --git https://github.com/cross-rs/cross
 
         - name: Cargo Build
-          if: startsWith(matrix.os, 'arm')
+          if: startsWith(matrix.TARGET, 'arm')
           shell: bash
           env:
             RUSTFLAGS: "-C link-arg=-latomic"
@@ -97,10 +97,8 @@ jobs:
             fi
 
         - name: Cargo Build
-          if: "!startsWith(matrix.os, 'arm')"
+          if: "!startsWith(matrix.TARGET, 'arm')"
           shell: bash
-          env:
-            RUSTFLAGS: "-C link-arg=-latomic"
           run: |
             if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
               cross build --verbose --release --target=${{ matrix.TARGET }}

@@ -131,7 +131,7 @@ jobs:
           run: cargo install cross --git https://github.com/cross-rs/cross
 
         - name: Cargo Build
-          if: steps.check.outputs.SHOULD_BUILD == 'true' && startsWith(matrix.os, 'arm')
+          if: steps.check.outputs.SHOULD_BUILD == 'true' && startsWith(matrix.TARGET, 'arm')
           env:
             RUSTFLAGS: "-C link-arg=-latomic"
           run: |
@@ -143,7 +143,7 @@ jobs:
           shell: bash
 
         - name: Cargo Build
-          if: steps.check.outputs.SHOULD_BUILD == 'true' && !startsWith(matrix.os, 'arm')
+          if: steps.check.outputs.SHOULD_BUILD == 'true' && !startsWith(matrix.TARGET, 'arm')
           run: |
             if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
               cross build --verbose --release --target=${{ matrix.TARGET }}
