@@ -6,34 +6,27 @@ on:
       build_macos_arm:
         type: boolean
         description: "Build: aarch64-apple-darwin (macOS ARM)"
-        default: true
+        default: false
       build_macos_intel:
         type: boolean
         description: "Build: x86_64-apple-darwin (macOS Intel)"
-        default: true
+        default: false
       build_linux_arm:
         type: boolean
         description: "Build: arm-unknown-linux-musleabihf"
-        default: true
+        default: false
       build_linux_armv7:
         type: boolean
         description: "Build: armv7-unknown-linux-musleabihf"
-        default: true
+        default: false
       build_linux_x86:
         type: boolean
         description: "Build: x86_64-unknown-linux-musl"
-        default: true
+        default: false
       build_windows:
         type: boolean
         description: "Build: x86_64-pc-windows-msvc"
-        default: true
-      message:
-        required: true
-        default: "Write some message here"
-      dryrun:
-        type: boolean
-        description: Is dryrun?
-        default: true
+        default: false
 
 jobs:
   create-release:
@@ -61,8 +54,7 @@ jobs:
             --target main \
             --draft \
             --title $VERSION \
-            --notes "Manual test release from main branch." \
-            --overwrite
+            --notes "Manual test release from main branch."
 
   build:
     name: Build for ${{ matrix.TARGET }}
