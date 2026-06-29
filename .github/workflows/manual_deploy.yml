@@ -1,0 +1,154 @@
+name: Manual Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      # --- ここからターゲット選択用のUIインプット ---
+      build_macos_arm:
+        type: boolean
+        description: "Build: aarch64-apple-darwin (macOS ARM)"
+        default: true
+      build_macos_intel:
+        type: boolean
+        description: "Build: x86_64-apple-darwin (macOS Intel)"
+        default: true
+      build_linux_arm:
+        type: boolean
+        description: "Build: arm-unknown-linux-musleabihf"
+        default: true
+      build_linux_armv7:
+        type: boolean
+        description: "Build: armv7-unknown-linux-musleabihf"
+        default: true
+      build_linux_x86:
+        type: boolean
+        description: "Build: x86_64-unknown-linux-musl"
+        default: true
+      build_windows:
+        type: boolean
+        description: "Build: x86_64-pc-windows-msvc"
+        default: true
+
+jobs:
+  create-release:
+    name: create-release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set-version.outputs.VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - id: set-version
+        run: |
+          echo "VERSION=test" >> $GITHUB_ENV
+          echo "VERSION=test" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create $VERSION \
+            --target main \
+            --draft \
+            --title $VERSION \
+            --notes "Manual test release from main branch." \
+            --overwrite
+
+  build:
+    name: Build for ${{ matrix.TARGET }}
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            TARGET: aarch64-apple-darwin
+            id: build_macos_arm # UIの入力IDと紐付け
+          - os: macos-latest
+            TARGET: x86_64-apple-darwin
+            id: build_macos_intel
+          - os: ubuntu-latest
+            TARGET: arm-unknown-linux-musleabihf
+            id: build_linux_arm
+          - os: ubuntu-latest
+            TARGET: armv7-unknown-linux-musleabihf
+            id: build_linux_armv7
+          - os: ubuntu-latest
+            TARGET: x86_64-unknown-linux-musl
+            id: build_linux_x86
+          - os: windows-latest
+            TARGET: x86_64-pc-windows-msvc
+            EXTENSION: .exe
+            id: build_windows
+
+    # 【重要】UIでチェックが入っていないターゲットはスキップする
+    if: ${{ github.event.inputs[matrix.id] == 'true' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Building ${{ matrix.TARGET }}
+        run: echo "${{ matrix.TARGET }}"
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.TARGET }}
+
+      - name: Install Cross
+        if: contains(matrix.TARGET, 'linux')
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Cargo Build
+        run: |
+          if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
+            cross build --verbose --release --target=${{ matrix.TARGET }}
+          else
+            cargo build --verbose --release --target=${{ matrix.TARGET }}
+          fi
+        shell: bash
+
+      - name: Determine archive name
+        shell: bash
+        run: |
+          version="${{ needs.create-release.outputs.version }}"
+          echo "ARCHIVE=task-fighter-$version-${{ matrix.TARGET }}" >> $GITHUB_ENV
+          echo "BIN=target/${{ matrix.TARGET }}/release/task-fighter${{ matrix.EXTENSION }}" >> $GITHUB_ENV
+
+      - name: Creating directory for archive
+        shell: bash
+        run: |
+          mkdir -p "$ARCHIVE"/doc
+          cp "$BIN" "$ARCHIVE"/
+          cp README.md LICENSE "$ARCHIVE"/ || true
+          if [ -d "assets" ]; then cp assets/*.png "$ARCHIVE"/doc/ || true; fi
+
+      - name: Build archive (Windows)
+        shell: bash
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          7z a "$ARCHIVE.zip" "$ARCHIVE"
+          certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
+          echo "ASSET=$ARCHIVE.zip" >> $GITHUB_ENV
+          echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> $GITHUB_ENV
+
+      - name: Build archive (Unix)
+        shell: bash
+        if: ${{ !startsWith(matrix.os, 'windows') }}
+        run: |
+          tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+          shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+          echo "ASSET=$ARCHIVE.tar.gz" >> $GITHUB_ENV
+          echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> $GITHUB_ENV
+
+      - name: Upload release archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          version="${{ needs.create-release.outputs.version }}"
+          gh release upload "$version" ${{ env.ASSET }} ${{ env.ASSET_SUM }} --clobber
