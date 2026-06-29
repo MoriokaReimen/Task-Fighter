@@ -1,6 +1,6 @@
 use crate::fl;
 use eframe::egui;
-use egui_plot::{Bar, BarChart, GridInput, Legend, Plot};
+use egui_plot::{Bar, BarChart, GridInput, Plot};
 use jiff::{ToSpan, Zoned};
 use std::sync::{Arc, Mutex};
 use tracing::log::{error, info};
@@ -105,11 +105,12 @@ impl Graph {
         });
     }
     fn draw_plot(&mut self, ui: &mut egui::Ui, data: &[(i32, i32, i32, i32)]) -> egui::Response {
-        // 1. x_formatter の引数を GridMark に修正
+        // 1. x_formatter の定義
         let x_formatter = move |mark: egui_plot::GridMark,
                                 _range: &std::ops::RangeInclusive<f64>| {
             let index = mark.value.round() as i64;
 
+            // 今日の日付から (データ数 - 1 - index) 日を引くことで正しい日付にする
             let start_date = Zoned::now().date();
             let days_to_subtract = (data.len() as i64 - 1) - index;
 
@@ -121,6 +122,7 @@ impl Graph {
             }
         };
 
+        // 2. 最大値の計算
         let max_x = if data.is_empty() {
             0.0
         } else {
@@ -132,55 +134,16 @@ impl Graph {
             .max()
             .unwrap_or(10) as f64;
 
-        // 【修正ポイント】可変な変数として定義し、メソッドチェーンの後に設定を流し込む
-        let mut task_plot = Plot::new(fl!("task-plot"))
-            .legend(Legend::default().position(egui_plot::Corner::LeftTop))
-            .y_axis_label(fl!("number-of-tasks"))
-            .include_x(-0.5)
-            .include_x(max_x + 0.5)
-            .include_y(0.0)
-            .include_y(max_y * 1.1)
-            .x_grid_spacer(move |input: GridInput| {
-                let mut ticks = Vec::new();
-                let start = input.bounds.0.floor() as i64;
-                let end = input.bounds.1.ceil() as i64;
-                let visible_width = input.bounds.1 - input.bounds.0;
-
-                let step = if visible_width <= 7.0 {
-                    1
-                } else if visible_width <= 15.0 {
-                    2
-                } else if visible_width <= 45.0 {
-                    5
-                } else if visible_width <= 90.0 {
-                    10
-                } else {
-                    30
-                };
-
-                for i in start..=end {
-                    if i % step == 0 {
-                        ticks.push(egui_plot::GridMark {
-                            value: i as f64,
-                            step_size: step as f64,
-                        });
-                    }
-                }
-                ticks
-            })
-            .x_axis_formatter(x_formatter);
-
-        // クレートの仕様に合わせて確実に有効化
-        task_plot = task_plot.allow_double_click_reset(true);
-
-        // ステータスごとの棒（Bar）を格納するベクタを準備
+        // 3. 各ステータスの Bar を格納するベクタを準備
         let mut pending_bars = Vec::new();
         let mut wip_bars = Vec::new();
         let mut complete_bars = Vec::new();
         let mut canceled_bars = Vec::new();
 
+        // データを古い順にループ処理
         for (i, d) in data.iter().rev().enumerate() {
             let x = i as f64;
+
             let start_date = Zoned::now().date();
             let days_to_subtract = (data.len() as i64 - 1) - i as i64;
             let current_date = start_date - days_to_subtract.days();
@@ -216,33 +179,127 @@ impl Graph {
             );
         }
 
-        let chart_pending = BarChart::new(fl!("pending"), pending_bars)
-            .color(egui::Color32::from_rgb(140, 160, 180)); // 先ほどのスタイリッシュカラーを適用
+        // 4. 各ステータスの BarChart を生成
+        let chart_pending =
+            BarChart::new("", pending_bars).color(egui::Color32::from_rgb(140, 160, 180));
 
-        let chart_wip = BarChart::new(fl!("work_in_progress"), wip_bars)
-            .color(egui::Color32::from_rgb(246, 160, 84));
+        let chart_wip = BarChart::new("", wip_bars).color(egui::Color32::from_rgb(246, 160, 84));
 
-        let chart_complete = BarChart::new(fl!("complete"), complete_bars)
-            .color(egui::Color32::from_rgb(78, 205, 151));
+        let chart_complete =
+            BarChart::new("", complete_bars).color(egui::Color32::from_rgb(78, 205, 151));
 
-        let chart_canceled = BarChart::new(fl!("canceled"), canceled_bars)
-            .color(egui::Color32::from_rgb(234, 110, 110));
+        let chart_canceled =
+            BarChart::new("", canceled_bars).color(egui::Color32::from_rgb(234, 110, 110));
 
+        // 積み上げの順番を設定
         let chart_complete = chart_complete.stack_on(&[&chart_canceled]);
         let chart_wip = chart_wip.stack_on(&[&chart_canceled, &chart_complete]);
         let chart_pending = chart_pending.stack_on(&[&chart_canceled, &chart_complete, &chart_wip]);
 
-        // プロットを表示して描画
-        let inner = task_plot.show(ui, |plot_ui| {
-            // 【修正ポイント】強制固定していた set_plot_bounds を削除
-            // 代わりに include_y(0.0) をビルダー側で呼んでいるため、初期状態やダブルクリック時は自動で下が0になります。
+        // 5. Plotの設定
+        let mut task_plot = Plot::new(fl!("task-plot"))
+            .y_axis_label(fl!("number-of-tasks"))
+            .include_x(-0.5)
+            .include_x(max_x + 0.5)
+            .include_y(0.0)
+            .include_y(max_y * 1.1)
+            .x_grid_spacer(move |input: GridInput| {
+                let mut ticks = Vec::new();
+                let start = input.bounds.0.floor() as i64;
+                let end = input.bounds.1.ceil() as i64;
+                let visible_width = input.bounds.1 - input.bounds.0;
 
+                let step = if visible_width <= 7.0 {
+                    1
+                } else if visible_width <= 15.0 {
+                    2
+                } else if visible_width <= 45.0 {
+                    5
+                } else if visible_width <= 90.0 {
+                    10
+                } else {
+                    30
+                };
+
+                for i in start..=end {
+                    if i % step == 0 {
+                        ticks.push(egui_plot::GridMark {
+                            value: i as f64,
+                            step_size: step as f64,
+                        });
+                    }
+                }
+                ticks
+            })
+            .x_axis_formatter(x_formatter);
+
+        task_plot = task_plot.allow_double_click_reset(true);
+
+        let text_color = ui.visuals().text_color();
+
+        // 変数をクロージャの外で保持するための変数を準備
+        let mut plot_transform = None;
+
+        // 6. プロットの表示と描画
+        let inner = task_plot.show(ui, |plot_ui| {
             plot_ui.bar_chart(chart_canceled);
             plot_ui.bar_chart(chart_complete);
             plot_ui.bar_chart(chart_wip);
             plot_ui.bar_chart(chart_pending);
+
+            // 凡例の描画ベースとなる「現在のプロット座標からスクリーン座標への変換関数」を取得
+            plot_transform = Some(*plot_ui.transform());
         });
 
+        // 7. 【修正】グラフの描画に干渉しない安全なペインター描画（カスタム凡例）
+        if let Some(transform) = plot_transform {
+            let bounds = transform.bounds();
+
+            // グラフ左上のプロット座標を計算
+            let plot_left = bounds.min()[0] + (bounds.max()[0] - bounds.min()[0]) * 0.03;
+            let plot_top = bounds.max()[1] - (bounds.max()[1] - bounds.min()[1]) * 0.04;
+
+            // プロット座標を、画面上の絶対ピクセル位置（ScreenPos）に変換
+            let screen_start =
+                transform.position_from_point(&egui_plot::PlotPoint::new(plot_left, plot_top));
+
+            let mut current_screen_y = screen_start.y;
+            let painter = ui.painter_at(inner.response.rect);
+            let font_id = egui::FontId::proportional(12.0);
+
+            let legend_items = [
+                (fl!("pending"), egui::Color32::from_rgb(140, 160, 180)),
+                (
+                    fl!("work_in_progress"),
+                    egui::Color32::from_rgb(246, 160, 84),
+                ),
+                (fl!("complete"), egui::Color32::from_rgb(78, 205, 151)),
+                (fl!("canceled"), egui::Color32::from_rgb(234, 110, 110)),
+            ];
+
+            for (text, color) in legend_items {
+                // 画面上の絶対ピクセルサイズでカラーチップを描画
+                let rect = egui::Rect::from_min_size(
+                    egui::pos2(screen_start.x, current_screen_y),
+                    egui::vec2(14.0, 14.0),
+                );
+                painter.rect_filled(rect, 2.0, color);
+
+                // テキストを右隣に描画
+                painter.text(
+                    egui::pos2(screen_start.x + 22.0, current_screen_y + 7.0),
+                    egui::Align2::LEFT_CENTER,
+                    text,
+                    font_id.clone(),
+                    text_color,
+                );
+
+                // 次の凡例項目へ縦に22ピクセル下げる
+                current_screen_y += 22.0;
+            }
+        }
+
+        // 8. スクリーンショット用の範囲記録
         self.plot_rect = Some(inner.response.rect);
 
         inner.response

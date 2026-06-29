@@ -17,7 +17,7 @@ mod mail;
 pub use mail::launch_system_mailer;
 
 mod plot;
-pub use plot::export_to_png;
+pub use plot::export_to_base64;
 
 mod periodic_task;
 pub use periodic_task::initialize_periodic_tasks;

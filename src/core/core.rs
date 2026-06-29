@@ -93,8 +93,8 @@ impl Core {
             let today = Zoned::now().date();
             let start_date = today - 99.days();
             let data = driver::count_tasks_by_date(conn_lock, start_date, today)?;
-            driver::export_to_png("./.plot.png", &data)?;
-            driver::launch_system_mailer(&tasks)
+            let image_data = driver::export_to_base64(&data)?;
+            driver::launch_system_mailer(&tasks, &image_data)
         });
         CoreOutput::MailDaily(rx)
     }

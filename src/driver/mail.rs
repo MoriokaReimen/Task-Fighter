@@ -1,18 +1,14 @@
 use crate::driver::{Priority, Task, TaskStatus};
 use anyhow::{Context, Result};
-use base64::{Engine as _, engine::general_purpose::STANDARD};
-use image::{ImageFormat, open};
 use jiff::Zoned;
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
 use std::fmt::Write as _;
-use std::io::Cursor;
 use std::io::Write as _;
-use std::path::Path;
 use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
 use syntect::parsing::SyntaxSet;
 use tempfile::Builder;
-use tracing::{error, info};
+use tracing::info;
 
 fn md_to_html(markdown_input: &str) -> String {
     let ps = SyntaxSet::load_defaults_newlines();
@@ -89,7 +85,7 @@ fn md_to_html(markdown_input: &str) -> String {
     html_output
 }
 
-pub fn create_mail_html(tasks: &[Task]) -> String {
+pub fn create_mail_html(tasks: &[Task], image_data: &str) -> String {
     let mut html = String::new();
 
     // タスクの進捗ステータスを集計
@@ -121,32 +117,13 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
     );
 
     let _ = write!(html, "<h1>Task Status Report</h1>\r\n");
-    let image_path = Path::new("./.plot.png");
-    match open(image_path) {
-        Ok(image) => {
-            // 1. メモリ上に書き出すためのバッファを用意
-            let mut buffer = Cursor::new(Vec::new());
-
-            // 2. 画像データをPNGフォーマットとしてバッファに書き込む
-            image.write_to(&mut buffer, ImageFormat::Png);
-
-            // 3. バッファからPNG形式のバイト列を取り出してBase64エンコード
-            let png_bytes = buffer.into_inner();
-            let base64_image = STANDARD.encode(png_bytes);
-
-            let img_src = format!("data:image/png;base64,{}", base64_image);
-            let _ = write!(
-                html,
-                "<div style=\"text-align: center; margin-bottom: 16px;\">\r\n\
-            <img src=\"{}\" alt=\"Report Header\" style=\"max-width: 100%; height: auto; border-radius: 4px;\">\r\n\
-            </div>\r\n\r\n",
-                img_src
-            );
-        }
-        Err(e) => {
-            error!("Failed to read file {}", e);
-        }
-    }
+    let _ = write!(
+        html,
+        "<div style=\"text-align: center; margin-bottom: 16px;\">\r\n\
+    <img src=\"{}\" alt=\"Report Header\" style=\"max-width: 100%; height: auto; border-radius: 4px;\">\r\n\
+    </div>\r\n\r\n",
+        image_data
+    );
 
     // --- メインタイトルとサマリーカード ---
     let _ = write!(
@@ -232,8 +209,8 @@ pub fn create_mail_html(tasks: &[Task]) -> String {
     html.replace("\r\n", "\n").replace("\n", "\r\n")
 }
 
-pub fn launch_system_mailer(tasks: &[Task]) -> Result<()> {
-    let html_text = create_mail_html(tasks);
+pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
+    let html_text = create_mail_html(tasks, image_data);
     let raw_subject = Zoned::now()
         .date()
         .strftime("%Y/%m/%d Task Status Report")
