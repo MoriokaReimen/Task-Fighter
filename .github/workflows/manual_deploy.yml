@@ -87,10 +87,9 @@ jobs:
             id: build_windows
 
     steps:
-      # --- 確実な修正ポイント1：GitHub Actions独自の構文で判定して変数を書き出す ---
       - name: Check if build is enabled
         id: check
-        # UIの入力が 'true'（チェックあり）なら SKIP=false、それ以外なら SKIP=true を確実に出力
+        shell: bash
         run: |
           if ${{ github.event.inputs[matrix.id] == 'true' }}; then
             echo "SKIP=false" >> $GITHUB_OUTPUT
