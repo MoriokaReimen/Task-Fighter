@@ -16,7 +16,8 @@ pub static CURRENT_LOCALE: OnceLock<LanguageIdentifier> = OnceLock::new();
 pub fn init_i18n() -> &'static LanguageIdentifier {
     CURRENT_LOCALE.get_or_init(|| {
         let locale_str = sys_locale::get_locale().unwrap_or_else(|| "en".to_string());
-        locale_str.parse::<LanguageIdentifier>()
+        locale_str
+            .parse::<LanguageIdentifier>()
             .unwrap_or_else(|_| "en".parse().unwrap())
     })
 }

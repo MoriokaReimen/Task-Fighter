@@ -4,7 +4,7 @@ use crate::driver::Task;
 use crate::fl;
 use eframe::egui::{self, Align, Button, Layout, vec2};
 use egui::Ui;
- // 💡 rand 0.8 用のRngトレイトをインポート
+// 💡 rand 0.8 用のRngトレイトをインポート
 use tracing::info;
 
 impl App {
@@ -65,4 +65,3 @@ impl App {
         });
     }
 }
-

@@ -98,12 +98,11 @@ impl Core {
 
         execute_blocking!(self, tx, |conn_lock| {
             let today = Zoned::now().date();
+            // 直近100日間の開始日（一番古い日）を計算
+            let start_date = today - 99.days();
 
-            let days: Vec<jiff::civil::Date> = (0..100).map(|i: i32| today - i.days()).collect();
-
-            days.into_iter()
-                .map(|day| driver::count_tasks_by_date(conn_lock, day))
-                .collect::<Result<Vec<(i32, i32, i32, i32)>, _>>()
+            // 1回のクエリで全データを一括取得
+            driver::count_tasks_by_date(conn_lock, start_date, today)
         });
 
         CoreOutput::PlotData(rx)

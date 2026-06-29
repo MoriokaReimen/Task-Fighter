@@ -222,28 +222,56 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
     Ok(())
 }
 
-pub fn count_tasks_by_date(conn: &Connection, target_date: Date) -> Result<(i32, i32, i32, i32)> {
+pub fn count_tasks_by_date(
+    conn: &Connection,
+    start_date: Date,
+    end_date: Date,
+) -> Result<Vec<(i32, i32, i32, i32)>> {
     let sql = r#"
-            SELECT COUNT(*) 
+        -- 1. 引数の start_date と、DB内の本当の最古の日のうち、「より新しい方」を実際の開始日に決定する
+        WITH actual_start AS (
+            SELECT GREATEST(
+                CAST(?1 AS DATE), 
+                COALESCE(MIN(start_date), CAST(?1 AS DATE))
+            ) AS start_d 
             FROM tasks
-            WHERE start_date <= ?1 AND (end_date >= ?1 OR end_date IS NULL) AND status = ?2
-        "#;
+        ),
+        -- 2. 決定した実質的な開始日から、指定された終了日までで日付一覧を生成
+        date_range AS (
+            SELECT CAST(d AS DATE) AS d
+            FROM generate_series(
+                (SELECT start_d FROM actual_start), 
+                CAST(?2 AS DATE), 
+                INTERVAL 1 DAY
+            ) AS t(d)
+        )
+        -- 3. 今日から過去へ遡る順で並べ、最大100日分に絞って集計
+        SELECT 
+            SUM(CASE WHEN t.status = 0 THEN 1 ELSE 0 END) AS pending,
+            SUM(CASE WHEN t.status = 1 THEN 1 ELSE 0 END) AS wip,
+            SUM(CASE WHEN t.status = 2 THEN 1 ELSE 0 END) AS complete,
+            SUM(CASE WHEN t.status = 3 THEN 1 ELSE 0 END) AS canceled
+        FROM date_range r
+        LEFT JOIN tasks t ON t.start_date <= r.d AND (t.end_date >= r.d OR t.end_date IS NULL)
+        GROUP BY r.d
+        ORDER BY r.d DESC
+        LIMIT 100
+    "#;
 
-    let pending_count: i32 =
-        conn.query_row(sql, params![target_date.to_string(), 0], |row| row.get(0))?;
-    let work_in_progress_count: i32 =
-        conn.query_row(sql, params![target_date.to_string(), 1], |row| row.get(0))?;
-    let complete_count: i32 =
-        conn.query_row(sql, params![target_date.to_string(), 2], |row| row.get(0))?;
-    let canceled_count: i32 =
-        conn.query_row(sql, params![target_date.to_string(), 3], |row| row.get(0))?;
+    let mut stmt = conn.prepare(sql)?;
+    let rows = stmt.query_map(
+        params![start_date.to_string(), end_date.to_string()],
+        |row| {
+            Ok((
+                row.get::<_, Option<i32>>(0)?.unwrap_or(0), // LEFT JOINでタスクがない日はNullになるため対策
+                row.get::<_, Option<i32>>(1)?.unwrap_or(0),
+                row.get::<_, Option<i32>>(2)?.unwrap_or(0),
+                row.get::<_, Option<i32>>(3)?.unwrap_or(0),
+            ))
+        },
+    )?;
 
-    Ok((
-        pending_count,
-        work_in_progress_count,
-        complete_count,
-        canceled_count,
-    ))
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
 pub fn scan_tasks(conn: &Connection, pattern: &str, only_active: bool) -> Result<Vec<Task>> {
