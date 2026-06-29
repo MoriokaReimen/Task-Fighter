@@ -13,15 +13,15 @@ on:
         default: false
       build_linux_arm:
         type: boolean
-        description: "Build: arm-unknown-linux-musleabihf"
+        description: "Build: arm-unknown-linux-gnueabihf"
         default: false
       build_linux_armv7:
         type: boolean
-        description: "Build: armv7-unknown-linux-musleabihf"
+        description: "Build: armv7-unknown-linux-gnueabihf"
         default: false
       build_linux_x86:
         type: boolean
-        description: "Build: x86_64-unknown-linux-musl"
+        description: "Build: x86_64-unknown-linux-gnu"
         default: false
       build_windows:
         type: boolean
@@ -73,13 +73,13 @@ jobs:
             TARGET: x86_64-apple-darwin
             id: build_macos_intel
           - os: ubuntu-latest
-            TARGET: arm-unknown-linux-musleabihf
+            TARGET: arm-unknown-linux-gnueabihf
             id: build_linux_arm
           - os: ubuntu-latest
-            TARGET: armv7-unknown-linux-musleabihf
+            TARGET: armv7-unknown-linux-gnueabihf
             id: build_linux_armv7
           - os: ubuntu-latest
-            TARGET: x86_64-unknown-linux-musl
+            TARGET: x86_64-unknown-linux-gnu
             id: build_linux_x86
           - os: windows-latest
             TARGET: x86_64-pc-windows-msvc
