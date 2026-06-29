@@ -1,6 +1,6 @@
 [package]
 name = "task-fighter"
-version = "7.0.13"
+version = "7.0.14"
 edition = "2024"
 authors = ["MoriokaReimen <menschenjager.mark.neun@gmail.com>"]
 description = "Personal task management application."
