@@ -95,7 +95,7 @@ jobs:
             FONTCONFIG_SYS_STATIC: "1"
             FREETYPE_SYS_STATIC: "1"
             PKG_CONFIG_ALLOW_CROSS: ${{ matrix.PKG_CONFIG_ALLOW_CROSS }}
-            RUSTFLAGS: "-C link-arg=-latomic"
+            RUSTFLAGS: "-C link-arg=-latomic -C link-arg=-lfontconfig"
           run: |
             if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
               cross build --verbose --release --target=${{ matrix.TARGET }}
