@@ -7,32 +7,34 @@ on:
       build_macos_arm:
         type: boolean
         description: "Build: aarch64-apple-darwin (macOS ARM)"
-        default: true
+        default: false
       build_macos_intel:
         type: boolean
         description: "Build: x86_64-apple-darwin (macOS Intel)"
-        default: true
+        default: false
       build_linux_arm:
         type: boolean
         description: "Build: arm-unknown-linux-musleabihf"
-        default: true
+        default: false
       build_linux_armv7:
         type: boolean
         description: "Build: armv7-unknown-linux-musleabihf"
-        default: true
+        default: false
       build_linux_x86:
         type: boolean
         description: "Build: x86_64-unknown-linux-musl"
-        default: true
+        default: false
       build_windows:
         type: boolean
         description: "Build: x86_64-pc-windows-msvc"
-        default: true
+        default: false
 
 jobs:
   create-release:
     name: create-release
     runs-on: ubuntu-latest
+    permissions:
+          contents: write
     outputs:
       version: ${{ steps.set-version.outputs.VERSION }}
     steps:
@@ -53,8 +55,7 @@ jobs:
             --target main \
             --draft \
             --title $VERSION \
-            --notes "Manual test release from main branch." \
-            --overwrite
+            --notes "Manual test release from main branch."
 
   build:
     name: Build for ${{ matrix.TARGET }}
@@ -66,26 +67,23 @@ jobs:
         include:
           - os: macos-latest
             TARGET: aarch64-apple-darwin
-            id: build_macos_arm # UIの入力IDと紐付け
+            if: build_macos_arm # UIの入力IDと紐付け
           - os: macos-latest
             TARGET: x86_64-apple-darwin
-            id: build_macos_intel
+            if: build_macos_intel
           - os: ubuntu-latest
             TARGET: arm-unknown-linux-musleabihf
-            id: build_linux_arm
+            if: build_linux_arm
           - os: ubuntu-latest
             TARGET: armv7-unknown-linux-musleabihf
-            id: build_linux_armv7
+            if: build_linux_armv7
           - os: ubuntu-latest
             TARGET: x86_64-unknown-linux-musl
-            id: build_linux_x86
+            if: build_linux_x86
           - os: windows-latest
             TARGET: x86_64-pc-windows-msvc
             EXTENSION: .exe
-            id: build_windows
-
-    # 【重要】UIでチェックが入っていないターゲットはスキップする
-    if: ${{ github.event.inputs[matrix.id] == 'true' }}
+            if: build_windows
 
     steps:
       - name: Checkout repository
