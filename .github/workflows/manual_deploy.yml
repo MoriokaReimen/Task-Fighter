@@ -169,4 +169,4 @@ jobs:
         shell: bash
         run: |
           version="${{ needs.create-release.outputs.version }}"
-          gh release upload "test" ${{ env.ASSET }} ${{ env.ASSET_SUM }} --clobber
+          gh release upload "$version" ${{ env.ASSET }} ${{ env.ASSET_SUM }} --clobber
