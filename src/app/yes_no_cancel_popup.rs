@@ -2,7 +2,7 @@ use crate::fl;
 use eframe::egui;
 
 /// ポップアップの状態を管理する構造体
-pub struct YesNoPopup {
+pub struct YesNoCancelPopup {
     title: String,
     message: String,
     is_open: bool,
@@ -15,10 +15,11 @@ pub struct YesNoPopup {
 pub enum PopupResult {
     Yes,
     No,
+    Cancel,
     None,
 }
 
-impl YesNoPopup {
+impl YesNoCancelPopup {
     /// 新しいポップアップの作成（一意の識別子を渡す）
     pub fn new(id_source: impl std::hash::Hash) -> Self {
         Self {
@@ -61,6 +62,10 @@ impl YesNoPopup {
                 |ui| {
                     ui.horizontal(|ui| {
                         // 2. ボタンクリック時に結果を格納し、直接モーダルを閉じるフラグを立てる
+                        if ui.button(fl!("cancel")).clicked() {
+                            result = PopupResult::Cancel;
+                            self.is_open = false;
+                        }
                         if ui.button(fl!("no")).clicked() {
                             result = PopupResult::No;
                             self.is_open = false;

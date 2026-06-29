@@ -1,7 +1,7 @@
 use super::style;
 use crate::app::graph::Graph;
 use crate::app::warning_popup::WarningPopup;
-use crate::app::yes_no_popup::YesNoPopup;
+use crate::app::yes_no_cancel_popup::YesNoCancelPopup;
 use crate::core::{self, CoreOutput, Task};
 use anyhow::Result;
 use eframe::egui::Ui;
@@ -68,7 +68,7 @@ pub struct App {
     pub temp_task: Task,
     pub only_active: bool,
     pub scan_pattern: String,
-    pub yes_no_popup: YesNoPopup,
+    pub yes_no_cancel_popup: YesNoCancelPopup,
     pub warning_popup: WarningPopup,
     pub graph: Graph,
 }
@@ -86,7 +86,7 @@ impl App {
             temp_task: Task::default(),
             only_active: false,
             scan_pattern: String::new(),
-            yes_no_popup: YesNoPopup::new("yes_no"),
+            yes_no_cancel_popup: YesNoCancelPopup::new("yes_no_cancel"),
             warning_popup: WarningPopup::new("warning"),
             graph: Graph::new(),
         }

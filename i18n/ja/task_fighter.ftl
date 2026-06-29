@@ -41,3 +41,4 @@ graph = 📈 図
 save-graph = 📸 グラフを画像として保存
 task-plot = 📈 タスク図
 number-of-tasks = タスク数
+cancel = 🚫 キャンセル

@@ -1,6 +1,6 @@
 use super::main_app::{App, AppState};
 use crate::app::task_edit::TaskEdit;
-use crate::app::yes_no_popup::PopupResult;
+use crate::app::yes_no_cancel_popup::PopupResult;
 use crate::core::CoreOutput;
 use crate::driver::Task;
 use crate::fl;
@@ -20,11 +20,11 @@ impl App {
                     .clicked()
                 {
                     info!("Close Button Pressed");
-                    self.yes_no_popup
+                    self.yes_no_cancel_popup
                         .open(fl!("save-task"), fl!("save-task-message"));
                 }
 
-                match self.yes_no_popup.show(ui) {
+                match self.yes_no_cancel_popup.show(ui) {
                     PopupResult::Yes => {
                         if self.temp_task.is_saveable() {
                             self.output = self.core.update_task(self.temp_task.clone());
