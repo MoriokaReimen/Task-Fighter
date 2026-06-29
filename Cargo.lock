@@ -5453,7 +5453,7 @@ dependencies = [
 
 [[package]]
 name = "task-fighter"
-version = "7.0.15"
+version = "7.0.16"
 dependencies = [
  "anyhow",
  "base64",
