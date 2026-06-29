@@ -36,6 +36,13 @@ jobs:
       contents: write
     outputs:
       version: ${{ steps.set-version.outputs.VERSION }}
+      # マトリックス動的生成用のフィルター出力を追加
+      build_macos_arm: ${{ github.event.inputs.build_macos_arm }}
+      build_macos_intel: ${{ github.event.inputs.build_macos_intel }}
+      build_linux_arm: ${{ github.event.inputs.build_linux_arm }}
+      build_linux_armv7: ${{ github.event.inputs.build_linux_armv7 }}
+      build_linux_x86: ${{ github.event.inputs.build_linux_x86 }}
+      build_windows: ${{ github.event.inputs.build_windows }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,8 +50,9 @@ jobs:
 
       - id: set-version
         run: |
-          echo "VERSION=test" >> $GITHUB_ENV
-          echo "VERSION=test" >> $GITHUB_OUTPUT
+          VERSION="Manual-Build-$(TZ='Asia/Tokyo' date +'%Y%m%d-%H%M%S')"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Create GitHub release
         env:
@@ -55,118 +63,123 @@ jobs:
             --draft \
             --title $VERSION \
             --notes "Manual test release from main branch."
-
   build:
-    name: Build for ${{ matrix.TARGET }}
-    needs: create-release
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            TARGET: aarch64-apple-darwin
-            id: build_macos_arm
-          - os: macos-latest
-            TARGET: x86_64-apple-darwin
-            id: build_macos_intel
-          - os: ubuntu-latest
-            TARGET: arm-unknown-linux-gnueabihf
-            id: build_linux_arm
-          - os: ubuntu-latest
-            TARGET: armv7-unknown-linux-gnueabihf
-            id: build_linux_armv7
-          - os: ubuntu-latest
-            TARGET: x86_64-unknown-linux-gnu
-            id: build_linux_x86
-          - os: windows-latest
-            TARGET: x86_64-pc-windows-msvc
-            EXTENSION: .exe
-            id: build_windows
+      name: Build for ${{ matrix.TARGET }}
+      needs: create-release
+      runs-on: ${{ matrix.os }}
+      permissions:
+        contents: write
+      strategy:
+        fail-fast: false
+        matrix:
+          include:
+            - os: macos-latest
+              TARGET: aarch64-apple-darwin
+              id: build_macos_arm
+            - os: macos-latest
+              TARGET: x86_64-apple-darwin
+              id: build_macos_intel
+            - os: ubuntu-latest
+              TARGET: arm-unknown-linux-gnueabihf
+              id: build_linux_arm
+            - os: ubuntu-latest
+              TARGET: armv7-unknown-linux-gnueabihf
+              id: build_linux_armv7
+            - os: ubuntu-latest
+              TARGET: x86_64-unknown-linux-gnu
+              id: build_linux_x86
+            - os: windows-latest
+              TARGET: x86_64-pc-windows-msvc
+              EXTENSION: .exe
+              id: build_windows
 
-    steps:
-      - name: Check if build is enabled
-        id: check
-        shell: bash
-        run: |
-          if ${{ github.event.inputs[matrix.id] == 'true' }}; then
-            echo "SKIP=false" >> $GITHUB_OUTPUT
-          else
-            echo "Skipping this target..."
-            echo "SKIP=true" >> $GITHUB_OUTPUT
-          fi
+      # ─── 修正ポイント：ここにあった if 構文を削除 ───
 
-      # --- 修正ポイント2：以降のステップはすべて出力を厳密にチェック ---
-      - name: Checkout repository
-        if: steps.check.outputs.SKIP == 'false'
-        uses: actions/checkout@v4
+      steps:
+        # ★ 改善：ここで最初にチェックボックスを判定し、falseならこのジョブを即座に成功終了（スキップ）させる
+        - name: Check if build is enabled
+          id: check
+          shell: bash
+          run: |
+            if [ "${{ needs.create-release.outputs[matrix.id] }}" = "true" ]; then
+              echo "SHOULD_BUILD=true" >> $GITHUB_OUTPUT
+            else
+              echo "Skipping this target (not selected in inputs)"
+              echo "SHOULD_BUILD=false" >> $GITHUB_OUTPUT
+            fi
 
-      - name: Building ${{ matrix.TARGET }}
-        if: steps.check.outputs.SKIP == 'false'
-        run: echo "${{ matrix.TARGET }}"
+        # ─── 以降のすべてのステップに if: steps.check.outputs.SHOULD_BUILD == 'true' を付与 ───
 
-      - name: Setup Rust toolchain
-        if: steps.check.outputs.SKIP == 'false'
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.TARGET }}
+        - name: Checkout repository
+          if: steps.check.outputs.SHOULD_BUILD == 'true'
+          uses: actions/checkout@v4
 
-      - name: Install Cross
-        if: steps.check.outputs.SKIP == 'false' && contains(matrix.TARGET, 'linux')
-        run: cargo install cross --git https://github.com/cross-rs/cross
+        - name: Setup Rust toolchain
+          if: steps.check.outputs.SHOULD_BUILD == 'true'
+          uses: dtolnay/rust-toolchain@stable
+          with:
+            targets: ${{ matrix.TARGET }}
 
-      - name: Cargo Build
-        if: steps.check.outputs.SKIP == 'false'
-        run: |
-          if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
-            cross build --verbose --release --target=${{ matrix.TARGET }}
-          else
-            cargo build --verbose --release --target=${{ matrix.TARGET }}
-          fi
-        shell: bash
+        - name: Rust Cache
+          if: steps.check.outputs.SHOULD_BUILD == 'true'
+          uses: Swatinem/rust-cache@v2
+          with:
+            key: ${{ matrix.TARGET }}
 
-      - name: Determine archive name
-        if: steps.check.outputs.SKIP == 'false'
-        shell: bash
-        run: |
-          version="${{ needs.create-release.outputs.version }}"
-          echo "ARCHIVE=task-fighter-$version-${{ matrix.TARGET }}" >> $GITHUB_ENV
-          echo "BIN=target/${{ matrix.TARGET }}/release/task-fighter${{ matrix.EXTENSION }}" >> $GITHUB_ENV
+        - name: Install Cross
+          if: steps.check.outputs.SHOULD_BUILD == 'true' && contains(matrix.TARGET, 'linux')
+          uses: taiki-e/install-action@cross
 
-      - name: Creating directory for archive
-        if: steps.check.outputs.SKIP == 'false'
-        shell: bash
-        run: |
-          mkdir -p "$ARCHIVE"/doc
-          cp "$BIN" "$ARCHIVE"/
-          cp README.md LICENSE "$ARCHIVE"/ || true
-          if [ -d "assets" ]; then cp assets/*.png "$ARCHIVE"/doc/ || true; fi
+        - name: Cargo Build
+          if: steps.check.outputs.SHOULD_BUILD == 'true'
+          run: |
+            if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
+              cross build --verbose --release --target=${{ matrix.TARGET }}
+            else
+              cargo build --verbose --release --target=${{ matrix.TARGET }}
+            fi
+          shell: bash
 
-      - name: Build archive (Windows)
-        shell: bash
-        if: steps.check.outputs.SKIP == 'false' && startsWith(matrix.os, 'windows')
-        run: |
-          7z a "$ARCHIVE.zip" "$ARCHIVE"
-          certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
-          echo "ASSET=$ARCHIVE.zip" >> $GITHUB_ENV
-          echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> $GITHUB_ENV
+        - name: Determine archive name
+          if: steps.check.outputs.SHOULD_BUILD == 'true'
+          shell: bash
+          run: |
+            version="${{ needs.create-release.outputs.version }}"
+            echo "ARCHIVE=task-fighter-$version-${{ matrix.TARGET }}" >> $GITHUB_ENV
+            echo "BIN=target/${{ matrix.TARGET }}/release/task-fighter${{ matrix.EXTENSION }}" >> $GITHUB_ENV
 
-      - name: Build archive (Unix)
-        shell: bash
-        if: steps.check.outputs.SKIP == 'false' && !startsWith(matrix.os, 'windows')
-        run: |
-          tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
-          shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
-          echo "ASSET=$ARCHIVE.tar.gz" >> $GITHUB_ENV
-          echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> $GITHUB_ENV
+        - name: Creating directory for archive
+          if: steps.check.outputs.SHOULD_BUILD == 'true'
+          shell: bash
+          run: |
+            mkdir -p "$ARCHIVE"/doc
+            cp "$BIN" "$ARCHIVE"/
+            cp README.md LICENSE "$ARCHIVE"/ || true
+            if [ -d "assets" ]; then cp assets/*.png "$ARCHIVE"/doc/ || true; fi
 
-      - name: Upload release archive
-        if: steps.check.outputs.SKIP == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          version="${{ needs.create-release.outputs.version }}"
-          gh release upload "$version" ${{ env.ASSET }} ${{ env.ASSET_SUM }} --clobber
+        - name: Build archive (Windows)
+          shell: bash
+          if: steps.check.outputs.SHOULD_BUILD == 'true' && startsWith(matrix.os, 'windows')
+          run: |
+            7z a "$ARCHIVE.zip" "$ARCHIVE"
+            certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
+            echo "ASSET=$ARCHIVE.zip" >> $GITHUB_ENV
+            echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> $GITHUB_ENV
+
+        - name: Build archive (Unix)
+          shell: bash
+          if: steps.check.outputs.SHOULD_BUILD == 'true' && !startsWith(matrix.os, 'windows')
+          run: |
+            tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+            shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+            echo "ASSET=$ARCHIVE.tar.gz" >> $GITHUB_ENV
+            echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> $GITHUB_ENV
+
+        - name: Upload release archive
+          if: steps.check.outputs.SHOULD_BUILD == 'true'
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          shell: bash
+          run: |
+            version="${{ needs.create-release.outputs.version }}"
+            gh release upload "$version" ${{ env.ASSET }} ${{ env.ASSET_SUM }} --clobber
