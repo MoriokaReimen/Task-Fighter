@@ -49,7 +49,7 @@ impl App {
 
     fn central_panel(&mut self, ui: &mut egui::Ui) {
         egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
-            ui.heading(fl!("graph"));
+            ui.heading(fl!("task-plot"));
             if !matches!(self.output, CoreOutput::Idle) || self.plot_data.is_none() {
                 ui.with_layout(
                     egui::Layout::centered_and_justified(egui::Direction::TopDown),

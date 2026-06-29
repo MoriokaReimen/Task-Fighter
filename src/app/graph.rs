@@ -3,6 +3,7 @@ use egui_plot::{Bar, BarChart, GridInput, Legend, Plot};
 use jiff::{ToSpan, Zoned};
 use std::sync::{Arc, Mutex};
 use tracing::log::{error, info};
+use crate::fl;
 
 pub struct Graph {
     // グラフの描画領域（位置とサイズ）を記録する
@@ -78,10 +79,10 @@ impl Graph {
             .max()
             .unwrap_or(10) as f64;
 
-        let task_plot = Plot::new("Task Plot")
+        let task_plot = Plot::new(fl!("task-plot"))
             .legend(Legend::default())
             .include_y(0.0)
-            .y_axis_label("Number of Tasks")
+            .y_axis_label(fl!("number-of-tasks"))
             .include_x(-0.5) // 左端の棒が切れないように少し余白を持たせる
             .include_x(max_x + 0.5) // 右端の棒が切れないように少し余白を持たせる
             .include_y(0.0) // Y軸の下限を 0 に固定
@@ -138,40 +139,40 @@ impl Graph {
 
             pending_bars.push(
                 Bar::new(x, d.0 as f64)
-                    .name(format!("{}: Pending: {}", date_str, d.0))
+                    .name(format!("{}: {}: {}", date_str, fl!("pending"), d.0))
                     .width(0.6),
             );
 
             wip_bars.push(
                 Bar::new(x, d.1 as f64)
-                    .name(format!("{}: WIP: {}", date_str, d.1))
+                    .name(format!("{}: {}: {}", date_str, fl!("work_in_progress"), d.1))
                     .width(0.6),
             );
 
             complete_bars.push(
                 Bar::new(x, d.2 as f64)
-                    .name(format!("{}: Complete: {}", date_str, d.2))
+                    .name(format!("{}: {}: {}", date_str, fl!("complete"), d.2))
                     .width(0.6),
             );
 
             canceled_bars.push(
                 Bar::new(x, d.3 as f64)
-                    .name(format!("{}: Canceled: {}", date_str, d.3))
+                    .name(format!("{}: {}: {}", date_str, fl!("canceled"), d.3))
                     .width(0.6),
             );
         }
 
         // 各ステータスの BarChart を生成し、色を設定
         let chart_pending =
-            BarChart::new("Pending", pending_bars).color(egui::Color32::from_rgb(52, 152, 219));
+            BarChart::new(fl!("pending"), pending_bars).color(egui::Color32::from_rgb(52, 152, 219));
 
-        let chart_wip = BarChart::new("WIP", wip_bars).color(egui::Color32::from_rgb(230, 126, 34));
+        let chart_wip = BarChart::new(fl!("work_in_progress"), wip_bars).color(egui::Color32::from_rgb(230, 126, 34));
 
         let chart_complete =
-            BarChart::new("Complete", complete_bars).color(egui::Color32::from_rgb(46, 204, 113));
+            BarChart::new(fl!("complete"), complete_bars).color(egui::Color32::from_rgb(46, 204, 113));
 
         let chart_canceled =
-            BarChart::new("Canceled", canceled_bars).color(egui::Color32::from_rgb(180, 0, 0));
+            BarChart::new(fl!("canceled"), canceled_bars).color(egui::Color32::from_rgb(180, 0, 0));
 
         // 積み上げの順番を設定
         let chart_complete = chart_complete.stack_on(&[&chart_canceled]);

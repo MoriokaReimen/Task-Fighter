@@ -39,3 +39,5 @@ edit = ✏ Edit
 status = 📌 Status
 graph = 📈 Graph
 save-graph = 📸 Save Graph Image
+task-plot = 📈 Task Plot
+number-of-tasks = Number of Tasks
