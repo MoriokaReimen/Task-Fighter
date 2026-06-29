@@ -24,21 +24,29 @@ impl App {
                         .open(fl!("save-task"), fl!("save-task-message"));
                 }
 
-                if self.yes_no_popup.show(ui) == PopupResult::Yes {
-                    if self.temp_task.is_saveable() {
-                        let task_to_insert = self.temp_task.clone();
-                        self.output = self.core.upsert_task(task_to_insert);
+                match self.yes_no_popup.show(ui) {
+                    PopupResult::Yes => {
+                        if self.temp_task.is_saveable() {
+                            let task_to_insert = self.temp_task.clone();
+                            self.output = self.core.upsert_task(task_to_insert);
+                            self.temp_task = Task::default();
+                            self.state = AppState::Default;
+                            self.displayed_tasks = None;
+                        } else {
+                            let message = if self.temp_task.project.is_empty() {
+                                fl!("project-empty")
+                            } else {
+                                fl!("title-empty")
+                            };
+                            self.warning_popup.open(fl!("save-error"), message);
+                        }
+                    }
+                    PopupResult::No => {
                         self.temp_task = Task::default();
                         self.state = AppState::Default;
                         self.displayed_tasks = None;
-                    } else {
-                        let message = if self.temp_task.project.is_empty() {
-                            fl!("project-empty")
-                        } else {
-                            fl!("title-empty")
-                        };
-                        self.warning_popup.open(fl!("save-error"), message);
                     }
+                    _ => {}
                 }
                 self.warning_popup.show(ui);
             });
