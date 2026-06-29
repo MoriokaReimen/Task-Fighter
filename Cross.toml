@@ -1,8 +1,8 @@
-[target.arm-unknown-linux-gnueabihf]
+[target.aarch64-unknown-linux-gnu]
 pre-build = [
-    "dpkg --add-architecture armhf",
+    "dpkg --add-architecture arm64",
     "apt-get update",
-    "DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated libx11-dev libxcb1-dev libasound2-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libfontconfig1-dev libfreetype6-dev"
+    "DEBIAN_FRONTEND=noninteractive apt-get install -y libx11-dev:arm64 libxcb1-dev:arm64 libasound2-dev:arm64 libxcb-render0-dev:arm64 libxcb-shape0-dev:arm64 libxcb-xfixes0-dev:arm64 libfontconfig1-dev:arm64 libfreetype6-dev:arm64"
 ]
 
 [target.armv7-unknown-linux-gnueabihf]

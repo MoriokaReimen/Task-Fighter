@@ -13,7 +13,7 @@ on:
         default: false
       build_linux_arm:
         type: boolean
-        description: "Build: arm-unknown-linux-gnueabihf"
+        description: "Build: aarch64-unknown-linux-gnu"
         default: false
         PKG_CONFIG_ALLOW_CROSS: "1"
       build_linux_armv7:
@@ -82,7 +82,7 @@ jobs:
               TARGET: x86_64-apple-darwin
               id: build_macos_intel
             - os: ubuntu-latest
-              TARGET: arm-unknown-linux-gnueabihf
+              TARGET: aarch64-unknown-linux-gnu
               id: build_linux_arm
             - os: ubuntu-latest
               TARGET: armv7-unknown-linux-gnueabihf
@@ -133,7 +133,7 @@ jobs:
           run: cargo install cross --git https://github.com/cross-rs/cross
 
         - name: Cargo Build
-          if: steps.check.outputs.SHOULD_BUILD == 'true' && startsWith(matrix.TARGET, 'arm')
+          if: steps.check.outputs.SHOULD_BUILD == 'true' && startsWith(matrix.TARGET, 'arm') || startsWith(matrix.TARGET, 'aarch')
           env:
             CROSS_CONTAINER_ENV_PASS: "RUSTFLAGS FONTCONFIG_SYS_STATIC FREETYPE_SYS_STATIC DUCKDB_NO_PKG_CONFIG"
             DUCKDB_NO_PKG_CONFIG: "1"
@@ -150,7 +150,7 @@ jobs:
           shell: bash
 
         - name: Cargo Build
-          if: steps.check.outputs.SHOULD_BUILD == 'true' && !startsWith(matrix.TARGET, 'arm')
+          if: steps.check.outputs.SHOULD_BUILD == 'true' && !startsWith(matrix.TARGET, 'arm') && !startsWith(matrix.TARGET, 'aarch')
           run: |
             if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
               cross build --verbose --release --target=${{ matrix.TARGET }}
