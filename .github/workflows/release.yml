@@ -4,16 +4,13 @@ name: release
 on:
   push:
     tags:
-    - "V[0-9]+.[0-9]+.[0-9]+"
+    - "[0-9]+.[0-9]+.[0-9]+"
 
 # We need this to be able to create releases.
 permissions:
   contents: write
 
 jobs:
-  # The create-release job runs purely to initialize the GitHub release itself,
-  # and names the release after the `x.y.z` tag that was pushed. It's separate
-  # from building the release so that we only create the release once.
   create-release:
     name: create-release
     runs-on: ubuntu-latest
@@ -25,6 +22,13 @@ jobs:
       - name: Show the version
         run: |
           echo "version is: $VERSION"
+      - name: Check that tag version and Cargo.toml version are the same
+        shell: bash
+        run: |
+          if ! grep -q "version = \"$VERSION\"" Cargo.toml; then
+            echo "version does not match Cargo.toml" >&2
+            exit 1
+          fi
       - name: Create GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -32,199 +36,100 @@ jobs:
     outputs:
       version: ${{ env.VERSION }}
 
-  build-release:
-    name: build-release
-    needs: ['create-release']
-    runs-on: ${{ matrix.os }}
-    env:
-      # For some builds, we use cross to test on 32-bit and big-endian
-      # systems.
-      CARGO: cargo
-      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
-      TARGET_FLAGS:
-      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
-      TARGET_DIR: ./target
-      # Bump this as appropriate. We pin to a version to make sure CI
-      # continues to work as cross releases in the past have broken things
-      # in subtle ways.
-      CROSS_VERSION: v0.2.5
-      # Emit backtraces on panics.
-      RUST_BACKTRACE: 1
-      # Build static releases with PCRE2.
-      PCRE2_SYS_STATIC: 1
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-        - build: linux
-          os: ubuntu-latest
-          rust: nightly
-          target: x86_64-unknown-linux-musl
-          strip: x86_64-linux-musl-strip
-        - build: stable-aarch64-musl
-          os: ubuntu-latest
-          rust: stable
-          target: aarch64-unknown-linux-musl
-          strip: aarch64-linux-musl-strip
-          qemu: qemu-aarch64
-        - build: stable-arm-musleabihf
-          os: ubuntu-latest
-          rust: stable
-          target: armv7-unknown-linux-musleabihf
-          strip: arm-linux-musleabihf-strip
-          qemu: qemu-arm
-        - build: stable-arm-musleabi
-          os: ubuntu-latest
-          rust: stable
-          target: armv7-unknown-linux-musleabi
-          strip: arm-linux-musleabi-strip
-          qemu: qemu-arm
-        - build: macos
-          os: macos-latest
-          rust: nightly
-          target: x86_64-apple-darwin
-        - build: macos
-          os: macos-latest
-          rust: nightly
-          target: aarch64-apple-darwin
-        - build: win-msvc
-          os: windows-latest
-          rust: nightly
-          target: x86_64-pc-windows-msvc
-        - build: win-gnu
-          os: windows-latest
-          rust: nightly-x86_64-gnu
-          target: x86_64-pc-windows-gnu
-          rustflags: -C link-args=-static
-        - build: winaarch64-msvc
-          os: windows-11-arm
-          rust: nightly
-          target: aarch64-pc-windows-msvc
-        - build: win32-msvc
-          os: windows-latest
-          rust: nightly
-          target: i686-pc-windows-msvc
+  build:
+      name: Build for ${{ matrix.TARGET }}
+      needs: create-release
+      runs-on: ${{ matrix.os }}
+      permissions:
+        contents: write
+      strategy:
+        fail-fast: false
+        matrix:
+          include:
+            - os: macos-latest
+              TARGET: aarch64-apple-darwin
+              id: build_macos_arm
+            - os: macos-latest
+              TARGET: x86_64-apple-darwin
+              id: build_macos_intel
+            - os: ubuntu-latest
+              TARGET: arm-unknown-linux-gnueabihf
+              id: build_linux_arm
+            - os: ubuntu-latest
+              TARGET: armv7-unknown-linux-gnueabihf
+              id: build_linux_armv7
+            - os: ubuntu-latest
+              TARGET: x86_64-unknown-linux-gnu
+              id: build_linux_x86
+            - os: windows-latest
+              TARGET: x86_64-pc-windows-msvc
+              EXTENSION: .exe
+              id: build_windows
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
 
-    - name: Install packages (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential gettext libasound2-dev
-        sudo apt-get install -y libx11-dev libxcursor-dev libxi-dev libxrandr-dev libxinerama-dev libxkbcommon-dev pkg-config
-    - name: Install dependencies (macOS)
-      if: matrix.os == 'macos-latest'
-      run: |
-        brew install gettext
-        echo "PATH=$(brew --prefix gettext)/bin:$PATH" >> $GITHUB_ENV
+        - name: Setup Rust toolchain
+          uses: dtolnay/rust-toolchain@stable
+          with:
+            targets: ${{ matrix.TARGET }}
 
-    - name: Install dependencies (Windows)
-      if: startsWith(matrix.os, 'windows')
-      run: vcpkg install gettext:x64-windows-static
+        - name: Rust Cache
+          uses: Swatinem/rust-cache@v2
+          with:
+            key: ${{ matrix.TARGET }}
 
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ matrix.rust }}
-        target: ${{ matrix.target }}
+        - name: Install Cross
+          if: contains(matrix.TARGET, 'linux')
+          uses: taiki-e/install-action@cross
 
-    - name: Use Cross
-      if: matrix.os == 'ubuntu-latest' && matrix.target != ''
-      shell: bash
-      run: |
-        # In the past, new releases of 'cross' have broken CI. So for now, we
-        # pin it. We also use their pre-compiled binary releases because cross
-        # has over 100 dependencies and takes a bit to compile.
-        dir="$RUNNER_TEMP/cross-download"
-        mkdir "$dir"
-        echo "$dir" >> $GITHUB_PATH
-        cd "$dir"
-        curl -LO "https://github.com/cross-rs/cross/releases/download/$CROSS_VERSION/cross-x86_64-unknown-linux-musl.tar.gz"
-        tar xf cross-x86_64-unknown-linux-musl.tar.gz
-        echo "CARGO=cross" >> $GITHUB_ENV
+        - name: Cargo Build
+          shell: bash
+          run: |
+            if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
+              cross build --verbose --release --target=${{ matrix.TARGET }}
+            else
+              cargo build --verbose --release --target=${{ matrix.TARGET }}
+            fi
 
-    - name: Set target variables
-      shell: bash
-      run: |
-        echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
-        echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
+        - name: Determine archive name
+          shell: bash
+          run: |
+            version="${{ needs.create-release.outputs.version }}"
+            echo "ARCHIVE=task-fighter-$version-${{ matrix.TARGET }}" >> $GITHUB_ENV
+            echo "BIN=target/${{ matrix.TARGET }}/release/task-fighter${{ matrix.EXTENSION }}" >> $GITHUB_ENV
 
-    - name: Show command used for Cargo
-      shell: bash
-      run: |
-        echo "cargo command is: ${{ env.CARGO }}"
-        echo "target flag is: ${{ env.TARGET_FLAGS }}"
-        echo "target dir is: ${{ env.TARGET_DIR }}"
+        - name: Creating directory for archive
+          shell: bash
+          run: |
+            mkdir -p "$ARCHIVE"/doc
+            cp "$BIN" "$ARCHIVE"/
+            cp README.md LICENSE "$ARCHIVE"/ || true
+            if [ -d "assets" ]; then cp assets/*.png "$ARCHIVE"/doc/ || true; fi
 
-    - name: Build release binary
-      shell: bash
-      env:
-        VCPKG_ROOT: C:\vcpkg
-        RUSTFLAGS: ${{ matrix.rustflags }}
-      run: |
-        ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
-        if [[ "${{ matrix.os }}" == windows-* ]]; then
-          bin="target/${{ matrix.target }}/release/task-fighter.exe"
-        else
-          bin="target/${{ matrix.target }}/release/task-fighter"
-        fi
-        echo "BIN=$bin" >> $GITHUB_ENV
+        - name: Build archive (Windows)
+          shell: bash
+          if: startsWith(matrix.os, 'windows')
+          run: |
+            7z a "$ARCHIVE.zip" "$ARCHIVE"
+            certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
+            echo "ASSET=$ARCHIVE.zip" >> $GITHUB_ENV
+            echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> $GITHUB_ENV
 
-    - name: Strip release binary (macos)
-      if: matrix.os == 'macos-latest'
-      shell: bash
-      run: strip "$BIN"
+        - name: Build archive (Unix)
+          shell: bash
+          if: !startsWith(matrix.os, 'windows')
+          run: |
+            tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+            shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+            echo "ASSET=$ARCHIVE.tar.gz" >> $GITHUB_ENV
+            echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> $GITHUB_ENV
 
-    - name: Strip release binary (cross)
-      if: env.CARGO == 'cross'
-      shell: bash
-      run: |
-        docker run --rm -v \
-          "$PWD/target:/target:Z" \
-          "ghcr.io/cross-rs/${{ matrix.target }}:main" \
-          "${{ matrix.strip }}" \
-          "/$BIN"
-
-    - name: Determine archive name
-      shell: bash
-      run: |
-        version="${{ needs.create-release.outputs.version }}"
-        echo "ARCHIVE=task-fighter-$version-${{ matrix.target }}" >> $GITHUB_ENV
-
-    - name: Creating directory for archive
-      shell: bash
-      run: |
-        mkdir -p "$ARCHIVE"/doc
-        cp "$BIN" "$ARCHIVE"/
-        cp {README.md,LICENSE} "$ARCHIVE"/
-        cp assets/*.png "$ARCHIVE"/doc/
-
-    - name: Build archive (Windows)
-      shell: bash
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        7z a "$ARCHIVE.zip" "$ARCHIVE"
-        certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
-        echo "ASSET=$ARCHIVE.zip" >> $GITHUB_ENV
-        echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> $GITHUB_ENV
-
-    - name: Build archive (Unix)
-      shell: bash
-      if: ${{ !startsWith(matrix.os, 'windows') }}
-      run: |
-        tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
-        shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
-        echo "ASSET=$ARCHIVE.tar.gz" >> $GITHUB_ENV
-        echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> $GITHUB_ENV
-
-    - name: Upload release archive
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      shell: bash
-      run: |
-        version="${{ needs.create-release.outputs.version }}"
-        gh release upload "$version" ${{ env.ASSET }} ${{ env.ASSET_SUM }}
-
+        - name: Upload release archive
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          shell: bash
+          run: |
+            version="${{ needs.create-release.outputs.version }}"
+            gh release upload "$version" ${{ env.ASSET }} ${{ env.ASSET_SUM }} --clobber
