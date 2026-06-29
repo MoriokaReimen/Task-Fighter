@@ -1,6 +1,9 @@
 [target.arm-unknown-linux-gnueabihf]
 pre-build = [
     "dpkg --add-architecture armhf",
+    "sed -i 's/deb http/deb [arch=amd64,i386] http/g' /etc/apt/sources.list",
+    "SUITE=$(. /etc/os-release && echo $VERSION_CODENAME) && echo \"deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ ${SUITE} main universe restricted multiverse\" >> /etc/apt/sources.list",
+    "SUITE=$(. /etc/os-release && echo $VERSION_CODENAME) && echo \"deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ ${SUITE}-updates main universe restricted multiverse\" >> /etc/apt/sources.list",
     "apt-get update",
     "DEBIAN_FRONTEND=noninteractive apt-get install -y libx11-dev:armhf libxcb1-dev:armhf libasound2-dev:armhf libxcb-render0-dev:armhf libxcb-shape0-dev:armhf libxcb-xfixes0-dev:armhf libfontconfig1-dev:armhf libfreetype6-dev:armhf"
 ]
@@ -9,7 +12,7 @@ pre-build = [
 pre-build = [
     "dpkg --add-architecture armhf",
     "apt-get update",
-    "DEBIAN_FRONTEND=noninteractive apt-get install -y libx11-dev libxcb1-dev libasound2-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libfontconfig1-dev libfreetype6-dev"
+    "DEBIAN_FRONTEND=noninteractive apt-get install -y libx11-dev:armhf libxcb1-dev:armhf libasound2-dev:armhf libxcb-render0-dev:armhf libxcb-shape0-dev:armhf libxcb-xfixes0-dev:armhf libfontconfig1-dev:armhf libfreetype6-dev:armhf"
 ]
 
 [target.x86_64-unknown-linux-gnu]
