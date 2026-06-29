@@ -128,7 +128,7 @@ jobs:
 
         - name: Install Cross
           if: steps.check.outputs.SHOULD_BUILD == 'true' && contains(matrix.TARGET, 'linux')
-          uses: taiki-e/install-action@cross
+          run: cargo install cross --git https://github.com/cross-rs/cross
 
         - name: Cargo Build
           if: steps.check.outputs.SHOULD_BUILD == 'true'
