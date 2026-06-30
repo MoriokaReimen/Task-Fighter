@@ -28,18 +28,18 @@ macro_rules! fl {
     // 引数なしの場合
     ($message_id:literal) => {{
         use fluent_templates::Loader; // マクロ展開先でトレイトをスコープに入れる
-        let lang = $crate::app::i18n::init_i18n();
-        $crate::app::i18n::LOCALES.lookup(lang, $message_id)
+        let lang = $crate::i18n::init_i18n();
+        $crate::i18n::LOCALES.lookup(lang, $message_id)
     }};
 
     // 引数（変数埋め込み）がある場合
     ($message_id:literal, $($key:expr => $value:expr),* $(,)?) => {{
         use fluent_templates::Loader; // マクロ展開先でトレイトをスコープに入れる
-        let lang = $crate::app::i18n::init_i18n();
+        let lang = $crate::i18n::init_i18n();
         let mut args = std::collections::HashMap::new();
         $(
             args.insert($key, fluent_templates::fluent_bundle::FluentValue::from($value));
         )*
-        $crate::app::i18n::LOCALES.lookup_with_args(lang, $message_id, &args)
+        $crate::i18n::LOCALES.lookup_with_args(lang, $message_id, &args)
     }};
 }

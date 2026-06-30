@@ -21,3 +21,5 @@ pub use plot::export_to_base64;
 
 mod periodic_task;
 pub use periodic_task::initialize_periodic_tasks;
+
+pub use duckdb::Connection;

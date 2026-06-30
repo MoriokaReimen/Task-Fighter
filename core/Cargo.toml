@@ -1,0 +1,21 @@
+[package]
+name = "core"
+version = "7.0.22"
+edition = "2024"
+authors = ["MoriokaReimen <menschenjager.mark.neun@gmail.com>"]
+description = "Personal task management application."
+license = "Apache-2.0"
+repository = "https://github.com/MoriokaReimen/task-fighter"
+readme = "README.md"
+keywords = ["todo", "task-manager", "egui", "duckdb", "productivity", "desktop-app"]
+categories = ["gui", "productivity"]
+
+[dependencies]
+driver = {path = "../driver"}
+tracing.workspace = true
+anyhow.workspace = true
+jiff.workspace = true
+tokio = { version = "^1.0", features = ["full"] }
+
+[build]
+rustc-wrapper = "sccache"

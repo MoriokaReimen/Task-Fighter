@@ -1,17 +1,16 @@
 use super::style;
-use crate::app::graph::Graph;
-use crate::app::warning_popup::WarningPopup;
-use crate::app::yes_no_cancel_popup::YesNoCancelPopup;
-use crate::core::{self, CoreOutput, Task};
+use crate::graph::Graph;
+use crate::warning_popup::WarningPopup;
+use crate::yes_no_cancel_popup::YesNoCancelPopup;
+use core::{CoreOutput, Task};
 use anyhow::Result;
 use eframe::egui::Ui;
-use std::sync::Arc;
-use tokio::sync::oneshot::error::TryRecvError;
+use std::sync::mpsc::TryRecvError; 
 use tracing::{error, warn};
 
 /// Generates window configuration and initializes the application icon.
 fn get_frame_option() -> Result<eframe::NativeOptions> {
-    let icon_bytes = include_bytes!("../../assets/icon.png");
+    let icon_bytes = include_bytes!("../assets/icon.png");
     let image = image::load_from_memory(icon_bytes)?.to_rgba8();
     let (width, height) = image.dimensions();
     let rgba_pixels = image.into_raw();
@@ -25,7 +24,7 @@ fn get_frame_option() -> Result<eframe::NativeOptions> {
     Ok(eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("Task Fighter")
-            .with_icon(Arc::new(icon_data))
+            .with_icon(icon_data)
             .with_inner_size(initial_size)
             .with_min_inner_size(initial_size),
         ..Default::default()
@@ -33,8 +32,8 @@ fn get_frame_option() -> Result<eframe::NativeOptions> {
 }
 
 /// Main entry point for launching the native GUI application.
-#[tokio::main]
-pub async fn start_app() -> Result<()> {
+// 【修正2】async を削除して同期関数に変更
+pub fn start_app() -> Result<()> { 
     let native_options = get_frame_option()?;
 
     eframe::run_native(
@@ -126,8 +125,9 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
                 Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Closed) => {
-                    error!("Channel closed unexpectedly (FetchActiveTasks)");
+                // 【修正3】TryRecvError::Closed を Disconnected に変更（以下すべて同様）
+                Err(TryRecvError::Disconnected) => { 
+                    error!("Channel disconnected unexpectedly (FetchActiveTasks)");
                     Some(CoreOutput::Idle)
                 }
             },
@@ -141,8 +141,8 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
                 Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Closed) => {
-                    error!("Channel closed unexpectedly (ScanTasks)");
+                Err(TryRecvError::Disconnected) => { 
+                    error!("Channel disconnected unexpectedly (ScanTasks)");
                     Some(CoreOutput::Idle)
                 }
             },
@@ -156,8 +156,8 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
                 Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Closed) => {
-                    error!("Channel closed unexpectedly (plot_data)");
+                Err(TryRecvError::Disconnected) => { 
+                    error!("Channel disconnected unexpectedly (plot_data)");
                     Some(CoreOutput::Idle)
                 }
             },
@@ -173,8 +173,8 @@ impl App {
                                 Some(CoreOutput::Idle)
                             }
                             Err(TryRecvError::Empty) => None,
-                            Err(TryRecvError::Closed) => {
-                                error!("Channel closed unexpectedly ({})", $err_msg);
+                            Err(TryRecvError::Disconnected) => { 
+                                error!("Channel disconnected unexpectedly ({})", $err_msg);
                                 Some(CoreOutput::Idle)
                             }
                         }

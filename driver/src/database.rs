@@ -1,5 +1,5 @@
-use crate::driver::Task;
-use crate::driver::{Priority, TaskStatus};
+use crate::Task;
+use crate::{Priority, TaskStatus};
 use anyhow::{Context, Result, bail};
 use duckdb::{Connection, params};
 use jiff::Zoned;

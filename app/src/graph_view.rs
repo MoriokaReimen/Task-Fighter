@@ -1,6 +1,5 @@
 use super::main_app::{App, AppState};
-use crate::core::CoreOutput;
-use crate::driver::Task;
+use core::{CoreOutput, Task};
 use crate::fl;
 use eframe::egui::{self, Align, Button, Layout, vec2};
 use egui::Ui;

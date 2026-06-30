@@ -1,55 +1,21 @@
-[package]
-name = "task-fighter"
-version = "7.0.22"
-edition = "2024"
-authors = ["MoriokaReimen <menschenjager.mark.neun@gmail.com>"]
-description = "Personal task management application."
-license = "Apache-2.0"
-repository = "https://github.com/MoriokaReimen/task-fighter"
-readme = "README.md"
-keywords = ["todo", "task-manager", "egui", "duckdb", "productivity", "desktop-app"]
-categories = ["gui", "productivity"]
-freetype-sys = { version = "*", features = ["vendored"] }
+[workspace]
+resolver = "3"
+members = ["driver", "core", "app", "main"]
 
-[dependencies]
-fluent-templates = "0.9"
-unic-langid = "0.9"
-sys-locale = "0.3"  # DesktopLanguageRequester の代わりにOSの言語を取得する用
+[workspace.dependencies]
+tracing = "^0.1"
 anyhow = "1.0.102"
-eframe = { version = "^0.34", features = ["default", "wayland", "x11"] }
-egui = "^0.34"
-open = "5.3.5"
-regex = "1.12.4"
-tokio = { version = "^1.0", features = ["full"] }
-egui_extras = { version = "^0.34", features = ["datepicker"] }
 jiff = { version = "^0.2", features = ["serde"] }
-tracing = { version = "^0.1", features = ["log"] }
-tracing-subscriber = "^0.3"
-image = "^0.25"
-rand = "0.10.1"
-tempfile = "3.27.0"
-serde = { version = "^1.0", features = ["derive"] }
-toml = "^1.1"
-duckdb = { version = "^1.10504", features = ["bundled"] }
-pulldown-cmark = { version = "^0.13", default-features = false, features = ["html"] }
-syntect = "5.3.0"
-lazy_static = "1.5.0"
-fluent = "0.17.0"
-rust-embed = "8.11.0"
-egui_plot = "^0.35"
-rfd = "0.17.2"
-plotters = "0.3.7"
-base64 = "0.22.1"
-
-[build-dependencies]
-fs_extra = "1.3.0"
-winres = "0.1.12"
 
 [profile.release]
-opt-level = 3
-lto = "fat"
 codegen-units = 1
+lto = true
+opt-level = 3
 panic = "abort"
+strip = "symbols"
 
-[build]
-rustc-wrapper = "sccache"
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3

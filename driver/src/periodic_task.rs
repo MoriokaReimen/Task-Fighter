@@ -1,4 +1,4 @@
-use crate::driver::{Priority, Task, insert_task};
+use crate::{Priority, Task, insert_task};
 use anyhow::{Context, Result, bail};
 use duckdb::{Connection, params};
 use jiff::ToSpan;
@@ -212,7 +212,7 @@ pub fn initialize_periodic_tasks(conn: &Connection) -> Result<()> {
     let config_path = Path::new("./runtime/config.toml");
     if !config_path.is_file() {
         warn!("Config file not found in {:?}", config_path);
-        let template = include_str!("../../assets/config.toml");
+        let template = include_str!("../assets/config.toml");
         if let Some(parent) = config_path.parent()
             && !parent.exists()
         {

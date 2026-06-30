@@ -170,25 +170,25 @@ jobs:
             mkdir -p "$ARCHIVE"/doc
             cp "$BIN" "$ARCHIVE"/
             cp README.md LICENSE "$ARCHIVE"/ || true
-            if [ -d "assets" ]; then cp assets/*.png "$ARCHIVE"/doc/ || true; fi
+            if [ -d "doc" ]; then cp doc/*.png "$ARCHIVE"/doc/ || true; fi
 
         - name: Build archive (Windows)
           shell: bash
           if: steps.check.outputs.SHOULD_BUILD == 'true' && startsWith(matrix.os, 'windows')
           run: |
             7z a "$ARCHIVE.zip" "$ARCHIVE"
-            certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
+            certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.sha256"
             echo "ASSET=$ARCHIVE.zip" >> $GITHUB_ENV
-            echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> $GITHUB_ENV
+            echo "ASSET_SUM=$ARCHIVE.sha256" >> $GITHUB_ENV
 
         - name: Build archive (Unix)
           shell: bash
           if: steps.check.outputs.SHOULD_BUILD == 'true' && !startsWith(matrix.os, 'windows')
           run: |
             tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
-            shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+            shasum -a 256 "$ARCHIVE.tar.gz" > "$ARCHIVE.sha256"
             echo "ASSET=$ARCHIVE.tar.gz" >> $GITHUB_ENV
-            echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> $GITHUB_ENV
+            echo "ASSET_SUM=$ARCHIVE.sha256" >> $GITHUB_ENV
 
         - name: Upload release archive
           if: steps.check.outputs.SHOULD_BUILD == 'true'

@@ -1,0 +1,37 @@
+[package]
+name = "app"
+version = "7.0.22"
+edition = "2024"
+authors = ["MoriokaReimen <menschenjager.mark.neun@gmail.com>"]
+description = "Personal task management application."
+license = "Apache-2.0"
+repository = "https://github.com/MoriokaReimen/task-fighter"
+readme = "README.md"
+keywords = ["todo", "task-manager", "egui", "duckdb", "productivity", "desktop-app"]
+categories = ["gui", "productivity"]
+publish = false
+
+[dependencies]
+core = {path = "../core"}
+tracing.workspace = true
+anyhow.workspace = true
+jiff.workspace = true
+fluent-templates = "0.9"
+unic-langid = "0.9"
+sys-locale = "0.3"  # DesktopLanguageRequester の代わりにOSの言語を取得する用
+eframe = { version = "^0.34", features = ["default", "wayland", "x11"] }
+egui = "^0.34"
+egui_extras = { version = "^0.34", features = ["datepicker"] }
+lazy_static = "1.5.0"
+fluent = "0.17.0"
+rust-embed = "8.11.0"
+egui_plot = "^0.35"
+rfd = "0.17.2"
+image = "^0.25"
+
+[build-dependencies]
+fs_extra = "1.3.0"
+winres = "0.1.12"
+
+[build]
+rustc-wrapper = "sccache"

@@ -1,4 +1,4 @@
-use crate::driver::{Priority, Task, TaskStatus};
+use core::{Priority, Task, TaskStatus};
 use crate::fl;
 use eframe::egui::{
     Color32, ComboBox, DragValue, Grid, Response, RichText, ScrollArea, Slider, TextEdit, Ui,

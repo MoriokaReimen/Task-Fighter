@@ -1,4 +1,4 @@
-use crate::driver::{Priority, Task, TaskStatus};
+use crate::{Priority, Task, TaskStatus};
 use anyhow::{Context, Result};
 use jiff::Zoned;
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};

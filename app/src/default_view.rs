@@ -1,6 +1,6 @@
 use super::main_app::{App, AppState};
-use crate::app::task_table::TaskTable;
-use crate::core::CoreOutput;
+use crate::task_table::TaskTable;
+use core::CoreOutput;
 use crate::fl;
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
@@ -44,7 +44,7 @@ impl App {
                     {
                         info!("Email Report Button Pressed");
                         if let Some(ref tasks) = self.displayed_tasks {
-                            self.output = self.core.mail_daily(tasks.clone());
+                            self.output = self.core.mail_daily(&tasks);
                         }
                     }
                 },

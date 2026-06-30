@@ -1,4 +1,4 @@
-use crate::driver::{Priority, Task, TaskStatus};
+use core::{Priority, Task, TaskStatus};
 use crate::fl;
 use egui::{Color32, Label, Response, Ui};
 use egui_extras::{Column, TableBuilder};

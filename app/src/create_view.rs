@@ -1,20 +1,19 @@
-use super::main_app::{App, AppState};
-use crate::app::task_edit::TaskEdit;
-use crate::app::yes_no_cancel_popup::PopupResult;
-use crate::core::CoreOutput;
-use crate::driver::Task;
+use crate::main_app::{App, AppState};
+use crate::task_edit::TaskEdit;
+use crate::yes_no_cancel_popup::PopupResult;
+use core::{CoreOutput, Task};
 use crate::fl;
 use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
 
 impl App {
-    /// Renders the task editing view inside a dedicated panel setup.
-    pub fn edit_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
+    /// Renders the task creation view inside separate action and workspace panels.
+    pub fn create_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
-            // Right-to-left layout places buttons from rightmost to leftmost
+            // Right-to-left layout automatically places items horizontally without nested horizontal blocks
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                // Cancel Button Action
+                // Cancel Action
                 if ui
                     .add(Button::new(fl!("close")).min_size(vec2(90.0, 28.0)))
                     .clicked()
@@ -27,7 +26,8 @@ impl App {
                 match self.yes_no_cancel_popup.show(ui) {
                     PopupResult::Yes => {
                         if self.temp_task.is_saveable() {
-                            self.output = self.core.update_task(self.temp_task.clone());
+                            let task_to_insert = self.temp_task.clone();
+                            self.output = self.core.upsert_task(task_to_insert);
                             self.temp_task = Task::default();
                             self.state = AppState::Default;
                             self.displayed_tasks = None;
@@ -37,7 +37,7 @@ impl App {
                             } else {
                                 fl!("title-empty")
                             };
-                            self.warning_popup.open(fl!("save-fail"), message);
+                            self.warning_popup.open(fl!("save-error"), message);
                         }
                     }
                     PopupResult::No => {
@@ -51,9 +51,9 @@ impl App {
             });
         });
 
-        // --- Main Form Content ---
+        // --- Main Form Panel ---
         egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
-            ui.heading(fl!("edit-task"));
+            ui.heading(fl!("create-task"));
             if !matches!(self.output, CoreOutput::Idle) {
                 ui.with_layout(
                     egui::Layout::centered_and_justified(egui::Direction::TopDown),
@@ -64,6 +64,7 @@ impl App {
                 );
                 return;
             }
+            // Render input form with minimized layout nesting depth
             let mut task_edit = TaskEdit::new(&mut self.temp_task);
             task_edit.show(ui);
         });
