@@ -84,7 +84,7 @@ jobs:
           run: cargo install cross --git https://github.com/cross-rs/cross
 
         - name: Cargo Build
-          if: matrix.TARGET == aarch64-unknown-linux-gnu || matrix.TARGET == armv7-unknown-linux-gnueabihf
+          if: matrix.TARGET == 'aarch64-unknown-linux-gnu' || matrix.TARGET == 'armv7-unknown-linux-gnueabihf'
           shell: bash
           env:
             CROSS_CONTAINER_ENV_PASS: "RUSTFLAGS FONTCONFIG_SYS_STATIC FREETYPE_SYS_STATIC DUCKDB_NO_PKG_CONFIG"
@@ -97,7 +97,7 @@ jobs:
               cross build --verbose --release --target=${{ matrix.TARGET }}
 
         - name: Cargo Build
-          if: matrix.TARGET != aarch64-unknown-linux-gnu && matrix.TARGET != armv7-unknown-linux-gnueabihf
+          if: matrix.TARGET != 'aarch64-unknown-linux-gnu' && matrix.TARGET != 'armv7-unknown-linux-gnueabihf'
           shell: bash
           run: |
             if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
