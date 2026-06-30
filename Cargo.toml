@@ -3,8 +3,8 @@ resolver = "3"
 members = ["driver", "core", "app", "main", "utility"]
 
 [workspace.dependencies]
-tracing = "^0.1"
-anyhow = "1.0.102"
+tracing = { version = "^0.1", features = ["log"] }
+anyhow = "^1.0"
 jiff = { version = "^0.2", features = ["serde"] }
 
 [profile.release]
