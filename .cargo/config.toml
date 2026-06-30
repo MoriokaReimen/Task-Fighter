@@ -19,3 +19,4 @@ rustflags = [
   "-C", "target-feature=+crt-static",
   "-C", "link-self-contained=yes",
 ]
+

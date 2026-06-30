@@ -17,5 +17,3 @@ anyhow.workspace = true
 jiff.workspace = true
 tokio = { version = "^1.0", features = ["full"] }
 
-[build]
-rustc-wrapper = "sccache"

@@ -1,8 +1,8 @@
-use driver::{self, Task, Connection};
 use anyhow::Result;
+use driver::{self, Connection, Task};
 use jiff::{ToSpan, Zoned};
+use std::sync::mpsc::{Receiver, channel};
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{channel, Receiver}; 
 
 pub struct Core {
     conn: Arc<Mutex<Connection>>,
@@ -30,8 +30,8 @@ impl Core {
     /// Initializes a new Core instance with an established database connection.
     pub fn new() -> Result<Core> {
         let runtime = tokio::runtime::Builder::new_multi_thread()
-                    .enable_all()
-                    .build()?;
+            .enable_all()
+            .build()?;
         let conn = driver::connect()?;
         driver::initialize_periodic_tasks(&conn)?;
         Ok(Core {
@@ -52,7 +52,8 @@ impl Core {
         let conn = Arc::clone(&self.conn);
         let (tx, rx) = channel();
         self.runtime.spawn(async move {
-            let result = conn.lock()
+            let result = conn
+                .lock()
                 .map_err(|_| anyhow::anyhow!("Database mutex lock was poisoned"))
                 .and_then(|conn_lock| driver::upsert_task(&conn_lock, &task)); // &conn_lock を渡す
             let _ = tx.send(result);
@@ -65,7 +66,8 @@ impl Core {
         let conn = Arc::clone(&self.conn);
         let (tx, rx) = channel();
         self.runtime.spawn(async move {
-            let result = conn.lock()
+            let result = conn
+                .lock()
                 .map_err(|_| anyhow::anyhow!("Database mutex lock was poisoned"))
                 .and_then(|conn_lock| driver::fetch_active_tasks(&conn_lock)); // &conn_lock を渡す
             let _ = tx.send(result);
@@ -77,7 +79,8 @@ impl Core {
         let conn = Arc::clone(&self.conn);
         let (tx, rx) = channel();
         self.runtime.spawn(async move {
-            let result = conn.lock()
+            let result = conn
+                .lock()
                 .map_err(|_| anyhow::anyhow!("Database mutex lock was poisoned"))
                 .and_then(|conn_lock| driver::update_task(&conn_lock, &task)); // &conn_lock を渡す
             let _ = tx.send(result);
@@ -91,7 +94,8 @@ impl Core {
         let (tx, rx) = channel();
         let pattern = pattern.to_string();
         self.runtime.spawn(async move {
-            let result = conn.lock()
+            let result = conn
+                .lock()
                 .map_err(|_| anyhow::anyhow!("Database mutex lock was poisoned"))
                 .and_then(|conn_lock| driver::scan_tasks(&conn_lock, &pattern, only_active)); // &conn_lock を渡す
             let _ = tx.send(result);
@@ -103,15 +107,17 @@ impl Core {
     pub fn mail_daily(&self, tasks: &[Task]) -> CoreOutput {
         let conn = Arc::clone(&self.conn);
         let (tx, rx) = channel();
-        let tasks = tasks.to_vec(); 
+        let tasks = tasks.to_vec();
         self.runtime.spawn(async move {
             let today = Zoned::now().date();
             let start_date = today - 99.days();
             let result = (|| -> Result<()> {
-                let conn_lock = conn.lock().map_err(|_| anyhow::anyhow!("Database mutex lock was poisoned"))?;
+                let conn_lock = conn
+                    .lock()
+                    .map_err(|_| anyhow::anyhow!("Database mutex lock was poisoned"))?;
                 let data = driver::count_tasks_by_date(&conn_lock, start_date, today)?; // &conn_lock を渡す
                 let image_data = driver::export_to_base64(&data)?;
-                driver::launch_system_mailer(&tasks, &image_data)?; 
+                driver::launch_system_mailer(&tasks, &image_data)?;
                 Ok(())
             })();
             let _ = tx.send(result);
@@ -126,7 +132,8 @@ impl Core {
         self.runtime.spawn(async move {
             let today = Zoned::now().date();
             let start_date = today - 99.days();
-            let result = conn.lock()
+            let result = conn
+                .lock()
                 .map_err(|_| anyhow::anyhow!("Database mutex lock was poisoned"))
                 .and_then(|conn_lock| driver::count_tasks_by_date(&conn_lock, start_date, today)); // &conn_lock を渡す
             let _ = tx.send(result);

@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use tracing::info;
 use anyhow::Result;
+use tracing::info;
 
 fn main() -> Result<()> {
     tracing_subscriber::fmt::init();

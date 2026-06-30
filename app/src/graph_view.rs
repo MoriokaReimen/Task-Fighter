@@ -1,6 +1,6 @@
 use super::main_app::{App, AppState};
-use core::{CoreOutput, Task};
 use crate::fl;
+use core::{CoreOutput, Task};
 use eframe::egui::{self, Align, Button, Layout, vec2};
 use egui::Ui;
 // 💡 rand 0.8 用のRngトレイトをインポート

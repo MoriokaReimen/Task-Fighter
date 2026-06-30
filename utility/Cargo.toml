@@ -1,5 +1,5 @@
 [package]
-name = "driver"
+name = "utility"
 version = "7.0.22"
 edition = "2024"
 authors = ["MoriokaReimen <menschenjager.mark.neun@gmail.com>"]
@@ -12,17 +12,10 @@ categories = ["gui", "productivity"]
 publish = false
 
 [dependencies]
+driver = {path = "../driver"}
 tracing.workspace = true
 anyhow.workspace = true
 jiff.workspace = true
-image = "^0.25"
-tempfile = "3.27.0"
-serde = { version = "^1.0", features = ["derive"] }
-toml = "^1.1"
 duckdb = { version = "1.10504.0", features = ["bundled"] }
-pulldown-cmark = { version = "^0.13", default-features = false, features = ["html"] }
-plotters = "0.3.7"
-base64 = "0.22.1"
-syntect = "5.3.0"
-open = "5.3.5"
+rand = "0.10.1"
 

@@ -2,10 +2,10 @@ use super::style;
 use crate::graph::Graph;
 use crate::warning_popup::WarningPopup;
 use crate::yes_no_cancel_popup::YesNoCancelPopup;
-use core::{CoreOutput, Task};
 use anyhow::Result;
+use core::{CoreOutput, Task};
 use eframe::egui::Ui;
-use std::sync::mpsc::TryRecvError; 
+use std::sync::mpsc::TryRecvError;
 use tracing::{error, warn};
 
 /// Generates window configuration and initializes the application icon.
@@ -33,7 +33,7 @@ fn get_frame_option() -> Result<eframe::NativeOptions> {
 
 /// Main entry point for launching the native GUI application.
 // 【修正2】async を削除して同期関数に変更
-pub fn start_app() -> Result<()> { 
+pub fn start_app() -> Result<()> {
     let native_options = get_frame_option()?;
 
     eframe::run_native(
@@ -126,7 +126,7 @@ impl App {
                 }
                 Err(TryRecvError::Empty) => None,
                 // 【修正3】TryRecvError::Closed を Disconnected に変更（以下すべて同様）
-                Err(TryRecvError::Disconnected) => { 
+                Err(TryRecvError::Disconnected) => {
                     error!("Channel disconnected unexpectedly (FetchActiveTasks)");
                     Some(CoreOutput::Idle)
                 }
@@ -141,7 +141,7 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
                 Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Disconnected) => { 
+                Err(TryRecvError::Disconnected) => {
                     error!("Channel disconnected unexpectedly (ScanTasks)");
                     Some(CoreOutput::Idle)
                 }
@@ -156,7 +156,7 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
                 Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Disconnected) => { 
+                Err(TryRecvError::Disconnected) => {
                     error!("Channel disconnected unexpectedly (plot_data)");
                     Some(CoreOutput::Idle)
                 }
@@ -173,7 +173,7 @@ impl App {
                                 Some(CoreOutput::Idle)
                             }
                             Err(TryRecvError::Empty) => None,
-                            Err(TryRecvError::Disconnected) => { 
+                            Err(TryRecvError::Disconnected) => {
                                 error!("Channel disconnected unexpectedly ({})", $err_msg);
                                 Some(CoreOutput::Idle)
                             }
