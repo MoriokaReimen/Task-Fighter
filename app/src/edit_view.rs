@@ -29,6 +29,7 @@ impl App {
                 {
                     info!("Start Work Button Pressed");
                     self.state = AppState::Time;
+                    self.start_time = jiff::Zoned::now();
                 }
 
                 match self.yes_no_cancel_popup.show(ui) {
