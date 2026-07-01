@@ -1,6 +1,6 @@
 Task-Fighter
 ==========================================================================
-![icon.png](./assets/icon.png)
+![icon.png](./doc/icon.png)
 
 Private task management software with simple UI.
 
