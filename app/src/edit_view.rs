@@ -23,6 +23,14 @@ impl App {
                         .open(fl!("save-task"), fl!("save-task-message"));
                 }
 
+                if ui
+                    .add(Button::new(fl!("start_work")).min_size(vec2(90.0, 28.0)))
+                    .clicked()
+                {
+                    info!("Start Work Button Pressed");
+                    self.state = AppState::Time;
+                }
+
                 match self.yes_no_cancel_popup.show(ui) {
                     PopupResult::Yes => {
                         if self.temp_task.is_saveable() {

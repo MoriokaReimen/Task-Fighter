@@ -5,20 +5,26 @@ use jiff::civil::Date;
 
 /// end_dateも含めたランダムなN件のタスクを生成してデータベースに挿入する
 pub fn generate_random_tasks(conn: &Connection, n: usize) -> Result<()> {
-    let projects = ["RustProject",
+    let projects = [
+        "RustProject",
         "Frontend",
         "Backend",
         "DevOps",
         "Marketing",
-        "Research"];
-    let details = ["割り当てられたチケットの確認と修正対応を行う。",
+        "Research",
+    ];
+    let details = [
+        "割り当てられたチケットの確認と修正対応を行う。",
         "コードの可読性向上のため、関数を分割して整理する。",
         "次のスプリントに向けた技術的な実現可能性を調査する。",
-        "フロントエンドからの要求に基づき、Swaggerを更新して実装する。"];
-    let statuses = [TaskStatus::Pending,
+        "フロントエンドからの要求に基づき、Swaggerを更新して実装する。",
+    ];
+    let statuses = [
+        TaskStatus::Pending,
         TaskStatus::WorkInProgress,
         TaskStatus::Complete,
-        TaskStatus::Canceled];
+        TaskStatus::Canceled,
+    ];
     let priorities = [Priority::Low, Priority::Medium, Priority::High];
 
     println!("{} 件のランダムタスク（end_date対応）を生成中...", n);

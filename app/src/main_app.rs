@@ -55,6 +55,7 @@ pub enum AppState {
     Edit,
     Create,
     Graph,
+    Time,
 }
 
 /// Main application state holder.
@@ -70,6 +71,7 @@ pub struct App {
     pub yes_no_cancel_popup: YesNoCancelPopup,
     pub warning_popup: WarningPopup,
     pub graph: Graph,
+    pub start_time: jiff::Zoned,
 }
 
 impl App {
@@ -88,6 +90,7 @@ impl App {
             yes_no_cancel_popup: YesNoCancelPopup::new("yes_no_cancel"),
             warning_popup: WarningPopup::new("warning"),
             graph: Graph::new(),
+            start_time: jiff::Zoned::now(),
         }
     }
 }
@@ -104,6 +107,7 @@ impl eframe::App for App {
             AppState::Create => self.create_view(ui, frame),
             AppState::Edit => self.edit_view(ui, frame),
             AppState::Graph => self.graph_view(ui, frame),
+            AppState::Time => self.time_view(ui, frame),
         }
     }
 }

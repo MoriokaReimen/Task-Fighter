@@ -4,9 +4,11 @@ mod edit_view;
 mod graph;
 mod graph_view;
 mod main_app;
+mod stop_watch;
 mod style;
 mod task_edit;
 mod task_table;
+mod time_view;
 mod warning_popup;
 mod yes_no_cancel_popup;
 #[macro_use]

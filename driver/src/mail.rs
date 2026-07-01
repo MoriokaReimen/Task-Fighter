@@ -1,7 +1,7 @@
 use crate::{Priority, Task, TaskStatus};
 use anyhow::{Context, Result};
 use jiff::Zoned;
-use minijinja::{context, Environment};
+use minijinja::{Environment, context};
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
 use serde::Serialize;
 use std::fmt::Write as _;
@@ -106,10 +106,22 @@ pub fn create_mail_html(tasks: &[Task], image_data: &str) -> String {
     // サマリーの集計
     let summary = TemplateSummary {
         total: tasks.len(),
-        completed: tasks.iter().filter(|t| t.status == TaskStatus::Complete).count(),
-        in_progress: tasks.iter().filter(|t| t.status == TaskStatus::WorkInProgress).count(),
-        pending: tasks.iter().filter(|t| t.status == TaskStatus::Pending).count(),
-        canceled: tasks.iter().filter(|t| t.status == TaskStatus::Canceled).count(),
+        completed: tasks
+            .iter()
+            .filter(|t| t.status == TaskStatus::Complete)
+            .count(),
+        in_progress: tasks
+            .iter()
+            .filter(|t| t.status == TaskStatus::WorkInProgress)
+            .count(),
+        pending: tasks
+            .iter()
+            .filter(|t| t.status == TaskStatus::Pending)
+            .count(),
+        canceled: tasks
+            .iter()
+            .filter(|t| t.status == TaskStatus::Canceled)
+            .count(),
     };
 
     let date_headline = Zoned::now().date().strftime("%B %d, %Y").to_string();
@@ -160,7 +172,7 @@ pub fn create_mail_html(tasks: &[Task], image_data: &str) -> String {
         .expect("Failed to compile template");
 
     let tmpl = env.get_template("mail").expect("Failed to get template");
-    
+
     // レンダリングを実行
     let rendered = tmpl
         .render(context! {

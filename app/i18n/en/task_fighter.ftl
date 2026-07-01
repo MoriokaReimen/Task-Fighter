@@ -42,3 +42,6 @@ save-graph = 📸 Save Graph Image
 task-plot = 📈 Task Plot
 number-of-tasks = Number of Tasks
 cancel = 🚫 Cancel
+stop_working = 🚫 Stop Working
+working_on = 🏃 Working on:
+start_work = ▶ Start Work

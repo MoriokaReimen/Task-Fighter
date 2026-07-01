@@ -42,3 +42,6 @@ save-graph = 📸 グラフを画像として保存
 task-plot = 📈 タスク図
 number-of-tasks = タスク数
 cancel = 🚫 キャンセル
+stop_working = 🚫 作業終わり
+working_on = 🏃 作業中:
+start_work = ▶ 作業開始
