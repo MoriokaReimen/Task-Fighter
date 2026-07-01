@@ -5,8 +5,9 @@ Task-Fighter
 Private task management software with simple UI.
 
 # Screen Shot
-![Screenshot1](./assets/Screenshot1.png)
-![Screenshot2](./assets/Screenshot2.png)
+![Screenshot1](./doc/Screenshot1.png)
+![Screenshot2](./doc/Screenshot2.png)
+![Screenshot3](./doc/Screenshot3.png)
 
 # Features
 - **Simple & Intuitive UI**: Built with `egui` for a lightweight and responsive desktop experience.
