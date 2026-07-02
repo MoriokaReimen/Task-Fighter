@@ -2,11 +2,12 @@ use super::main_app::{App, AppState};
 use crate::fl;
 use crate::stop_watch::StopWatch;
 use eframe::egui::{RichText, ScrollArea, TextEdit, Ui};
+use std::time::Duration;
 
 impl App {
     pub fn time_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // 毎フレーム再描画を要求（アニメーションを滑らかにするため）
-        ui.ctx().request_repaint();
+        ui.ctx().request_repaint_after(Duration::from_millis(20));
 
         egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
             let working_on = fl!("working_on");
