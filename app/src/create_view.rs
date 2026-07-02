@@ -10,7 +10,7 @@ impl App {
     /// Renders the task creation view inside separate action and workspace panels.
     pub fn create_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // --- Bottom Action Bar ---
-        egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
+        egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout automatically places items horizontally without nested horizontal blocks
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 // Cancel Action
@@ -52,7 +52,7 @@ impl App {
         });
 
         // --- Main Form Panel ---
-        egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
+        egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             ui.heading(fl!("create-task"));
             if !matches!(self.output, CoreOutput::Idle) {
                 ui.with_layout(

@@ -10,7 +10,7 @@ impl App {
     /// Renders the task editing view inside a dedicated panel setup.
     pub fn edit_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // --- Bottom Action Bar ---
-        egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
+        egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout places buttons from rightmost to leftmost
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 // Cancel Button Action
@@ -60,7 +60,7 @@ impl App {
         });
 
         // --- Main Form Content ---
-        egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
+        egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             ui.heading(fl!("edit-task"));
             if !matches!(self.output, CoreOutput::Idle) {
                 ui.with_layout(

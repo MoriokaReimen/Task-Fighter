@@ -9,7 +9,7 @@ impl App {
         // 毎フレーム再描画を要求（アニメーションを滑らかにするため）
         ui.ctx().request_repaint_after(Duration::from_millis(20));
 
-        egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
+        egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             let working_on = fl!("working_on");
             ui.heading(format!("{} {}", working_on, self.temp_task.title));
 

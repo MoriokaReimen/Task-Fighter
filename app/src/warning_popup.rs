@@ -8,7 +8,7 @@ pub struct WarningPopup {
 }
 
 impl WarningPopup {
-    pub fn new(id_source: impl std::hash::Hash) -> Self {
+    pub fn new(id_source: impl std::hash::Hash + std::fmt::Debug) -> Self {
         Self {
             title: String::new(),
             message: String::new(),

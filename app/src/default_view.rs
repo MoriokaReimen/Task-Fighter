@@ -14,7 +14,7 @@ impl App {
         }
 
         // --- Bottom Action Panel ---
-        egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
+        egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // クリックされたかどうかを記録するフラグを用意する
             let mut go_to_graph = false;
             let mut go_to_create = false;
@@ -68,7 +68,7 @@ impl App {
         });
 
         // --- Central Dashboard Content ---
-        egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
+        egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             ui.heading(fl!("task-list"));
 
             // Search Control Bar Layout

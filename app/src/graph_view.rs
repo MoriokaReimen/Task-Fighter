@@ -17,7 +17,7 @@ impl App {
         let mut should_close = false;
 
         // --- Bottom Action Bar ---
-        egui::Panel::bottom("bottom_panel").show_inside(ui, |ui: &mut Ui| {
+        egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout places buttons from rightmost to leftmost
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 // Cancel Button Action
@@ -47,7 +47,7 @@ impl App {
     }
 
     fn central_panel(&mut self, ui: &mut egui::Ui) {
-        egui::CentralPanel::default().show_inside(ui, |ui: &mut Ui| {
+        egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             ui.heading(fl!("task-plot"));
             if !matches!(self.output, CoreOutput::Idle) || self.plot_data.is_none() {
                 ui.with_layout(

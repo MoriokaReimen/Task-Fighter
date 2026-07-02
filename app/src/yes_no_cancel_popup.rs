@@ -21,7 +21,7 @@ pub enum PopupResult {
 
 impl YesNoCancelPopup {
     /// 新しいポップアップの作成（一意の識別子を渡す）
-    pub fn new(id_source: impl std::hash::Hash) -> Self {
+    pub fn new(id_source: impl std::hash::Hash + std::fmt::Debug) -> Self {
         Self {
             title: String::new(),
             message: String::new(),
