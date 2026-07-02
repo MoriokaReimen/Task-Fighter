@@ -1,4 +1,4 @@
-use fluent_templates::static_loader; // ← これがマクロ内部で明示的に必要になります
+use fluent_templates::static_loader;
 use std::sync::OnceLock;
 use unic_langid::LanguageIdentifier;
 
@@ -13,33 +13,34 @@ static_loader! {
 // 2. 現在のOSの言語を保持するシングルトン
 pub static CURRENT_LOCALE: OnceLock<LanguageIdentifier> = OnceLock::new();
 
+/// OSのロケールを取得し、初期化する
 pub fn init_i18n() -> &'static LanguageIdentifier {
     CURRENT_LOCALE.get_or_init(|| {
-        let locale_str = sys_locale::get_locale().unwrap_or_else(|| "en".to_string());
-        locale_str
-            .parse::<LanguageIdentifier>()
-            .unwrap_or_else(|_| "en".parse().unwrap())
+        sys_locale::get_locale()
+            .and_then(|s| s.parse::<LanguageIdentifier>().ok())
+            .unwrap_or_else(|| "en".parse().expect("Valid fallback language identifier"))
     })
 }
 
-// 3. 完全自己完結型に修正した fl! マクロ
+// 3. 高速かつ簡潔に修正した fl! マクロ
 #[macro_export]
 macro_rules! fl {
     // 引数なしの場合
     ($message_id:literal) => {{
-        use fluent_templates::Loader; // マクロ展開先でトレイトをスコープに入れる
-        let lang = $crate::i18n::init_i18n();
-        $crate::i18n::LOCALES.lookup(lang, $message_id)
+        use fluent_templates::Loader;
+        $crate::i18n::LOCALES.lookup($crate::i18n::init_i18n(), $message_id)
     }};
 
     // 引数（変数埋め込み）がある場合
     ($message_id:literal, $($key:expr => $value:expr),* $(,)?) => {{
-        use fluent_templates::Loader; // マクロ展開先でトレイトをスコープに入れる
-        let lang = $crate::i18n::init_i18n();
-        let mut args = std::collections::HashMap::new();
+        use fluent_templates::Loader;
+
+        // 繰り返し数（引数の個数）をコンパイル時に数えて HashMap の容量をあらかじめ確保
+        let mut args = std::collections::HashMap::with_capacity([$({ let _ = &$key; 1 }),*].len());
         $(
             args.insert($key, fluent_templates::fluent_bundle::FluentValue::from($value));
         )*
-        $crate::i18n::LOCALES.lookup_with_args(lang, $message_id, &args)
+
+        $crate::i18n::LOCALES.lookup_with_args($crate::i18n::init_i18n(), $message_id, &args)
     }};
 }
