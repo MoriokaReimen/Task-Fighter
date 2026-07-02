@@ -3,9 +3,8 @@ use crate::graph::Graph;
 use crate::warning_popup::WarningPopup;
 use crate::yes_no_cancel_popup::YesNoCancelPopup;
 use anyhow::Result;
-use core::{CoreOutput, Task};
+use core::{CoreOutput, Task, TryRecvError};
 use eframe::egui::Ui;
-use std::sync::mpsc::TryRecvError;
 use tracing::{error, warn};
 
 /// Generates window configuration and initializes the application icon.
@@ -130,7 +129,7 @@ impl App {
                 }
                 Err(TryRecvError::Empty) => None,
                 // 【修正3】TryRecvError::Closed を Disconnected に変更（以下すべて同様）
-                Err(TryRecvError::Disconnected) => {
+                Err(TryRecvError::Closed) => {
                     error!("Channel disconnected unexpectedly (FetchActiveTasks)");
                     Some(CoreOutput::Idle)
                 }
@@ -145,7 +144,7 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
                 Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Disconnected) => {
+                Err(TryRecvError::Closed) => {
                     error!("Channel disconnected unexpectedly (ScanTasks)");
                     Some(CoreOutput::Idle)
                 }
@@ -160,7 +159,7 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
                 Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Disconnected) => {
+                Err(TryRecvError::Closed) => {
                     error!("Channel disconnected unexpectedly (plot_data)");
                     Some(CoreOutput::Idle)
                 }
@@ -177,7 +176,7 @@ impl App {
                                 Some(CoreOutput::Idle)
                             }
                             Err(TryRecvError::Empty) => None,
-                            Err(TryRecvError::Disconnected) => {
+                            Err(TryRecvError::Closed) => {
                                 error!("Channel disconnected unexpectedly ({})", $err_msg);
                                 Some(CoreOutput::Idle)
                             }

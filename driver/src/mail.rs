@@ -5,13 +5,11 @@ use minijinja::{Environment, context};
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
 use serde::Serialize;
 use std::fmt::Write as _;
+use std::fs::OpenOptions;
 use std::io::Write as _;
 use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
 use syntect::parsing::SyntaxSet;
-use tempfile::Builder;
-use tracing::info;
-use std::fs::OpenOptions;
 
 // 1. テンプレートに渡すためのシリアライズ可能なデータ構造を定義
 #[derive(Serialize)]
@@ -221,7 +219,8 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
 
     drop(temp_file);
 
-    open::that("./task_report.eml").context("Failed invoking native desktop standard protocol handlers")?;
+    open::that("./task_report.eml")
+        .context("Failed invoking native desktop standard protocol handlers")?;
 
     Ok(())
 }
