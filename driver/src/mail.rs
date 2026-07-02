@@ -198,7 +198,7 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
 
     let mut temp_file = Builder::new()
         .suffix(suffix)
-        .tempfile_in(".")
+        .tempfile()
         .context("Failed to allocate transient local storage space for email payload context")?;
 
     let mut eml_content = String::new();
