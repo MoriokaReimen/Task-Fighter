@@ -11,6 +11,7 @@ use syntect::html::highlighted_html_for_string;
 use syntect::parsing::SyntaxSet;
 use tempfile::Builder;
 use tracing::info;
+use std::fs::OpenOptions;
 
 // 1. テンプレートに渡すためのシリアライズ可能なデータ構造を定義
 #[derive(Serialize)]
@@ -194,12 +195,12 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
         .strftime("%Y/%m/%d Task Status Report")
         .to_string();
 
-    let suffix = ".eml";
-
-    let mut temp_file = Builder::new()
-        .suffix(suffix)
-        .tempfile()
-        .context("Failed to allocate transient local storage space for email payload context")?;
+    let mut temp_file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open("./task_report.eml")
+        .context("Failed to task_report.eml")?;
 
     let mut eml_content = String::new();
     let _ = write!(eml_content, "Subject: {}\r\n", raw_subject);
@@ -218,16 +219,9 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
         .flush()
         .context("Failed flushing operating system write streams buffers")?;
 
-    let (file, path) = temp_file
-        .keep()
-        .context("Failed safeguarding local file persistence integrity")?;
-    drop(file);
+    drop(temp_file);
 
-    info!(
-        "Synchronized continuous email file sequence artifact: {:?}",
-        path
-    );
-    open::that(&path).context("Failed invoking native desktop standard protocol handlers")?;
+    open::that("./task_report.eml").context("Failed invoking native desktop standard protocol handlers")?;
 
     Ok(())
 }
