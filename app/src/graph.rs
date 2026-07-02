@@ -2,29 +2,28 @@ use crate::fl;
 use eframe::egui;
 use egui_plot::{Bar, BarChart, GridInput, Plot};
 use jiff::{ToSpan, Zoned};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tracing::log::{error, info};
 
 pub struct Graph {
     // グラフの描画領域（位置とサイズ）を記録する
     plot_rect: Option<egui::Rect>,
     // ファイル保存ダイアログを開くフラグ
-    should_save: Arc<Mutex<bool>>,
+    should_save: Arc<AtomicBool>,
 }
 
 impl Graph {
     pub fn new() -> Self {
         Self {
             plot_rect: None,
-            should_save: Arc::new(Mutex::new(false)),
+            should_save: Arc::new(AtomicBool::new(false)),
         }
     }
 
     /// 「グラフだけ」を画像として保存する要求を出すメソッド
     pub fn save_screenshot(&self) {
-        if let Ok(mut guard) = self.should_save.lock() {
-            *guard = true;
-        }
+        self.should_save.store(true, Ordering::SeqCst);
     }
 }
 
@@ -51,14 +50,9 @@ impl Graph {
 impl Graph {
     /// 保存要求フラグが立っているか確認し、立っていればリセットして true を返す
     fn check_save_trigger(&self) -> bool {
-        let Ok(mut guard) = self.should_save.lock() else {
-            return false;
-        };
-        if *guard {
-            *guard = false;
-            return true;
-        }
-        false
+        self.should_save
+            .compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst)
+            .is_ok()
     }
 
     /// eguiのイベント配列からScreenshotイベントを検知して非同期保存する
