@@ -50,9 +50,8 @@ impl App {
                         .clicked()
                     {
                         self.state = AppState::Edit;
-                        let time_spent = &mut self.temp_task.time_spent;
-                        *time_spent += (stop_watch.get_total_seconds() as f32) / 3600.0;
-                        *time_spent = (*time_spent * 10.0).round() / 10.0;
+                        self.temp_task
+                            .accumulate_time(stop_watch.get_total_seconds());
                     }
                 });
         });

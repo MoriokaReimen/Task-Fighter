@@ -66,6 +66,13 @@ impl Task {
     pub fn is_saveable(&self) -> bool {
         !self.project.is_empty() && !self.title.is_empty()
     }
+
+    pub fn accumulate_time(&mut self, seconds: i64) {
+        let hours = (seconds as f32) / 3600.0;
+        self.time_spent += hours;
+        // 小数点第1位に安全に丸めるロジックをモデル側に隠蔽
+        self.time_spent = (self.time_spent * 10.0).round() / 10.0;
+    }
 }
 
 impl Default for Task {
