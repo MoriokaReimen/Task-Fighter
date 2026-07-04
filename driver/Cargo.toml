@@ -24,6 +24,6 @@ pulldown-cmark = { version = "^0.13", default-features = false, features = ["htm
 plotters = "0.3.7"
 base64 = "0.22.1"
 syntect = "5.3.0"
-open = "5.3.5"
+open = "5.3.6"
 minijinja = "2.21.0"
 

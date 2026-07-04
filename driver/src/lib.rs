@@ -23,3 +23,5 @@ mod periodic_task;
 pub use periodic_task::initialize_periodic_tasks;
 
 pub use duckdb::Connection;
+
+mod duckdb_data;

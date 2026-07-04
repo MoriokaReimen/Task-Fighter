@@ -1,5 +1,6 @@
 use crate::Task;
-use crate::{Priority, TaskStatus};
+use crate::duckdb_data::DuckdbTask;
+use crate::TaskStatus;
 use anyhow::{Context, Result, bail};
 use duckdb::{Connection, params};
 use jiff::Zoned;
@@ -7,48 +8,6 @@ use jiff::civil::Date;
 use std::fs;
 use std::path::Path;
 use tracing::info;
-
-/// Centralized mapper to convert a database row slice into a Task token instance,
-/// significantly flattening nesting inside fetch functions.
-impl<'a> TryFrom<&'a duckdb::Row<'a>> for Task {
-    type Error = duckdb::Error;
-
-    fn try_from(row: &'a duckdb::Row<'a>) -> Result<Self, Self::Error> {
-        let status_raw: i32 = row.get(2)?;
-        let priority_raw: i32 = row.get(8)?;
-
-        let status = TaskStatus::try_from(status_raw).map_err(|e| {
-            duckdb::Error::FromSqlConversionFailure(2, duckdb::types::Type::Int, e.into())
-        })?;
-        let priority = Priority::try_from(priority_raw).map_err(|e| {
-            duckdb::Error::FromSqlConversionFailure(8, duckdb::types::Type::Int, e.into())
-        })?;
-
-        let start_date_str: String = row.get(6)?;
-        let due_date_str: String = row.get(7)?;
-
-        let start_date = start_date_str.parse::<Date>().map_err(|e| {
-            duckdb::Error::FromSqlConversionFailure(6, duckdb::types::Type::Text, e.into())
-        })?;
-        let due_date = due_date_str.parse::<Date>().map_err(|e| {
-            duckdb::Error::FromSqlConversionFailure(7, duckdb::types::Type::Text, e.into())
-        })?;
-
-        Ok(Task {
-            id: row.get(0)?,
-            active: row.get(1)?,
-            status,
-            project: row.get(3)?,
-            title: row.get(4)?,
-            detail: row.get(5)?,
-            start_date,
-            due_date,
-            priority,
-            progress: row.get(9)?,
-            time_spent: row.get(10)?,
-        })
-    }
-}
 
 pub fn connect() -> Result<Connection> {
     let path = Path::new("runtime");
@@ -141,9 +100,14 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
         .prepare(FETCH_ACTIVE_TASK)
         .context("Failed compiling relational parameter statements validations queries")?;
 
-    let tasks = stmt
-        .query_map([], |row| Task::try_from(row))?
-        .collect::<Result<Vec<Task>, _>>()
+    let duckdb_tasks = stmt
+        .query_map([], |row| DuckdbTask::try_from(row))?
+        .collect::<Result<Vec<DuckdbTask>, duckdb::Error>>()
+        .context("Failed parsing query sequences lists mapping constraints rows")?;
+    let tasks = duckdb_tasks
+        .into_iter()
+        .map(Task::try_from)
+        .collect::<Result<Vec<Task>>>()
         .context("Failed parsing query sequences lists mapping constraints rows")?;
     info!("{} tasks queried.", tasks.len());
 
@@ -241,9 +205,14 @@ pub fn scan_tasks(conn: &Connection, pattern: &str, _only_active: bool) -> Resul
     let mut stmt = conn
         .prepare(SCAN_TASK_SQL)
         .context("Failed to prepare regex match database query statement")?;
-    let tasks = stmt
-        .query_map([trimmed], |row| Task::try_from(row))?
-        .collect::<Result<Vec<Task>, _>>()
+    let duckdb_tasks = stmt
+        .query_map([trimmed], |row| DuckdbTask::try_from(row))?
+        .collect::<Result<Vec<DuckdbTask>, duckdb::Error>>()
+        .context("Failed parsing query sequences lists mapping constraints rows")?;
+    let tasks = duckdb_tasks
+        .into_iter()
+        .map(Task::try_from)
+        .collect::<Result<Vec<Task>>>()
         .context("Failed parsing query sequences lists mapping constraints rows")?;
     info!("{} tasks queried.", tasks.len());
     Ok(tasks)

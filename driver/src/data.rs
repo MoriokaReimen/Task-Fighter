@@ -60,6 +60,8 @@ pub struct Task {
     pub priority: Priority,
     pub progress: f32,
     pub time_spent: f32,
+    pub entry_date: Date,
+    pub end_date: Option<Date>,
 }
 
 impl Task {
@@ -89,6 +91,8 @@ impl Default for Task {
             priority: Priority::Low,
             progress: 0.0,
             time_spent: 0.0,
+            entry_date: Zoned::now().date(),
+            end_date: None,
         }
     }
 }
