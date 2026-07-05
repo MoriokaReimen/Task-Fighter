@@ -1,6 +1,6 @@
 use crate::Task;
-use crate::duckdb_task::DuckdbTask;
 use crate::TaskStatus;
+use crate::duckdb_task::DuckdbTask;
 use anyhow::{Context, Result, bail};
 use duckdb::{Connection, params};
 use jiff::Zoned;
@@ -18,13 +18,7 @@ pub fn connect() -> Result<Connection> {
 
     let conn = Connection::open("./runtime/task_fighter.db")
         .context("Failed to establish DuckDB database file handle stream connection")?;
-
-    // 💡 1. 自動インクリメント用のシーケンス（SEQUENCE）を作成
-    conn.execute("CREATE SEQUENCE IF NOT EXISTS tasks_id_seq START 1;", [])
-        .context("Failed to create sequence for tasks id")?;
-
-    // 💡 2. テーブル作成時に DEFAULT nextval('tasks_id_seq') を指定
-    const CREATE_TABLE_SQL: &str = include_str!("../assets/create_table.sql");
+    const CREATE_TABLE_SQL: &str = include_str!("../assets/task_sql/connect.sql");
     conn.execute(CREATE_TABLE_SQL, []).context(
         "Failed executing target master initialization schema table creation migrations",
     )?;
@@ -34,28 +28,12 @@ pub fn connect() -> Result<Connection> {
 }
 
 pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
-    info!("Inserting task record token: {:?}", task);
-
-    const INSERT_TASK_SQL: &str = include_str!("../assets/insert_task.sql");
-    let entry_date = Zoned::now().date();
-
-    conn.execute(
-        INSERT_TASK_SQL,
-        params![
-            task.active,
-            task.status as i32,
-            task.project,
-            task.title,
-            task.detail,
-            task.start_date.to_string(),
-            task.due_date.to_string(),
-            task.priority as i32,
-            task.progress,
-            task.time_spent,
-            entry_date.to_string()
-        ],
-    )
-    .context("Failed to commit novel dataset item to relational datastore row bounds")?;
+    info!("Inserting task: {:?}", task);
+    const INSERT_TASK_SQL: &str = include_str!("../assets/task_sql/insert_task.sql");
+    let db_task: DuckdbTask = task.clone().into();
+    let params = db_task.to_named_params();
+    let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
+    stmt.execute(&params)?;
 
     Ok(())
 }
@@ -115,57 +93,19 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
 }
 
 pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
-    const UPDATE_TASK_SQL: &str = include_str!("../assets/update_task.sql");
-    let mut stmt = conn.prepare(UPDATE_TASK_SQL).context(
-        "Failed compiling database structural mutations modification pipelines statements",
-    )?;
+    info!("Inserting task: {:?}", task);
+    const UPDATE_TASK_SQL: &str = include_str!("../assets/task_sql/update_task.sql");
+    let mut db_task: DuckdbTask = task.clone().into();
+    db_task.end_date = if task.status == TaskStatus::Complete || task.status == TaskStatus::Canceled
+    {
+        Some(Zoned::now().date().to_string())
+    } else {
+        None
+    };
 
-    let rows_affected = stmt
-        .execute(params![
-            task.active,
-            task.status as i32,
-            task.project,
-            task.title,
-            task.detail,
-            task.start_date.to_string(),
-            task.due_date.to_string(),
-            task.priority as i32,
-            task.progress,
-            task.time_spent,
-            task.id
-        ])
-        .context("Failed executing datastore entity mutations pipelines updates states")?;
-
-    if rows_affected == 0 {
-        bail!(
-            "Target modification bounds target identity token is non-existent: Identity [{}]",
-            task.id
-        );
-    }
-
-    if task.status == TaskStatus::Complete || task.status == TaskStatus::Canceled {
-        let end_date = Zoned::now().date();
-        let mut stmt = conn
-            .prepare(
-                "UPDATE tasks 
-            SET end_date = ?2
-            WHERE id = ?1",
-            )
-            .context(
-                "Failed compiling database structural mutations modification pipelines statements",
-            )?;
-
-        let rows_affected = stmt
-            .execute(params![task.id, end_date.to_string()])
-            .context("Failed executing datastore entity mutations pipelines updates states")?;
-
-        if rows_affected == 0 {
-            bail!(
-                "Target modification bounds target identity token is non-existent: Identity [{}]",
-                task.id
-            );
-        }
-    }
+    let params = db_task.to_named_params();
+    let mut stmt = conn.prepare(UPDATE_TASK_SQL)?;
+    stmt.execute(&params)?;
 
     info!("Task {} update success.", task.id);
     Ok(())

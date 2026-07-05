@@ -1,4 +1,4 @@
-use crate::{TaskPriority, Task, TaskStatus};
+use crate::{Task, TaskPriority, TaskStatus};
 use anyhow::{Context, Result};
 use jiff::Zoned;
 use minijinja::{Environment, context};

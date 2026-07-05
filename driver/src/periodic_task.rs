@@ -1,4 +1,4 @@
-use crate::{TaskPriority, Task, insert_task};
+use crate::{Task, TaskPriority, insert_task};
 use anyhow::{Context, Result, bail};
 use duckdb::{Connection, params};
 use jiff::ToSpan;

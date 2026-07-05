@@ -1,4 +1,4 @@
-use crate::task::{TaskPriority, Task, TaskStatus};
+use crate::task::{Task, TaskPriority, TaskStatus};
 use anyhow::Result;
 use duckdb::Row;
 use duckdb::ToSql;
@@ -84,19 +84,19 @@ impl TryFrom<&Row<'_>> for DuckdbTask {
 
     fn try_from(row: &Row<'_>) -> Result<Self, Self::Error> {
         Ok(DuckdbTask {
-            id: row.get(":id:")?,
-            active: row.get(":active:")?,
-            status: row.get(":status:")?,
-            project: row.get(":project:")?,
-            title: row.get(":title:")?,
-            detail: row.get(":detail:")?,
-            start_date: row.get(":start_date:")?,
-            due_date: row.get(":due_date:")?,
-            priority: row.get(":priority:")?,
-            progress: row.get(":progress:")?,
-            time_spent: row.get(":time_spent:")?,
-            entry_date: row.get(":entry_date:")?,
-            end_date: row.get(":end_date:")?,
+            id: row.get("id")?,
+            active: row.get("active")?,
+            status: row.get("status")?,
+            project: row.get("project")?,
+            title: row.get("title")?,
+            detail: row.get("detail")?,
+            start_date: row.get("start_date")?,
+            due_date: row.get("due_date")?,
+            priority: row.get("priority")?,
+            progress: row.get("progress")?,
+            time_spent: row.get("time_spent")?,
+            entry_date: row.get("entry_date")?,
+            end_date: row.get("end_date")?,
         })
     }
 }
@@ -104,19 +104,19 @@ impl TryFrom<&Row<'_>> for DuckdbTask {
 impl DuckdbTask {
     pub fn to_named_params(&self) -> HashMap<&str, &dyn ToSql> {
         HashMap::from_iter([
-            (":id:", &self.id as &dyn ToSql),
-            (":active:", &self.active as &dyn ToSql),
-            (":status:", &self.status as &dyn ToSql),
-            (":project:", &self.project as &dyn ToSql),
-            (":title:", &self.title as &dyn ToSql),
-            (":detail:", &self.detail as &dyn ToSql),
-            (":start_date:", &self.start_date as &dyn ToSql),
-            (":due_date:", &self.due_date as &dyn ToSql),
-            (":priority:", &self.priority as &dyn ToSql),
-            (":progress:", &self.progress as &dyn ToSql),
-            (":time_spent:", &self.time_spent as &dyn ToSql),
-            (":entry_date:", &self.entry_date as &dyn ToSql),
-            (":end_date:", &self.end_date as &dyn ToSql),
+            (":id", &self.id as &dyn ToSql),
+            (":active", &self.active as &dyn ToSql),
+            (":status", &self.status as &dyn ToSql),
+            (":project", &self.project as &dyn ToSql),
+            (":title", &self.title as &dyn ToSql),
+            (":detail", &self.detail as &dyn ToSql),
+            (":start_date", &self.start_date as &dyn ToSql),
+            (":due_date", &self.due_date as &dyn ToSql),
+            (":priority", &self.priority as &dyn ToSql),
+            (":progress", &self.progress as &dyn ToSql),
+            (":time_spent", &self.time_spent as &dyn ToSql),
+            (":entry_date", &self.entry_date as &dyn ToSql),
+            (":end_date", &self.end_date as &dyn ToSql),
         ])
     }
 }
