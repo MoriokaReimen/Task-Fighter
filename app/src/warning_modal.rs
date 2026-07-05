@@ -1,13 +1,13 @@
 use eframe::egui;
 
-pub struct WarningPopup {
+pub struct WarningModal {
     title: String,
     message: String,
     is_open: bool,
     id: egui::Id,
 }
 
-impl WarningPopup {
+impl WarningModal {
     pub fn new(id_source: impl std::hash::Hash + std::fmt::Debug) -> Self {
         Self {
             title: String::new(),

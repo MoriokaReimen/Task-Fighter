@@ -107,9 +107,12 @@ impl App {
                     let order_flag = TaskOrderFlags::OrderByPriority
                         | TaskOrderFlags::OrderByDueDate
                         | TaskOrderFlags::Reversed;
-                    self.output =
-                        self.core
-                            .search_task(&self.scan_pattern, search_flag, filter_flag, order_flag);
+                    self.output = self.core.search_task(
+                        &self.scan_pattern,
+                        search_flag,
+                        filter_flag,
+                        order_flag,
+                    );
                 }
                 ui.checkbox(&mut self.only_active, "");
                 ui.label(fl!("only-active"));

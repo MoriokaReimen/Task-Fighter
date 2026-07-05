@@ -81,7 +81,9 @@ impl TaskRecord for Core {
     }
 
     fn fetch_one_task(&self, id: i32) -> Self::AsyncOutput {
-        spawn_async_db!(self, FetchOneTask, |conn| { driver::fetch_one_task(conn, id) })
+        spawn_async_db!(self, FetchOneTask, |conn| {
+            driver::fetch_one_task(conn, id)
+        })
     }
 
     fn fetch_all_task(

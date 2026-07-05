@@ -9,8 +9,8 @@ mod style;
 mod task_edit;
 mod task_table;
 mod time_view;
-mod warning_popup;
-mod yes_no_cancel_popup;
+mod warning_modal;
+mod yes_no_cancel_modal;
 #[macro_use]
 pub mod i18n;
 pub use main_app::start_app;

@@ -1,7 +1,7 @@
 use super::style;
 use crate::graph::Graph;
-use crate::warning_popup::WarningPopup;
-use crate::yes_no_cancel_popup::YesNoCancelPopup;
+use crate::warning_modal::WarningModal;
+use crate::yes_no_cancel_modal::YesNoCancelModal;
 use anyhow::Result;
 use core::{CoreOutput, Task, TryRecvError};
 use eframe::egui::Ui;
@@ -67,8 +67,8 @@ pub struct App {
     pub temp_task: Task,
     pub only_active: bool,
     pub scan_pattern: String,
-    pub yes_no_cancel_popup: YesNoCancelPopup,
-    pub warning_popup: WarningPopup,
+    pub yes_no_cancel_modal: YesNoCancelModal,
+    pub warning_popup: WarningModal,
     pub graph: Graph,
     pub start_time: jiff::Zoned,
 }
@@ -86,8 +86,8 @@ impl App {
             temp_task: Task::default(),
             only_active: false,
             scan_pattern: String::new(),
-            yes_no_cancel_popup: YesNoCancelPopup::new("yes_no_cancel"),
-            warning_popup: WarningPopup::new("warning"),
+            yes_no_cancel_modal: YesNoCancelModal::new("yes_no_cancel"),
+            warning_popup: WarningModal::new("warning"),
             graph: Graph::new(),
             start_time: jiff::Zoned::now(),
         }

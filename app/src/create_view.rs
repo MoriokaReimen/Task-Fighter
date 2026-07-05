@@ -1,7 +1,7 @@
 use crate::fl;
 use crate::main_app::{App, AppState};
 use crate::task_edit::TaskEdit;
-use crate::yes_no_cancel_popup::PopupResult;
+use crate::yes_no_cancel_modal::ModalResult;
 use core::prelude::*;
 use core::{CoreOutput, Task};
 use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
@@ -20,12 +20,12 @@ impl App {
                     .clicked()
                 {
                     info!("Close Button Pressed");
-                    self.yes_no_cancel_popup
+                    self.yes_no_cancel_modal
                         .open(fl!("save-task"), fl!("save-task-message"));
                 }
 
-                match self.yes_no_cancel_popup.show(ui) {
-                    PopupResult::Yes => {
+                match self.yes_no_cancel_modal.show(ui) {
+                    ModalResult::Yes => {
                         if self.temp_task.is_saveable() {
                             self.output = self.core.upsert_task(&self.temp_task);
                             self.temp_task = Task::default();
@@ -40,7 +40,7 @@ impl App {
                             self.warning_popup.open(fl!("save-error"), message);
                         }
                     }
-                    PopupResult::No => {
+                    ModalResult::No => {
                         self.temp_task = Task::default();
                         self.state = AppState::Default;
                         self.displayed_tasks = None;

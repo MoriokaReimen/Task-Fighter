@@ -2,7 +2,7 @@ use crate::fl;
 use eframe::egui;
 
 /// ポップアップの状態を管理する構造体
-pub struct YesNoCancelPopup {
+pub struct YesNoCancelModal {
     title: String,
     message: String,
     is_open: bool,
@@ -12,14 +12,14 @@ pub struct YesNoCancelPopup {
 
 /// ユーザーがどちらを選択したかの戻り値
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum PopupResult {
+pub enum ModalResult {
     Yes,
     No,
     Cancel,
     None,
 }
 
-impl YesNoCancelPopup {
+impl YesNoCancelModal {
     /// 新しいポップアップの作成（一意の識別子を渡す）
     pub fn new(id_source: impl std::hash::Hash + std::fmt::Debug) -> Self {
         Self {
@@ -39,12 +39,12 @@ impl YesNoCancelPopup {
     }
 
     /// ポップアップを描画する（ウィジェット関数）
-    pub fn show(&mut self, ctx: &egui::Context) -> PopupResult {
+    pub fn show(&mut self, ctx: &egui::Context) -> ModalResult {
         if !self.is_open {
-            return PopupResult::None;
+            return ModalResult::None;
         }
 
-        let mut result = PopupResult::None;
+        let mut result = ModalResult::None;
 
         // 1. egui::Modal を一意のIDで生成
         let modal = egui::Modal::new(self.id).show(ctx, |ui| {
@@ -63,15 +63,15 @@ impl YesNoCancelPopup {
                     ui.horizontal(|ui| {
                         // 2. ボタンクリック時に結果を格納し、直接モーダルを閉じるフラグを立てる
                         if ui.button(fl!("cancel")).clicked() {
-                            result = PopupResult::Cancel;
+                            result = ModalResult::Cancel;
                             self.is_open = false;
                         }
                         if ui.button(fl!("no")).clicked() {
-                            result = PopupResult::No;
+                            result = ModalResult::No;
                             self.is_open = false;
                         }
                         if ui.button(fl!("yes")).clicked() {
-                            result = PopupResult::Yes;
+                            result = ModalResult::Yes;
                             self.is_open = false;
                         }
                     });
