@@ -1,5 +1,5 @@
-use crate::task::{Task, TaskPriority, TaskStatus};
 use anyhow::Result;
+use domain::{Task, TaskPriority, TaskStatus};
 use duckdb::Row;
 use duckdb::ToSql;
 use jiff::civil::Date;

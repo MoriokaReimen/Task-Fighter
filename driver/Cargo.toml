@@ -12,6 +12,7 @@ categories = ["gui", "productivity"]
 publish = false
 
 [dependencies]
+domain = {path = "../domain"}
 tracing.workspace = true
 anyhow.workspace = true
 jiff.workspace = true
@@ -26,5 +27,4 @@ base64 = "0.22.1"
 syntect = "5.3.0"
 open = "5.3.6"
 minijinja = "2.21.0"
-bitflags = "2.13.0"
 

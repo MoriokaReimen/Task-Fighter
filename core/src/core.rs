@@ -1,5 +1,7 @@
 use anyhow::Result;
-use driver::{Connection, Task, TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
+use domain::{Task, TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
+use driver::Connection;
+
 use jiff::{ToSpan, Zoned};
 use std::sync::Arc;
 use tokio::sync::Mutex;

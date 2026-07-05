@@ -1158,6 +1158,7 @@ name = "core"
 version = "7.0.22"
 dependencies = [
  "anyhow",
+ "domain",
  "driver",
  "jiff",
  "tokio",
@@ -1450,6 +1451,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "domain"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bitflags 2.13.0",
+ "jiff",
+ "serde",
+ "tracing",
+]
+
+[[package]]
 name = "downcast-rs"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1467,7 +1479,7 @@ version = "7.0.22"
 dependencies = [
  "anyhow",
  "base64",
- "bitflags 2.13.0",
+ "domain",
  "duckdb",
  "image 0.25.10",
  "jiff",
@@ -6090,6 +6102,7 @@ name = "utility"
 version = "7.0.22"
 dependencies = [
  "anyhow",
+ "domain",
  "driver",
  "duckdb",
  "jiff",

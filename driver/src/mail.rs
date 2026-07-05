@@ -1,5 +1,5 @@
-use crate::{Task, TaskPriority, TaskStatus};
 use anyhow::{Context, Result};
+use domain::{Task, TaskPriority, TaskStatus};
 use jiff::Zoned;
 use minijinja::{Environment, context};
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};

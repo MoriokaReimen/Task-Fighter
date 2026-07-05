@@ -1,7 +1,3 @@
-mod task;
-pub use task::{Task, TaskPriority, TaskStatus};
-pub use task::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
-
 mod task_database;
 pub use task_database::DuckdbPath;
 pub use task_database::connect;

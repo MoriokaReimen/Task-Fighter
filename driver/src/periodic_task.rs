@@ -1,5 +1,6 @@
-use crate::{Task, TaskPriority, insert_task};
+use crate::insert_task;
 use anyhow::{Context, Result, bail};
+use domain::{Task, TaskPriority};
 use duckdb::{Connection, params};
 use jiff::ToSpan;
 use jiff::Zoned;

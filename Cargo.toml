@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["driver", "core", "app", "main", "utility"]
+members = ["driver", "core", "app", "main", "utility", "domain"]
 
 [workspace.dependencies]
 tracing = { version = "^0.1", features = ["log"] }

@@ -13,6 +13,7 @@ publish = false
 
 [dependencies]
 driver = {path = "../driver"}
+domain = {path = "../domain"}
 tracing.workspace = true
 anyhow.workspace = true
 jiff.workspace = true

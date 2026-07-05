@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use driver::{TaskPriority, TaskStatus};
+use domain::{TaskPriority, TaskStatus};
 use duckdb::{Connection, params};
 use jiff::civil::Date;
 

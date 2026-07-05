@@ -1,7 +1,7 @@
 use crate::duckdb_task::DuckdbTask;
-use crate::task::{Task, TaskStatus};
-use crate::task::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 use anyhow::{Context, Result, bail};
+use domain::{Task, TaskStatus};
+use domain::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 use duckdb::{Connection, params};
 use jiff::Zoned;
 use jiff::civil::Date;
