@@ -1,6 +1,6 @@
-use crate::task::{TaskPriority, Task};
-use jiff::civil::{Date, Weekday};
+use crate::task::{Task, TaskPriority};
 use anyhow::{Result, bail};
+use jiff::civil::{Date, Weekday};
 
 pub struct WeeklyTask {
     pub id: i32,

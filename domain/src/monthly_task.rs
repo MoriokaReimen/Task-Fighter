@@ -1,6 +1,6 @@
-use crate::task::{TaskPriority, Task};
-use jiff::civil::Date;
+use crate::task::{Task, TaskPriority};
 use anyhow::{Result, bail};
+use jiff::civil::Date;
 
 pub struct MonthlyTask {
     pub id: i32,

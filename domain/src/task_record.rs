@@ -1,0 +1,74 @@
+use crate::task::Task;
+use anyhow::Result;
+use bitflags::bitflags;
+
+pub type PlotResult = Result<Vec<(i32, i32, i32, i32)>>;
+
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct TaskFilterFlags: u32 {
+        const Active           = 1 << 0;
+        const Inactive         = 1 << 1;
+        const PriorityLow      = 1 << 2;
+        const PriorityMiddle   = 1 << 3;
+        const PriorityHigh     = 1 << 4;
+        const StatusPending    = 1 << 5;
+        const StatusWIP        = 1 << 6;
+        const StatusComplete   = 1 << 7;
+        const StatusCanceled   = 1 << 8;
+    }
+}
+
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct TaskSearchFlags: u32 {
+        const SearchTitle      = 1 << 0;
+        const SearchProject    = 1 << 1;
+        const SearchDetail     = 1 << 2;
+        const EnableRegex      = 1 << 3;
+    }
+}
+
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct TaskOrderFlags: u32 {
+        const OrderByStatus    = 1 << 0;
+        const OrderByStartDate = 1 << 1;
+        const OrderByDueDate   = 1 << 2;
+        const OrderByEntryDate = 1 << 3;
+        const OrderByEndDate   = 1 << 4;
+        const OrderByPriority  = 1 << 5;
+        const OrderByProgress  = 1 << 6;
+        const OrderByTimeSpent = 1 << 7;
+        const Reversed         = 1 << 8;
+    }
+}
+
+pub trait TaskRecord {
+    type AsyncOutput;
+    fn get_next_id(&self) -> Result<i32>;
+    fn fetch_one(&self, id: i32) -> Self::AsyncOutput;
+    fn fetch_all(
+        &self,
+        filter_flags: TaskFilterFlags,
+        order_flags: TaskOrderFlags,
+    ) -> Self::AsyncOutput;
+    fn search(
+        &self,
+        pattern: &str,
+        search_flags: TaskSearchFlags,
+        filter_flags: TaskFilterFlags,
+        order_flags: TaskOrderFlags,
+    ) -> Self::AsyncOutput;
+    fn insert(&self, task: &Task) -> Self::AsyncOutput;
+    fn update(&self, task: &Task) -> Self::AsyncOutput;
+    fn upsert(&self, task: &Task) -> Self::AsyncOutput {
+        if task.id == 0 {
+            self.insert(task)
+        } else {
+            self.update(task)
+        }
+    }
+    fn get_plot_data(&self) -> Self::AsyncOutput;
+    fn mail_daily(&self, tasks: &[Task]) -> Self::AsyncOutput;
+}
