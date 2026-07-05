@@ -110,7 +110,7 @@ impl Core {
 
                 // ここで安全にブロックしてロックを取得
                 let conn_guard = handle.block_on(async { conn.lock().await });
-                let data = driver::count_tasks_by_date(&conn_guard, start_date, today)?;
+                let data = driver::get_plot_data(&conn_guard, start_date, today)?;
                 drop(conn_guard); // 不要になったらすぐ解放
 
                 let image_data = driver::export_to_base64(&data)?;
@@ -127,7 +127,10 @@ impl Core {
         spawn_async_db!(self, PlotData, |c| {
             let today = Zoned::now().date();
             let start_date = today - 99.days();
-            driver::count_tasks_by_date(c, start_date, today)
+            driver::get_plot_data(c, start_date, today)
         })
     }
+
+
+
 }
