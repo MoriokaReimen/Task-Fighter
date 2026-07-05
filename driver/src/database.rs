@@ -1,5 +1,5 @@
-use crate::Task;
-use crate::TaskStatus;
+use crate::task::{Task, TaskPriority, TaskStatus};
+use crate::task::{TaskSearchFlags, TaskFilterFlags, TaskOrderFlags};
 use crate::duckdb_task::DuckdbTask;
 use anyhow::{Context, Result, bail};
 use duckdb::{Connection, params};
@@ -8,16 +8,29 @@ use jiff::civil::Date;
 use std::fs;
 use std::path::Path;
 use tracing::info;
+use std::path::PathBuf;
 
-pub fn connect() -> Result<Connection> {
-    let path = Path::new("runtime");
-    if path.exists() && !path.is_dir() {
-        bail!("'runtime' exists but is a file. Expected a directory context path target.");
-    }
-    fs::create_dir_all(path).context("Failed to safely initialize target 'runtime' directory")?;
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DuckdbPath {
+    InMemory,
+    InDirectory(PathBuf),
+}
 
-    let conn = Connection::open("./runtime/task_fighter.db")
-        .context("Failed to establish DuckDB database file handle stream connection")?;
+pub fn connect(duckdb_path: &DuckdbPath) -> Result<Connection> {
+    let conn = match duckdb_path {
+        DuckdbPath::InMemory => {
+            info!("Initializing DuckDB in-memory database.");
+            Connection::open_in_memory()?
+        }
+        DuckdbPath::InDirectory(path) => {
+            info!("Initializing File-based DuckDB database at: {:?}", path);
+            if path.exists() && !path.is_dir() {
+                bail!(format!("The file named {:?} exists", path));
+            }
+            fs::create_dir_all(path)?;
+            Connection::open(path.join("task-fighter.db"))?
+        }
+    };
     const CREATE_TABLE_SQL: &str = include_str!("../assets/task_sql/connect.sql");
     conn.execute(CREATE_TABLE_SQL, []).context(
         "Failed executing target master initialization schema table creation migrations",
@@ -39,6 +52,9 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
 }
 
 fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
+    if id <= 0{
+        Ok(0)
+    }
     let mut stmt = conn.prepare("SELECT 1 FROM tasks WHERE id = ?;")?;
     let exists = stmt
         .exists(duckdb::params![id])
@@ -155,5 +171,79 @@ pub fn scan_tasks(conn: &Connection, pattern: &str, _only_active: bool) -> Resul
         .collect::<Result<Vec<Task>>>()
         .context("Failed parsing query sequences lists mapping constraints rows")?;
     info!("{} tasks queried.", tasks.len());
+    Ok(tasks)
+}
+
+pub fn search_task(
+    conn: &Connection,
+    pattern: &str,
+    search_flags: TaskSearchFlags,
+    filter_flags: TaskFilterFlags,
+    order_flags: TaskOrderFlags,
+) -> Result<Vec<Task>> {
+    info!("Searching tasks with pattern: '{}'", pattern);
+    const SEARCH_SQL: &str = include_str!("../assets/task_sql/search_task.sql");
+    let mut stmt = conn.prepare(SEARCH_SQL)?;
+
+    let params = duckdb::named_params! {
+        ":pattern": pattern,
+        ":search_flags": search_flags.bits() as i32,
+        ":filter_flags": filter_flags.bits() as i32,
+        ":order_flags": order_flags.bits() as i32,
+    };
+
+    let duckdb_tasks = stmt
+        .query_map(params, |row| DuckdbTask::try_from(row))?
+        .collect::<Result<Vec<DuckdbTask>, duckdb::Error>>()?;
+
+    let tasks = duckdb_tasks
+        .into_iter()
+        .map(Task::try_from)
+        .collect::<Result<Vec<Task>>>()?;
+
+    Ok(tasks)
+}
+
+pub fn fetch_one_task(conn: &Connection, id: i32) -> Result<Task> {
+    info!("Querying task with id: {}", id);
+
+    const FETCH_ONE_SQL: &str = include_str!("../assets/task_sql/fetch_one_task.sql");
+    let mut stmt = conn
+        .prepare(FETCH_ONE_SQL)?;
+
+    let duckdb_task = stmt
+        .query_row(duckdb::named_params! { ":id": id }, |row| {
+            DuckdbTask::try_from(row)
+        })?;
+
+    let task = Task::try_from(duckdb_task)?;
+    Ok(task)
+}
+
+pub fn fetch_all_task(
+    conn: &Connection,
+    filter_flags: TaskFilterFlags,
+    order_flags: TaskOrderFlags,
+) -> Result<Vec<Task>> {
+    info!("Querying tasks");
+
+    const FETCH_ALL_SQL: &str = include_str!("../assets/task_sql/fetch_all_task.sql");
+
+    let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
+
+    let params = duckdb::named_params! {
+        ":filter_flags:": filter_flags.bits() as i32,
+        ":order_flags:": order_flags.bits() as i32,
+    };
+
+    let duckdb_tasks = stmt
+        .query_map(params, |row| DuckdbTask::try_from(row))?
+        .collect::<Result<Vec<DuckdbTask>, duckdb::Error>>()?;
+
+    let tasks = duckdb_tasks
+        .into_iter()
+        .map(Task::try_from)
+        .collect::<Result<Vec<Task>>>()?;
+
     Ok(tasks)
 }

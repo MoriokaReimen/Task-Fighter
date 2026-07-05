@@ -116,7 +116,8 @@ pub fn generate_random_tasks(conn: &Connection, n: usize) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    let conn = connect()?;
+    let path = driver::DuckdbPath::InDirectory("./runtime".into());
+    let conn = driver::connect(&path)?;
 
     let num_records = 100;
     generate_random_tasks(&conn, num_records)?;

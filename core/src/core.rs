@@ -58,7 +58,10 @@ impl Core {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()?;
-        let conn = driver::connect()?;
+
+        let path = driver::DuckdbPath::InDirectory("./runtime".into());
+
+        let conn = driver::connect(&path)?;
         driver::initialize_periodic_tasks(&conn)?;
         Ok(Core {
             conn: Arc::new(Mutex::new(conn)),

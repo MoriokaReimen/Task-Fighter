@@ -1467,6 +1467,7 @@ version = "7.0.22"
 dependencies = [
  "anyhow",
  "base64",
+ "bitflags 2.13.0",
  "duckdb",
  "image 0.25.10",
  "jiff",

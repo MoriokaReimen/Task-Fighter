@@ -1,7 +1,6 @@
 mod task;
-pub use task::Task;
-pub use task::TaskPriority;
-pub use task::TaskStatus;
+pub use task::{Task, TaskPriority, TaskStatus};
+pub use task::{TaskSearchFlags, TaskFilterFlags, TaskOrderFlags};
 
 mod database;
 pub use database::connect;
@@ -12,6 +11,7 @@ pub use database::insert_task;
 pub use database::scan_tasks;
 pub use database::update_task;
 pub use database::upsert_task;
+pub use database::DuckdbPath;
 
 mod mail;
 pub use mail::launch_system_mailer;
