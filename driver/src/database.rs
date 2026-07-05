@@ -1,15 +1,13 @@
-use crate::task::{Task, TaskPriority, TaskStatus};
-use crate::task::{TaskSearchFlags, TaskFilterFlags, TaskOrderFlags};
 use crate::duckdb_task::DuckdbTask;
- use std::collections::HashMap;
+use crate::task::{Task, TaskStatus};
+use crate::task::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 use anyhow::{Context, Result, bail};
-use duckdb::{Connection, params, Statement, ToSql};
+use duckdb::{Connection, params};
 use jiff::Zoned;
 use jiff::civil::Date;
 use std::fs;
-use std::path::Path;
-use tracing::info;
 use std::path::PathBuf;
+use tracing::info;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DuckdbPath {
@@ -56,7 +54,7 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
 }
 
 fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
-    if id <= 0{
+    if id <= 0 {
         bail!(format!("Invlid id: {}", id));
     }
     let mut stmt = conn.prepare("SELECT 1 FROM tasks WHERE id = ?;")?;
@@ -91,27 +89,6 @@ pub fn get_next_id(conn: &Connection) -> Result<i32> {
     Ok(next_id)
 }
 
-pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
-    info!("Querying active tasks");
-    const FETCH_ACTIVE_TASK: &str = include_str!("../assets/fetch_active_task.sql");
-    let mut stmt = conn
-        .prepare(FETCH_ACTIVE_TASK)
-        .context("Failed compiling relational parameter statements validations queries")?;
-
-    let duckdb_tasks = stmt
-        .query_map([], |row| DuckdbTask::try_from(row))?
-        .collect::<Result<Vec<DuckdbTask>, duckdb::Error>>()
-        .context("Failed parsing query sequences lists mapping constraints rows")?;
-    let tasks = duckdb_tasks
-        .into_iter()
-        .map(Task::try_from)
-        .collect::<Result<Vec<Task>>>()
-        .context("Failed parsing query sequences lists mapping constraints rows")?;
-    info!("{} tasks queried.", tasks.len());
-
-    Ok(tasks)
-}
-
 pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
     info!("Updating task: {:?}", task);
     const UPDATE_TASK_SQL: &str = include_str!("../assets/task_sql/update_task.sql");
@@ -136,7 +113,7 @@ pub fn get_plot_data(
     start_date: Date,
     end_date: Date,
 ) -> Result<Vec<(i32, i32, i32, i32)>> {
-    const COUNT_TASK_BY_DATE_SQL: &str = include_str!("../assets/count_task_by_date.sql");
+    const COUNT_TASK_BY_DATE_SQL: &str = include_str!("../assets/task_sql/get_plot_data.sql");
     let mut stmt = conn.prepare(COUNT_TASK_BY_DATE_SQL)?;
     let rows = stmt.query_map(
         params![start_date.to_string(), end_date.to_string()],
@@ -151,31 +128,6 @@ pub fn get_plot_data(
     )?;
 
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
-}
-
-pub fn scan_tasks(conn: &Connection, pattern: &str, _only_active: bool) -> Result<Vec<Task>> {
-    info!("Scanning tasks with regex pattern: {}", pattern);
-
-    let trimmed = pattern.trim();
-    if trimmed.is_empty() {
-        return Ok(Vec::new());
-    }
-
-    const SCAN_TASK_SQL: &str = include_str!("../assets/scan_task.sql");
-    let mut stmt = conn
-        .prepare(SCAN_TASK_SQL)
-        .context("Failed to prepare regex match database query statement")?;
-    let duckdb_tasks = stmt
-        .query_map([trimmed], |row| DuckdbTask::try_from(row))?
-        .collect::<Result<Vec<DuckdbTask>, duckdb::Error>>()
-        .context("Failed parsing query sequences lists mapping constraints rows")?;
-    let tasks = duckdb_tasks
-        .into_iter()
-        .map(Task::try_from)
-        .collect::<Result<Vec<Task>>>()
-        .context("Failed parsing query sequences lists mapping constraints rows")?;
-    info!("{} tasks queried.", tasks.len());
-    Ok(tasks)
 }
 
 pub fn search_task(
@@ -212,13 +164,11 @@ pub fn fetch_one_task(conn: &Connection, id: i32) -> Result<Task> {
     info!("Querying task with id: {}", id);
 
     const FETCH_ONE_SQL: &str = include_str!("../assets/task_sql/fetch_one_task.sql");
-    let mut stmt = conn
-        .prepare(FETCH_ONE_SQL)?;
+    let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
-    let duckdb_task = stmt
-        .query_row(duckdb::named_params! { ":id": id }, |row| {
-            DuckdbTask::try_from(row)
-        })?;
+    let duckdb_task = stmt.query_row(duckdb::named_params! { ":id": id }, |row| {
+        DuckdbTask::try_from(row)
+    })?;
 
     let task = Task::try_from(duckdb_task)?;
     Ok(task)

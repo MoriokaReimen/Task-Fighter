@@ -1,8 +1,8 @@
 use anyhow::{Result, bail};
+use bitflags::bitflags;
 use jiff::Zoned;
 use jiff::civil::Date;
 use serde::{Deserialize, Serialize};
-use bitflags::bitflags;
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
