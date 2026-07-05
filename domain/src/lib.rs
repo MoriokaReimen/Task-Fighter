@@ -11,7 +11,7 @@ mod monthly_task;
 pub use monthly_task::MonthlyTask;
 
 mod task_record;
-pub use task_record::{TaskFilterFlags, TaskOrderFlags, TaskRecord, TaskSearchFlags, PlotResult};
+pub use task_record::{PlotResult, TaskFilterFlags, TaskOrderFlags, TaskRecord, TaskSearchFlags};
 
 mod monthly_task_record;
 pub use monthly_task_record::{

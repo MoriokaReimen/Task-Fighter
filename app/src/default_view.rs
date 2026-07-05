@@ -2,7 +2,7 @@ use super::main_app::{App, AppState};
 use crate::fl;
 use crate::task_table::TaskTable;
 use core::prelude::*;
-use core::CoreOutput;
+use core::{CoreOutput, TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
 
@@ -11,7 +11,11 @@ impl App {
     pub fn default_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // Trigger automatic tasks fetch if system is idle and no tasks are stored yet
         if matches!(self.output, CoreOutput::Idle) && self.displayed_tasks.is_none() {
-            self.output = self.core.fetch_active_tasks();
+            let filter_flag = TaskFilterFlags::Active;
+            let order_flag = TaskOrderFlags::OrderByPriority
+                | TaskOrderFlags::OrderByDueDate
+                | TaskOrderFlags::Reversed;
+            self.output = self.core.fetch_all(filter_flag, order_flag);
         }
 
         // --- Bottom Action Panel ---
@@ -79,7 +83,11 @@ impl App {
                     .clicked()
                 {
                     info!("Reset Button Pressed");
-                    self.output = self.core.fetch_active_tasks();
+                    let filter_flag = TaskFilterFlags::Active;
+                    let order_flag = TaskOrderFlags::OrderByPriority
+                        | TaskOrderFlags::OrderByDueDate
+                        | TaskOrderFlags::Reversed;
+                    self.output = self.core.fetch_all(filter_flag, order_flag);
                 }
 
                 if ui
@@ -87,7 +95,21 @@ impl App {
                     .clicked()
                 {
                     info!("Search Button Pressed");
-                    self.output = self.core.scan_tasks(&self.scan_pattern, self.only_active);
+                    let search_flag = TaskSearchFlags::SearchTitle
+                        | TaskSearchFlags::SearchProject
+                        | TaskSearchFlags::SearchDetail
+                        | TaskSearchFlags::EnableRegex;
+                    let filter_flag = if self.only_active {
+                        TaskFilterFlags::Active
+                    } else {
+                        TaskFilterFlags::Active | TaskFilterFlags::Inactive
+                    };
+                    let order_flag = TaskOrderFlags::OrderByPriority
+                        | TaskOrderFlags::OrderByDueDate
+                        | TaskOrderFlags::Reversed;
+                    self.output =
+                        self.core
+                            .search(&self.scan_pattern, search_flag, filter_flag, order_flag);
                 }
                 ui.checkbox(&mut self.only_active, "");
                 ui.label(fl!("only-active"));

@@ -118,7 +118,7 @@ impl App {
             CoreOutput::Idle => None,
 
             // Handle cases where tasks data needs to be saved into the UI state (`self.displayed_tasks`)
-            CoreOutput::FetchActiveTasks(rx) => match rx.try_recv() {
+            CoreOutput::FetchAllTask(rx) => match rx.try_recv() {
                 Ok(Ok(tasks)) => {
                     self.displayed_tasks = Some(tasks);
                     Some(CoreOutput::Idle)
@@ -134,7 +134,7 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
             },
-            CoreOutput::ScanTask(rx) => match rx.try_recv() {
+            CoreOutput::SearchTask(rx) => match rx.try_recv() {
                 Ok(Ok(tasks)) => {
                     self.displayed_tasks = Some(tasks);
                     Some(CoreOutput::Idle)
@@ -187,11 +187,8 @@ impl App {
                 match other_output {
                     CoreOutput::InsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
                     CoreOutput::UpsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
-                    CoreOutput::FetchAllTasks(rx) => handle_rx!(rx, "Failed to fetch all tasks"),
+                    CoreOutput::FetchAllTask(rx) => handle_rx!(rx, "Failed to fetch all tasks"),
                     CoreOutput::FetchOne(rx) => handle_rx!(rx, "Failed to fetch task by ID"),
-                    CoreOutput::FetchIncompleteTasks(rx) => {
-                        handle_rx!(rx, "Failed to fetch incomplete tasks")
-                    }
                     CoreOutput::UpdateTask(rx) => handle_rx!(rx, "Failed to update task"),
                     CoreOutput::MailDaily(rx) => handle_rx!(rx, "Failed to send daily report mail"),
                     _ => None,

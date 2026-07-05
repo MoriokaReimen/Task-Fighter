@@ -15,18 +15,14 @@ pub struct Core {
 
 pub type PlotResult = Result<Vec<(i32, i32, i32, i32)>>;
 
-#[allow(dead_code)]
 pub enum CoreOutput {
     Idle,
     InsertTask(Receiver<Result<()>>),
     UpsertTask(Receiver<Result<()>>),
-    FetchAllTasks(Receiver<Result<Vec<Task>>>),
+    FetchAllTask(Receiver<Result<Vec<Task>>>),
     FetchOne(Receiver<Result<Task>>),
-    FetchActiveTasks(Receiver<Result<Vec<Task>>>),
-    FetchIncompleteTasks(Receiver<Result<Vec<Task>>>),
     UpdateTask(Receiver<Result<()>>),
-    ScanTask(Receiver<Result<Vec<Task>>>),
-    SearchTasks(Receiver<Result<Vec<Task>>>), // ここが SearchTasks
+    SearchTask(Receiver<Result<Vec<Task>>>),
     MailDaily(Receiver<Result<()>>),
     PlotData(Receiver<PlotResult>),
 }
@@ -72,73 +68,6 @@ impl Core {
             runtime,
         })
     }
-
-    pub fn fetch_active_tasks(&self) -> CoreOutput {
-        spawn_async_db!(self, FetchActiveTasks, |c| {
-            let filter_flag = TaskFilterFlags::Active;
-            let order_flag = TaskOrderFlags::OrderByPriority
-                | TaskOrderFlags::OrderByDueDate
-                | TaskOrderFlags::Reversed;
-            driver::fetch_all_task(c, filter_flag, order_flag)
-        })
-    }
-
-    pub fn update_task(&self, task: Task) -> CoreOutput {
-        spawn_async_db!(self, UpdateTask, |c| driver::update_task(c, &task))
-    }
-
-    pub fn scan_tasks(&self, pattern: &str, only_active: bool) -> CoreOutput {
-        let pattern = pattern.to_string();
-        spawn_async_db!(self, ScanTask, |c| {
-            let search_flag = TaskSearchFlags::SearchTitle
-                | TaskSearchFlags::SearchProject
-                | TaskSearchFlags::SearchDetail
-                | TaskSearchFlags::EnableRegex;
-            let filter_flag = if only_active {
-                TaskFilterFlags::Active
-            } else {
-                TaskFilterFlags::Active | TaskFilterFlags::Inactive
-            };
-            let order_flag = TaskOrderFlags::OrderByPriority
-                | TaskOrderFlags::OrderByDueDate
-                | TaskOrderFlags::Reversed;
-            driver::search_task(c, &pattern, search_flag, filter_flag, order_flag)
-        })
-    }
-
-    pub fn mail_daily(&self, tasks: &[Task]) -> CoreOutput {
-        let conn = Arc::clone(&self.conn);
-        let (tx, rx) = oneshot::channel();
-        let tasks = tasks.to_vec();
-        let handle = self.runtime.handle().clone();
-
-        self.runtime.spawn_blocking(move || {
-            let result = (|| -> Result<()> {
-                let today = Zoned::now().date();
-                let start_date = today - 99.days();
-
-                // ここで安全にブロックしてロックを取得
-                let conn_guard = handle.block_on(async { conn.lock().await });
-                let data = driver::get_plot_data(&conn_guard, start_date, today)?;
-                drop(conn_guard); // 不要になったらすぐ解放
-
-                let image_data = driver::export_to_base64(&data)?;
-                driver::launch_system_mailer(&tasks, &image_data)?;
-                Ok(())
-            })();
-            let _ = tx.send(result);
-        });
-
-        CoreOutput::MailDaily(rx)
-    }
-
-    pub fn get_plot_data(&self) -> CoreOutput {
-        spawn_async_db!(self, PlotData, |c| {
-            let today = Zoned::now().date();
-            let start_date = today - 99.days();
-            driver::get_plot_data(c, start_date, today)
-        })
-    }
 }
 
 impl TaskRecord for Core {
@@ -163,7 +92,7 @@ impl TaskRecord for Core {
     ) -> Self::AsyncOutput {
         // 【修正】引数名が `filter_flags` になっているため、マクロ内でもそれに合わせる
         // 【修正】CoreOutput のバリアントは `FetchAllTasks` の可能性が高いため変更（元のままだと型エラーになる可能性があるため確認してください）
-        spawn_async_db!(self, FetchAllTasks, |c| {
+        spawn_async_db!(self, FetchAllTask, |c| {
             driver::fetch_all_task(c, filter_flags, order_flags)
         })
     }
@@ -176,8 +105,7 @@ impl TaskRecord for Core {
         order_flags: TaskOrderFlags,
     ) -> Self::AsyncOutput {
         let pattern = pattern.to_string();
-        // 【修正】CoreOutput::SearchTask は存在しないため、SearchTasks に修正
-        spawn_async_db!(self, SearchTasks, |c| {
+        spawn_async_db!(self, SearchTask, |c| {
             driver::search_task(c, &pattern, search_flags, filter_flags, order_flags)
         })
     }
