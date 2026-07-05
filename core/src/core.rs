@@ -1,5 +1,5 @@
 use anyhow::Result;
-use driver::{Connection, Task};
+use driver::{Connection, Task, TaskFilterFlags, TaskOrderFlags};
 use jiff::{ToSpan, Zoned};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -81,7 +81,11 @@ impl Core {
     }
 
     pub fn fetch_active_tasks(&self) -> CoreOutput {
-        spawn_async_db!(self, FetchActiveTasks, |c| driver::fetch_active_tasks(c))
+        spawn_async_db!(self, FetchActiveTasks, |c| {
+            let filter_flag = TaskFilterFlags::Active;
+            let order_flag = TaskOrderFlags::OrderByPriority | TaskOrderFlags::OrderByDueDate | TaskOrderFlags::Reversed;
+            driver::fetch_all_task(c, filter_flag, order_flag)
+        })
     }
 
     pub fn update_task(&self, task: Task) -> CoreOutput {

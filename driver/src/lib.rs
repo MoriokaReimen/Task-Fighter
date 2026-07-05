@@ -12,6 +12,8 @@ pub use database::scan_tasks;
 pub use database::update_task;
 pub use database::upsert_task;
 pub use database::DuckdbPath;
+pub use database::fetch_all_task;
+pub use database::fetch_one_task;
 
 mod mail;
 pub use mail::launch_system_mailer;

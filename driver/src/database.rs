@@ -190,10 +190,10 @@ pub fn search_task(
     let mut stmt = conn.prepare(SEARCH_SQL)?;
 
     let params = duckdb::named_params! {
-        ":pattern": pattern,
-        ":search_flags": search_flags.bits() as i32,
-        ":filter_flags": filter_flags.bits() as i32,
-        ":order_flags": order_flags.bits() as i32,
+        "pattern": pattern,
+        "search_flags": search_flags.bits() as i32,
+        "filter_flags": filter_flags.bits() as i32,
+        "order_flags": order_flags.bits() as i32,
     };
 
     let duckdb_tasks = stmt
@@ -236,8 +236,8 @@ pub fn fetch_all_task(
     let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
 
     let params = duckdb::named_params! {
-        ":filter_flags:": filter_flags.bits() as i32,
-        ":order_flags:": order_flags.bits() as i32,
+        "filter_flags": filter_flags.bits() as i32,
+        "order_flags": order_flags.bits() as i32,
     };
 
     let duckdb_tasks = stmt
