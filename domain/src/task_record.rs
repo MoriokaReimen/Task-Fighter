@@ -62,13 +62,7 @@ pub trait TaskRecord {
     ) -> Self::AsyncOutput;
     fn insert(&self, task: &Task) -> Self::AsyncOutput;
     fn update(&self, task: &Task) -> Self::AsyncOutput;
-    fn upsert(&self, task: &Task) -> Self::AsyncOutput {
-        if task.id == 0 {
-            self.insert(task)
-        } else {
-            self.update(task)
-        }
-    }
+    fn upsert(&self, task: &Task) -> Self::AsyncOutput;
     fn get_plot_data(&self) -> Self::AsyncOutput;
     fn mail_daily(&self, tasks: &[Task]) -> Self::AsyncOutput;
 }

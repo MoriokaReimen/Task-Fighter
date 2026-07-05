@@ -2,6 +2,7 @@ use crate::fl;
 use crate::main_app::{App, AppState};
 use crate::task_edit::TaskEdit;
 use crate::yes_no_cancel_popup::PopupResult;
+use core::prelude::*;
 use core::{CoreOutput, Task};
 use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
@@ -26,8 +27,7 @@ impl App {
                 match self.yes_no_cancel_popup.show(ui) {
                     PopupResult::Yes => {
                         if self.temp_task.is_saveable() {
-                            let task_to_insert = self.temp_task.clone();
-                            self.output = self.core.upsert_task(task_to_insert);
+                            self.output = self.core.upsert(&self.temp_task);
                             self.temp_task = Task::default();
                             self.state = AppState::Default;
                             self.displayed_tasks = None;

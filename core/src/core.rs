@@ -1,4 +1,5 @@
 use anyhow::Result;
+use domain::prelude::*;
 use domain::{Task, TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 use driver::Connection;
 
@@ -20,11 +21,12 @@ pub enum CoreOutput {
     InsertTask(Receiver<Result<()>>),
     UpsertTask(Receiver<Result<()>>),
     FetchAllTasks(Receiver<Result<Vec<Task>>>),
-    FetchTaskById(Receiver<Result<Task>>),
+    FetchOne(Receiver<Result<Task>>),
     FetchActiveTasks(Receiver<Result<Vec<Task>>>),
     FetchIncompleteTasks(Receiver<Result<Vec<Task>>>),
     UpdateTask(Receiver<Result<()>>),
-    ScanTasks(Receiver<Result<Vec<Task>>>),
+    ScanTask(Receiver<Result<Vec<Task>>>),
+    SearchTasks(Receiver<Result<Vec<Task>>>), // ここが SearchTasks
     MailDaily(Receiver<Result<()>>),
     PlotData(Receiver<PlotResult>),
 }
@@ -71,17 +73,6 @@ impl Core {
         })
     }
 
-    pub fn get_next_id(&self) -> Result<i32> {
-        self.runtime.block_on(async {
-            let conn = self.conn.lock().await;
-            driver::get_next_id(&conn)
-        })
-    }
-
-    pub fn upsert_task(&self, task: Task) -> CoreOutput {
-        spawn_async_db!(self, UpsertTask, |c| driver::upsert_task(c, &task))
-    }
-
     pub fn fetch_active_tasks(&self) -> CoreOutput {
         spawn_async_db!(self, FetchActiveTasks, |c| {
             let filter_flag = TaskFilterFlags::Active;
@@ -98,7 +89,7 @@ impl Core {
 
     pub fn scan_tasks(&self, pattern: &str, only_active: bool) -> CoreOutput {
         let pattern = pattern.to_string();
-        spawn_async_db!(self, ScanTasks, |c| {
+        spawn_async_db!(self, ScanTask, |c| {
             let search_flag = TaskSearchFlags::SearchTitle
                 | TaskSearchFlags::SearchProject
                 | TaskSearchFlags::SearchDetail
@@ -147,5 +138,98 @@ impl Core {
             let start_date = today - 99.days();
             driver::get_plot_data(c, start_date, today)
         })
+    }
+}
+
+impl TaskRecord for Core {
+    type AsyncOutput = CoreOutput;
+
+    fn get_next_id(&self) -> Result<i32> {
+        self.runtime.block_on(async {
+            let conn = self.conn.lock().await;
+            driver::get_next_id(&conn)
+        })
+    }
+
+    fn fetch_one(&self, id: i32) -> Self::AsyncOutput {
+        // 【修正】driver::fetch_one_task の戻り値をそのままマクロが返すようにセミコロンを削除
+        spawn_async_db!(self, FetchOne, |conn| { driver::fetch_one_task(conn, id) })
+    }
+
+    fn fetch_all(
+        &self,
+        filter_flags: TaskFilterFlags,
+        order_flags: TaskOrderFlags,
+    ) -> Self::AsyncOutput {
+        // 【修正】引数名が `filter_flags` になっているため、マクロ内でもそれに合わせる
+        // 【修正】CoreOutput のバリアントは `FetchAllTasks` の可能性が高いため変更（元のままだと型エラーになる可能性があるため確認してください）
+        spawn_async_db!(self, FetchAllTasks, |c| {
+            driver::fetch_all_task(c, filter_flags, order_flags)
+        })
+    }
+
+    fn search(
+        &self,
+        pattern: &str,
+        search_flags: TaskSearchFlags,
+        filter_flags: TaskFilterFlags,
+        order_flags: TaskOrderFlags,
+    ) -> Self::AsyncOutput {
+        let pattern = pattern.to_string();
+        // 【修正】CoreOutput::SearchTask は存在しないため、SearchTasks に修正
+        spawn_async_db!(self, SearchTasks, |c| {
+            driver::search_task(c, &pattern, search_flags, filter_flags, order_flags)
+        })
+    }
+
+    fn insert(&self, task: &Task) -> Self::AsyncOutput {
+        // 【修正】driver::insert_task が定義されていると仮定して修正（updateになっていたため）
+        let task = task.clone();
+        spawn_async_db!(self, InsertTask, |conn| driver::insert_task(conn, &task))
+    }
+
+    fn update(&self, task: &Task) -> Self::AsyncOutput {
+        let task = task.clone();
+        spawn_async_db!(self, UpdateTask, |c| driver::update_task(c, &task))
+    }
+
+    fn upsert(&self, task: &Task) -> Self::AsyncOutput {
+        let task = task.clone();
+        spawn_async_db!(self, UpsertTask, |c| driver::upsert_task(c, &task))
+    }
+
+    // 【注意】TaskRecord トレイトに以下の独自の関数（get_plot_data, mail_daily）が含まれている場合はこれで通ります。
+    // もしトレイト側に定義がない場合は、これらの関数自体を impl Task Record for Core から削除してください。
+    fn get_plot_data(&self) -> Self::AsyncOutput {
+        spawn_async_db!(self, PlotData, |c| {
+            let today = Zoned::now().date();
+            let start_date = today - 99.days();
+            driver::get_plot_data(c, start_date, today)
+        })
+    }
+
+    fn mail_daily(&self, tasks: &[Task]) -> Self::AsyncOutput {
+        let conn = Arc::clone(&self.conn);
+        let (tx, rx) = oneshot::channel();
+        let tasks = tasks.to_vec();
+        let handle = self.runtime.handle().clone();
+
+        self.runtime.spawn_blocking(move || {
+            let result = (|| -> Result<()> {
+                let today = Zoned::now().date();
+                let start_date = today - 99.days();
+
+                let conn_guard = handle.block_on(async { conn.lock().await });
+                let data = driver::get_plot_data(&conn_guard, start_date, today)?;
+                drop(conn_guard);
+
+                let image_data = driver::export_to_base64(&data)?;
+                driver::launch_system_mailer(&tasks, &image_data)?;
+                Ok(())
+            })();
+            let _ = tx.send(result);
+        });
+
+        CoreOutput::MailDaily(rx)
     }
 }

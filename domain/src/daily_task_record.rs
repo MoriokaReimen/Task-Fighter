@@ -49,12 +49,6 @@ pub trait DailyTaskRecord {
     ) -> Self::AsyncOutput;
     fn insert(&self, task: &DailyTask) -> Self::AsyncOutput;
     fn update(&self, task: &DailyTask) -> Self::AsyncOutput;
-    fn upsert(&self, task: &DailyTask) -> Self::AsyncOutput {
-        if task.id == 0 {
-            self.insert(task)
-        } else {
-            self.update(task)
-        }
-    }
+    fn upsert(&self, task: &DailyTask) -> Self::AsyncOutput;
     fn delete(&self, task: &DailyTask) -> Self::AsyncOutput;
 }

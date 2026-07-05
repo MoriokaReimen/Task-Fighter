@@ -1,6 +1,7 @@
 use super::main_app::{App, AppState};
 use crate::fl;
 use crate::task_table::TaskTable;
+use core::prelude::*;
 use core::CoreOutput;
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};

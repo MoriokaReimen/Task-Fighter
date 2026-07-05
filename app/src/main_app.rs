@@ -134,7 +134,7 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
             },
-            CoreOutput::ScanTasks(rx) => match rx.try_recv() {
+            CoreOutput::ScanTask(rx) => match rx.try_recv() {
                 Ok(Ok(tasks)) => {
                     self.displayed_tasks = Some(tasks);
                     Some(CoreOutput::Idle)
@@ -188,7 +188,7 @@ impl App {
                     CoreOutput::InsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
                     CoreOutput::UpsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
                     CoreOutput::FetchAllTasks(rx) => handle_rx!(rx, "Failed to fetch all tasks"),
-                    CoreOutput::FetchTaskById(rx) => handle_rx!(rx, "Failed to fetch task by ID"),
+                    CoreOutput::FetchOne(rx) => handle_rx!(rx, "Failed to fetch task by ID"),
                     CoreOutput::FetchIncompleteTasks(rx) => {
                         handle_rx!(rx, "Failed to fetch incomplete tasks")
                     }

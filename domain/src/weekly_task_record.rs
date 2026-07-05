@@ -49,12 +49,6 @@ pub trait WeeklyTaskRecord {
     ) -> Self::AsyncOutput;
     fn insert(&self, task: &WeeklyTask) -> Self::AsyncOutput;
     fn update(&self, task: &WeeklyTask) -> Self::AsyncOutput;
-    fn upsert(&self, task: &WeeklyTask) -> Self::AsyncOutput {
-        if task.id == 0 {
-            self.insert(task)
-        } else {
-            self.update(task)
-        }
-    }
+    fn upsert(&self, task: &WeeklyTask) -> Self::AsyncOutput;
     fn delete(&self, task: &WeeklyTask) -> Self::AsyncOutput;
 }

@@ -49,12 +49,6 @@ pub trait MonthlyTaskRecord {
     ) -> Self::AsyncOutput;
     fn insert(&self, task: &MonthlyTask) -> Self::AsyncOutput;
     fn update(&self, task: &MonthlyTask) -> Self::AsyncOutput;
-    fn upsert(&self, task: &MonthlyTask) -> Self::AsyncOutput {
-        if task.id == 0 {
-            self.insert(task)
-        } else {
-            self.update(task)
-        }
-    }
+    fn upsert(&self, task: &MonthlyTask) -> Self::AsyncOutput;
     fn delete(&self, task: &MonthlyTask) -> Self::AsyncOutput;
 }
