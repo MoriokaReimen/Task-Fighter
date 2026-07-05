@@ -1,5 +1,6 @@
 use super::style;
 use crate::graph::Graph;
+use crate::search_condition_modal::SearchConditionModal;
 use crate::warning_modal::WarningModal;
 use crate::yes_no_cancel_modal::YesNoCancelModal;
 use anyhow::Result;
@@ -65,10 +66,9 @@ pub struct App {
     pub displayed_tasks: Option<Vec<Task>>,
     pub plot_data: Option<Vec<(i32, i32, i32, i32)>>,
     pub temp_task: Task,
-    pub only_active: bool,
-    pub scan_pattern: String,
     pub yes_no_cancel_modal: YesNoCancelModal,
-    pub warning_popup: WarningModal,
+    pub warning_modal: WarningModal,
+    pub search_condition_modal: SearchConditionModal,
     pub graph: Graph,
     pub start_time: jiff::Zoned,
 }
@@ -84,10 +84,9 @@ impl App {
             displayed_tasks: None,
             plot_data: None,
             temp_task: Task::default(),
-            only_active: false,
-            scan_pattern: String::new(),
             yes_no_cancel_modal: YesNoCancelModal::new("yes_no_cancel"),
-            warning_popup: WarningModal::new("warning"),
+            warning_modal: WarningModal::new("warning"),
+            search_condition_modal: SearchConditionModal::new("search_condition"),
             graph: Graph::new(),
             start_time: jiff::Zoned::now(),
         }

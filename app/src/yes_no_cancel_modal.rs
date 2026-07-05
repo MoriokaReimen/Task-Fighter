@@ -47,7 +47,7 @@ impl YesNoCancelModal {
         let mut result = ModalResult::None;
 
         // 1. egui::Modal を一意のIDで生成
-        let modal = egui::Modal::new(self.id).show(ctx, |ui| {
+        let _modal = egui::Modal::new(self.id).show(ctx, |ui| {
             // タイトルをモーダルのヘッダーとして表示
             ui.heading(&self.title);
             ui.add_space(4.0);
@@ -78,11 +78,6 @@ impl YesNoCancelModal {
                 },
             );
         });
-
-        // 3. モーダルの外側（暗背景）がクリックされた、またはエスケープキーが押された場合のハンドリング
-        if modal.should_close() {
-            self.is_open = false;
-        }
 
         result
     }

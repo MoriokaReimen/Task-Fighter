@@ -37,7 +37,7 @@ impl App {
                             } else {
                                 fl!("title-empty")
                             };
-                            self.warning_popup.open(fl!("save-error"), message);
+                            self.warning_modal.open(fl!("save-error"), message);
                         }
                     }
                     ModalResult::No => {
@@ -47,7 +47,7 @@ impl App {
                     }
                     _ => {}
                 }
-                self.warning_popup.show(ui);
+                self.warning_modal.show(ui);
             });
         });
 

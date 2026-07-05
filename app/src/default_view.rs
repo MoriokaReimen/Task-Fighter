@@ -1,8 +1,9 @@
 use super::main_app::{App, AppState};
 use crate::fl;
+use crate::search_condition_modal::ModalResult;
 use crate::task_table::TaskTable;
 use core::prelude::*;
-use core::{CoreOutput, TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
+use core::{CoreOutput, TaskFilterFlags, TaskOrderFlags};
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
 
@@ -94,6 +95,9 @@ impl App {
                     .add(Button::new(fl!("search")).min_size(vec2(80.0, 28.0)))
                     .clicked()
                 {
+                    self.search_condition_modal.open();
+
+                    /*
                     info!("Search Button Pressed");
                     let search_flag = TaskSearchFlags::SearchTitle
                         | TaskSearchFlags::SearchProject
@@ -113,14 +117,23 @@ impl App {
                         filter_flag,
                         order_flag,
                     );
+                    */
                 }
-                ui.checkbox(&mut self.only_active, "");
-                ui.label(fl!("only-active"));
 
-                ui.add(
-                    egui::TextEdit::singleline(&mut self.scan_pattern)
-                        .desired_width(ui.available_width()),
-                );
+                if let ModalResult::Search(
+                    pattern,
+                    task_filter_flag,
+                    task_order_flag,
+                    task_search_flag,
+                ) = self.search_condition_modal.show(ui)
+                {
+                    self.output = self.core.search_task(
+                        &pattern,
+                        task_search_flag,
+                        task_filter_flag,
+                        task_order_flag,
+                    );
+                }
             });
 
             // Scrollable Workspace Panels

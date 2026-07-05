@@ -28,7 +28,7 @@ impl WarningModal {
             return;
         }
 
-        let modal = egui::Modal::new(self.id).show(ctx, |ui| {
+        let _modal = egui::Modal::new(self.id).show(ctx, |ui| {
             ui.heading(&self.title);
             ui.add_space(4.0);
 
@@ -40,9 +40,5 @@ impl WarningModal {
                 }
             });
         });
-
-        if modal.should_close() {
-            self.is_open = false;
-        }
     }
 }

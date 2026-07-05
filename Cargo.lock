@@ -240,6 +240,7 @@ name = "app"
 version = "7.0.22"
 dependencies = [
  "anyhow",
+ "bitflags 2.13.0",
  "core",
  "eframe",
  "egui",

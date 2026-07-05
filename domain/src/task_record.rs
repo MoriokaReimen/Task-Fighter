@@ -5,7 +5,7 @@ use bitflags::bitflags;
 pub type PlotResult = Result<Vec<(i32, i32, i32, i32)>>;
 
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
     pub struct TaskFilterFlags: u32 {
         const Active           = 1 << 0;
         const Inactive         = 1 << 1;
@@ -20,7 +20,7 @@ bitflags! {
 }
 
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
     pub struct TaskSearchFlags: u32 {
         const SearchTitle      = 1 << 0;
         const SearchProject    = 1 << 1;
@@ -30,7 +30,7 @@ bitflags! {
 }
 
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
     pub struct TaskOrderFlags: u32 {
         const OrderByStatus    = 1 << 0;
         const OrderByStartDate = 1 << 1;
