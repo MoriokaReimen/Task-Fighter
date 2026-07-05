@@ -78,7 +78,7 @@ pub fn upsert_task(conn: &Connection, task: &Task) -> Result<()> {
     Ok(())
 }
 
-pub fn get_next_id(conn: &Connection) -> Result<i32> {
+pub fn get_next_task_id(conn: &Connection) -> Result<i32> {
     let query = "SELECT last_value FROM duckdb_sequences() WHERE sequence_name = 'tasks_id_seq';";
     let last_value: Option<i64> = conn
         .query_row(query, [], |row| row.get(0))

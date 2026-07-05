@@ -20,7 +20,7 @@ pub enum CoreOutput {
     InsertTask(Receiver<Result<()>>),
     UpsertTask(Receiver<Result<()>>),
     FetchAllTask(Receiver<Result<Vec<Task>>>),
-    FetchOne(Receiver<Result<Task>>),
+    FetchOneTask(Receiver<Result<Task>>),
     UpdateTask(Receiver<Result<()>>),
     SearchTask(Receiver<Result<Vec<Task>>>),
     MailDaily(Receiver<Result<()>>),
@@ -73,19 +73,18 @@ impl Core {
 impl TaskRecord for Core {
     type AsyncOutput = CoreOutput;
 
-    fn get_next_id(&self) -> Result<i32> {
+    fn get_next_task_id(&self) -> Result<i32> {
         self.runtime.block_on(async {
             let conn = self.conn.lock().await;
-            driver::get_next_id(&conn)
+            driver::get_next_task_id(&conn)
         })
     }
 
-    fn fetch_one(&self, id: i32) -> Self::AsyncOutput {
-        // 【修正】driver::fetch_one_task の戻り値をそのままマクロが返すようにセミコロンを削除
-        spawn_async_db!(self, FetchOne, |conn| { driver::fetch_one_task(conn, id) })
+    fn fetch_one_task(&self, id: i32) -> Self::AsyncOutput {
+        spawn_async_db!(self, FetchOneTask, |conn| { driver::fetch_one_task(conn, id) })
     }
 
-    fn fetch_all(
+    fn fetch_all_task(
         &self,
         filter_flags: TaskFilterFlags,
         order_flags: TaskOrderFlags,
@@ -97,7 +96,7 @@ impl TaskRecord for Core {
         })
     }
 
-    fn search(
+    fn search_task(
         &self,
         pattern: &str,
         search_flags: TaskSearchFlags,
@@ -110,18 +109,18 @@ impl TaskRecord for Core {
         })
     }
 
-    fn insert(&self, task: &Task) -> Self::AsyncOutput {
+    fn insert_task(&self, task: &Task) -> Self::AsyncOutput {
         // 【修正】driver::insert_task が定義されていると仮定して修正（updateになっていたため）
         let task = task.clone();
         spawn_async_db!(self, InsertTask, |conn| driver::insert_task(conn, &task))
     }
 
-    fn update(&self, task: &Task) -> Self::AsyncOutput {
+    fn update_task(&self, task: &Task) -> Self::AsyncOutput {
         let task = task.clone();
         spawn_async_db!(self, UpdateTask, |c| driver::update_task(c, &task))
     }
 
-    fn upsert(&self, task: &Task) -> Self::AsyncOutput {
+    fn upsert_task(&self, task: &Task) -> Self::AsyncOutput {
         let task = task.clone();
         spawn_async_db!(self, UpsertTask, |c| driver::upsert_task(c, &task))
     }

@@ -15,7 +15,7 @@ impl App {
             let order_flag = TaskOrderFlags::OrderByPriority
                 | TaskOrderFlags::OrderByDueDate
                 | TaskOrderFlags::Reversed;
-            self.output = self.core.fetch_all(filter_flag, order_flag);
+            self.output = self.core.fetch_all_task(filter_flag, order_flag);
         }
 
         // --- Bottom Action Panel ---
@@ -63,7 +63,7 @@ impl App {
 
             if go_to_create {
                 self.state = AppState::Create;
-                if let Ok(id) = self.core.get_next_id() {
+                if let Ok(id) = self.core.get_next_task_id() {
                     self.temp_task.id = id;
                     info!("The next id is {}", id);
                 } else {
@@ -87,7 +87,7 @@ impl App {
                     let order_flag = TaskOrderFlags::OrderByPriority
                         | TaskOrderFlags::OrderByDueDate
                         | TaskOrderFlags::Reversed;
-                    self.output = self.core.fetch_all(filter_flag, order_flag);
+                    self.output = self.core.fetch_all_task(filter_flag, order_flag);
                 }
 
                 if ui
@@ -109,7 +109,7 @@ impl App {
                         | TaskOrderFlags::Reversed;
                     self.output =
                         self.core
-                            .search(&self.scan_pattern, search_flag, filter_flag, order_flag);
+                            .search_task(&self.scan_pattern, search_flag, filter_flag, order_flag);
                 }
                 ui.checkbox(&mut self.only_active, "");
                 ui.label(fl!("only-active"));

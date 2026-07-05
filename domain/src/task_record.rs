@@ -46,23 +46,23 @@ bitflags! {
 
 pub trait TaskRecord {
     type AsyncOutput;
-    fn get_next_id(&self) -> Result<i32>;
-    fn fetch_one(&self, id: i32) -> Self::AsyncOutput;
-    fn fetch_all(
+    fn get_next_task_id(&self) -> Result<i32>;
+    fn fetch_one_task(&self, id: i32) -> Self::AsyncOutput;
+    fn fetch_all_task(
         &self,
         filter_flags: TaskFilterFlags,
         order_flags: TaskOrderFlags,
     ) -> Self::AsyncOutput;
-    fn search(
+    fn search_task(
         &self,
         pattern: &str,
         search_flags: TaskSearchFlags,
         filter_flags: TaskFilterFlags,
         order_flags: TaskOrderFlags,
     ) -> Self::AsyncOutput;
-    fn insert(&self, task: &Task) -> Self::AsyncOutput;
-    fn update(&self, task: &Task) -> Self::AsyncOutput;
-    fn upsert(&self, task: &Task) -> Self::AsyncOutput;
+    fn insert_task(&self, task: &Task) -> Self::AsyncOutput;
+    fn update_task(&self, task: &Task) -> Self::AsyncOutput;
+    fn upsert_task(&self, task: &Task) -> Self::AsyncOutput;
     fn get_plot_data(&self) -> Self::AsyncOutput;
     fn mail_daily(&self, tasks: &[Task]) -> Self::AsyncOutput;
 }

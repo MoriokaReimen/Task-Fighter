@@ -188,7 +188,7 @@ impl App {
                     CoreOutput::InsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
                     CoreOutput::UpsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
                     CoreOutput::FetchAllTask(rx) => handle_rx!(rx, "Failed to fetch all tasks"),
-                    CoreOutput::FetchOne(rx) => handle_rx!(rx, "Failed to fetch task by ID"),
+                    CoreOutput::FetchOneTask(rx) => handle_rx!(rx, "Failed to fetch task by ID"),
                     CoreOutput::UpdateTask(rx) => handle_rx!(rx, "Failed to update task"),
                     CoreOutput::MailDaily(rx) => handle_rx!(rx, "Failed to send daily report mail"),
                     _ => None,

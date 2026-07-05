@@ -36,7 +36,7 @@ impl App {
                 match self.yes_no_cancel_popup.show(ui) {
                     PopupResult::Yes => {
                         if self.temp_task.is_saveable() {
-                            self.output = self.core.update(&self.temp_task);
+                            self.output = self.core.update_task(&self.temp_task);
                             self.temp_task = Task::default();
                             self.state = AppState::Default;
                             self.displayed_tasks = None;

@@ -3,7 +3,7 @@ pub use task_database::DuckdbPath;
 pub use task_database::connect;
 pub use task_database::fetch_all_task;
 pub use task_database::fetch_one_task;
-pub use task_database::get_next_id;
+pub use task_database::get_next_task_id;
 pub use task_database::get_plot_data;
 pub use task_database::insert_task;
 pub use task_database::search_task;
