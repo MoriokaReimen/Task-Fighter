@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use driver::{Priority, TaskStatus, connect};
+use driver::{TaskPriority, TaskStatus, connect};
 use duckdb::{Connection, params};
 use jiff::civil::Date;
 
@@ -25,7 +25,7 @@ pub fn generate_random_tasks(conn: &Connection, n: usize) -> Result<()> {
         TaskStatus::Complete,
         TaskStatus::Canceled,
     ];
-    let priorities = [Priority::Low, Priority::Medium, Priority::High];
+    let priorities = [TaskPriority::Low, TaskPriority::Medium, TaskPriority::High];
 
     println!("{} 件のランダムタスク（end_date対応）を生成中...", n);
 

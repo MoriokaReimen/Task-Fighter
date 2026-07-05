@@ -1,4 +1,4 @@
-use crate::{Priority, Task, insert_task};
+use crate::{TaskPriority, Task, insert_task};
 use anyhow::{Context, Result, bail};
 use duckdb::{Connection, params};
 use jiff::ToSpan;
@@ -36,7 +36,7 @@ pub struct PeriodicTask {
     pub project: String,
     pub title: String,
     pub detail: String,
-    pub priority: Priority,
+    pub priority: TaskPriority,
 }
 
 #[derive(Debug, Deserialize)]
@@ -51,7 +51,7 @@ impl Default for PeriodicTask {
             project: String::new(),
             title: String::new(),
             detail: String::new(),
-            priority: Priority::Low,
+            priority: TaskPriority::Low,
         }
     }
 }

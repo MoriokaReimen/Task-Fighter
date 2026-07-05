@@ -4,21 +4,21 @@ use jiff::civil::Date;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
-pub enum Priority {
+pub enum TaskPriority {
     #[default]
     Low = 0,
     Medium = 1,
     High = 2,
 }
 
-impl TryFrom<i32> for Priority {
+impl TryFrom<i32> for TaskPriority {
     type Error = anyhow::Error;
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Priority::Low),
-            1 => Ok(Priority::Medium),
-            2 => Ok(Priority::High),
+            0 => Ok(TaskPriority::Low),
+            1 => Ok(TaskPriority::Medium),
+            2 => Ok(TaskPriority::High),
             _ => bail!("Invalid priority integer state: {}", value),
         }
     }
@@ -57,7 +57,7 @@ pub struct Task {
     pub detail: String,
     pub start_date: Date,
     pub due_date: Date,
-    pub priority: Priority,
+    pub priority: TaskPriority,
     pub progress: f32,
     pub time_spent: f32,
     pub entry_date: Date,
@@ -88,7 +88,7 @@ impl Default for Task {
             detail: String::new(),
             start_date: Zoned::now().date(),
             due_date: Zoned::now().date(),
-            priority: Priority::Low,
+            priority: TaskPriority::Low,
             progress: 0.0,
             time_spent: 0.0,
             entry_date: Zoned::now().date(),
@@ -102,25 +102,25 @@ mod tests {
     use super::*;
 
     // =========================================================================
-    // Priority の TryFrom テスト
+    // TaskPriority の TryFrom テスト
     // =========================================================================
     #[test]
     fn test_priority_try_from_valid() {
-        assert_eq!(Priority::try_from(0).unwrap(), Priority::Low);
-        assert_eq!(Priority::try_from(1).unwrap(), Priority::Medium);
-        assert_eq!(Priority::try_from(2).unwrap(), Priority::High);
+        assert_eq!(TaskPriority::try_from(0).unwrap(), TaskPriority::Low);
+        assert_eq!(TaskPriority::try_from(1).unwrap(), TaskPriority::Medium);
+        assert_eq!(TaskPriority::try_from(2).unwrap(), TaskPriority::High);
     }
 
     #[test]
     fn test_priority_try_from_invalid() {
-        let result = Priority::try_from(3);
+        let result = TaskPriority::try_from(3);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
             "Invalid priority integer state: 3"
         );
 
-        let result_neg = Priority::try_from(-1);
+        let result_neg = TaskPriority::try_from(-1);
         assert!(result_neg.is_err());
     }
 
@@ -159,7 +159,7 @@ mod tests {
         assert_eq!(task.project, "");
         assert_eq!(task.title, "");
         assert_eq!(task.detail, "");
-        assert_eq!(task.priority, Priority::Low);
+        assert_eq!(task.priority, TaskPriority::Low);
         assert_eq!(task.progress, 0.0);
         assert_eq!(task.time_spent, 0.0);
     }

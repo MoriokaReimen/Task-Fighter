@@ -1,4 +1,4 @@
-use crate::{Priority, Task, TaskStatus};
+use crate::{TaskPriority, Task, TaskStatus};
 use anyhow::{Context, Result};
 use jiff::Zoned;
 use minijinja::{Environment, context};
@@ -137,9 +137,9 @@ pub fn create_mail_html(tasks: &[Task], image_data: &str) -> String {
             };
 
             let (priority_text, priority_color) = match task.priority {
-                Priority::High => ("🔴 High", "#dc3545"),
-                Priority::Medium => ("🟡 Medium", "#ffc107"),
-                Priority::Low => ("🔵 Low", "#20c997"),
+                TaskPriority::High => ("🔴 High", "#dc3545"),
+                TaskPriority::Medium => ("🟡 Medium", "#ffc107"),
+                TaskPriority::Low => ("🔵 Low", "#20c997"),
             };
 
             let detail_html = if task.detail.trim().is_empty() {

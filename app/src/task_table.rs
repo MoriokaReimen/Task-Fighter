@@ -1,5 +1,5 @@
 use crate::fl;
-use core::{Priority, Task, TaskStatus};
+use core::{TaskPriority, Task, TaskStatus};
 use egui::{Color32, Label, Response, Ui};
 use egui_extras::{Column, TableBuilder};
 
@@ -98,19 +98,19 @@ impl<'a> TaskTable<'a> {
                         });
 
                         row.col(|ui| match task.priority {
-                            Priority::High => {
+                            TaskPriority::High => {
                                 ui.label(
                                     egui::RichText::new(fl!("high"))
                                         .color(Color32::from_rgb(255, 60, 60)),
                                 );
                             }
-                            Priority::Medium => {
+                            TaskPriority::Medium => {
                                 ui.label(
                                     egui::RichText::new(fl!("medium"))
                                         .color(Color32::from_rgb(255, 215, 0)),
                                 );
                             }
-                            Priority::Low => {
+                            TaskPriority::Low => {
                                 ui.label(
                                     egui::RichText::new(fl!("low"))
                                         .color(Color32::from_rgb(60, 255, 60)),

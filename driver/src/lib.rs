@@ -1,7 +1,7 @@
-mod data;
-pub use data::Priority;
-pub use data::Task;
-pub use data::TaskStatus;
+mod task;
+pub use task::TaskPriority;
+pub use task::Task;
+pub use task::TaskStatus;
 
 mod database;
 pub use database::connect;
@@ -24,4 +24,4 @@ pub use periodic_task::initialize_periodic_tasks;
 
 pub use duckdb::Connection;
 
-mod duckdb_data;
+mod duckdb_task;

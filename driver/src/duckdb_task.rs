@@ -1,4 +1,4 @@
-use crate::data::{Priority, Task, TaskStatus};
+use crate::task::{TaskPriority, Task, TaskStatus};
 use anyhow::Result;
 use duckdb::Row;
 use duckdb::ToSql;
@@ -58,7 +58,7 @@ impl TryFrom<DuckdbTask> for Task {
         };
 
         // 各数値を Enum に変換する際のエラーをマッピング
-        let priority = Priority::try_from(duckdb_task.priority)?;
+        let priority = TaskPriority::try_from(duckdb_task.priority)?;
         let status = TaskStatus::try_from(duckdb_task.status)?;
 
         Ok(Task {

@@ -1,5 +1,5 @@
 use crate::fl;
-use core::{Priority, Task, TaskStatus};
+use core::{TaskPriority, Task, TaskStatus};
 use eframe::egui::{
     Color32, ComboBox, DragValue, Grid, Response, RichText, ScrollArea, Slider, TextEdit, Ui,
 };
@@ -146,9 +146,9 @@ impl<'a> TaskEdit<'a> {
     fn show_priority_combo(&mut self, ui: &mut Ui) {
         ui.label(fl!("priority"));
         let priorities = [
-            (Priority::Low, fl!("low"), Color32::GREEN),
-            (Priority::Medium, fl!("medium"), Color32::YELLOW),
-            (Priority::High, fl!("high"), Color32::RED),
+            (TaskPriority::Low, fl!("low"), Color32::GREEN),
+            (TaskPriority::Medium, fl!("medium"), Color32::YELLOW),
+            (TaskPriority::High, fl!("high"), Color32::RED),
         ];
 
         let (_, current_label, current_color) = priorities[self.task.priority as usize].clone();

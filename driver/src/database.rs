@@ -1,5 +1,5 @@
 use crate::Task;
-use crate::duckdb_data::DuckdbTask;
+use crate::duckdb_task::DuckdbTask;
 use crate::TaskStatus;
 use anyhow::{Context, Result, bail};
 use duckdb::{Connection, params};
