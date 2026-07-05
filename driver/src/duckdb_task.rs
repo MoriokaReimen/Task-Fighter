@@ -104,19 +104,19 @@ impl TryFrom<&Row<'_>> for DuckdbTask {
 impl DuckdbTask {
     pub fn to_named_params(&self) -> HashMap<&str, &dyn ToSql> {
         HashMap::from_iter([
-            (":id", &self.id as &dyn ToSql),
-            (":active", &self.active as &dyn ToSql),
-            (":status", &self.status as &dyn ToSql),
-            (":project", &self.project as &dyn ToSql),
-            (":title", &self.title as &dyn ToSql),
-            (":detail", &self.detail as &dyn ToSql),
-            (":start_date", &self.start_date as &dyn ToSql),
-            (":due_date", &self.due_date as &dyn ToSql),
-            (":priority", &self.priority as &dyn ToSql),
-            (":progress", &self.progress as &dyn ToSql),
-            (":time_spent", &self.time_spent as &dyn ToSql),
-            (":entry_date", &self.entry_date as &dyn ToSql),
-            (":end_date", &self.end_date as &dyn ToSql),
+            ("id", &self.id as &dyn ToSql),
+            ("active", &self.active as &dyn ToSql),
+            ("status", &self.status as &dyn ToSql),
+            ("project", &self.project as &dyn ToSql),
+            ("title", &self.title as &dyn ToSql),
+            ("detail", &self.detail as &dyn ToSql),
+            ("start_date", &self.start_date as &dyn ToSql),
+            ("due_date", &self.due_date as &dyn ToSql),
+            ("priority", &self.priority as &dyn ToSql),
+            ("progress", &self.progress as &dyn ToSql),
+            ("time_spent", &self.time_spent as &dyn ToSql),
+            ("entry_date", &self.entry_date as &dyn ToSql),
+            ("end_date", &self.end_date as &dyn ToSql),
         ])
     }
 }

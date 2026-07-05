@@ -1,8 +1,9 @@
 use crate::task::{Task, TaskPriority, TaskStatus};
 use crate::task::{TaskSearchFlags, TaskFilterFlags, TaskOrderFlags};
 use crate::duckdb_task::DuckdbTask;
+ use std::collections::HashMap;
 use anyhow::{Context, Result, bail};
-use duckdb::{Connection, params};
+use duckdb::{Connection, params, Statement, ToSql};
 use jiff::Zoned;
 use jiff::civil::Date;
 use std::fs;
@@ -44,8 +45,11 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     info!("Inserting task: {:?}", task);
     const INSERT_TASK_SQL: &str = include_str!("../assets/task_sql/insert_task.sql");
     let db_task: DuckdbTask = task.clone().into();
-    let params = db_task.to_named_params();
+    let mut params = db_task.to_named_params();
     let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
+    params.remove("end_date");
+    params.remove("id");
+
     stmt.execute(&params)?;
 
     Ok(())
@@ -109,7 +113,7 @@ pub fn fetch_active_tasks(conn: &Connection) -> Result<Vec<Task>> {
 }
 
 pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
-    info!("Inserting task: {:?}", task);
+    info!("Updating task: {:?}", task);
     const UPDATE_TASK_SQL: &str = include_str!("../assets/task_sql/update_task.sql");
     let mut db_task: DuckdbTask = task.clone().into();
     db_task.end_date = if task.status == TaskStatus::Complete || task.status == TaskStatus::Canceled
