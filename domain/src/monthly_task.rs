@@ -4,6 +4,7 @@ use jiff::civil::Date;
 
 pub struct MonthlyTask {
     pub id: i32,
+    pub active: bool,
     pub project: String,
     pub title: String,
     pub detail: String,
@@ -16,6 +17,7 @@ impl Default for MonthlyTask {
     fn default() -> Self {
         Self {
             id: 0,
+            active: true,
             project: String::new(),
             title: String::new(),
             detail: String::new(),

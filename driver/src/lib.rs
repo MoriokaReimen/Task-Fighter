@@ -1,6 +1,4 @@
 mod task_database;
-pub use task_database::DuckdbPath;
-pub use task_database::connect;
 pub use task_database::fetch_all_task;
 pub use task_database::fetch_one_task;
 pub use task_database::get_next_task_id;
@@ -22,3 +20,18 @@ pub use periodic_task::initialize_periodic_tasks;
 pub use duckdb::Connection;
 
 mod duckdb_task;
+
+mod daily_task_database;
+mod duckdb_daily_task;
+pub use daily_task_database::delete_daily_task;
+pub use daily_task_database::fetch_all_daily_task;
+pub use daily_task_database::fetch_one_daily_task;
+pub use daily_task_database::get_next_daily_task_id;
+pub use daily_task_database::insert_daily_task;
+pub use daily_task_database::search_daily_task;
+pub use daily_task_database::update_daily_task;
+pub use daily_task_database::upsert_daily_task;
+
+mod connect;
+pub use connect::DuckdbPath;
+pub use connect::connect;

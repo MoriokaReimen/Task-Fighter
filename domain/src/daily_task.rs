@@ -1,9 +1,12 @@
 use crate::task::{Task, TaskPriority};
 use anyhow::{Result, bail};
 use jiff::civil::Date;
+use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct DailyTask {
     pub id: i32,
+    pub active: bool,
     pub project: String,
     pub title: String,
     pub detail: String,
@@ -14,6 +17,7 @@ impl Default for DailyTask {
     fn default() -> Self {
         Self {
             id: 0,
+            active: true,
             project: String::new(),
             title: String::new(),
             detail: String::new(),

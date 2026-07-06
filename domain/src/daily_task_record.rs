@@ -33,22 +33,23 @@ bitflags! {
 
 pub trait DailyTaskRecord {
     type AsyncOutput;
-    fn get_next_id(&self) -> Result<i32>;
-    fn fetch_one(&self, id: i32) -> Self::AsyncOutput;
-    fn fetch_all(
+    fn get_next_daily_task_id(&self) -> Result<i32>;
+    fn fetch_one_daily_task(&self, id: i32) -> Self::AsyncOutput;
+    fn fetch_all_daily_task(
         &self,
         filter_flags: DailyTaskFilterFlags,
         order_flags: DailyTaskOrderFlags,
     ) -> Self::AsyncOutput;
-    fn search(
+    fn search_daily_task(
         &self,
         pattern: &str,
         search_flags: DailyTaskSearchFlags,
         filter_flags: DailyTaskFilterFlags,
         order_flags: DailyTaskOrderFlags,
     ) -> Self::AsyncOutput;
-    fn insert(&self, task: &DailyTask) -> Self::AsyncOutput;
-    fn update(&self, task: &DailyTask) -> Self::AsyncOutput;
-    fn upsert(&self, task: &DailyTask) -> Self::AsyncOutput;
-    fn delete(&self, task: &DailyTask) -> Self::AsyncOutput;
+    fn insert_daily_task(&self, task: &DailyTask) -> Self::AsyncOutput;
+    fn update_daily_task(&self, task: &DailyTask) -> Self::AsyncOutput;
+    fn upsert_daily_task(&self, task: &DailyTask) -> Self::AsyncOutput;
+    fn delete_daily_task(&self, id: i32) -> Self::AsyncOutput;
+    fn sync_all_daily_task(&self) -> Self::AsyncOutput;
 }
