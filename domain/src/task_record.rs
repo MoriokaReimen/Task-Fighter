@@ -5,7 +5,7 @@ use bitflags::bitflags;
 pub type PlotResult = Result<Vec<(i32, i32, i32, i32)>>;
 
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct TaskFilterFlags: u32 {
         const Active           = 1 << 0;
         const Inactive         = 1 << 1;
@@ -19,8 +19,22 @@ bitflags! {
     }
 }
 
+impl Default for TaskFilterFlags {
+    fn default() -> Self {
+        TaskFilterFlags::Active
+            | TaskFilterFlags::Inactive
+            | TaskFilterFlags::PriorityLow
+            | TaskFilterFlags::PriorityMiddle
+            | TaskFilterFlags::PriorityHigh
+            | TaskFilterFlags::StatusPending
+            | TaskFilterFlags::StatusWIP
+            | TaskFilterFlags::StatusComplete
+            | TaskFilterFlags::StatusCanceled
+    }
+}
+
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct TaskSearchFlags: u32 {
         const SearchTitle      = 1 << 0;
         const SearchProject    = 1 << 1;
@@ -29,8 +43,16 @@ bitflags! {
     }
 }
 
+impl Default for TaskSearchFlags {
+    fn default() -> Self {
+        TaskSearchFlags::SearchTitle
+            | TaskSearchFlags::SearchProject
+            | TaskSearchFlags::SearchDetail
+    }
+}
+
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct TaskOrderFlags: u32 {
         const OrderByStatus    = 1 << 0;
         const OrderByStartDate = 1 << 1;
@@ -41,6 +63,12 @@ bitflags! {
         const OrderByProgress  = 1 << 6;
         const OrderByTimeSpent = 1 << 7;
         const Reversed         = 1 << 8;
+    }
+}
+
+impl Default for TaskOrderFlags {
+    fn default() -> Self {
+        TaskOrderFlags::OrderByProgress
     }
 }
 
