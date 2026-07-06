@@ -1458,6 +1458,7 @@ dependencies = [
  "anyhow",
  "bitflags 2.13.0",
  "jiff",
+ "rand 0.10.2",
  "serde",
  "tracing",
 ]

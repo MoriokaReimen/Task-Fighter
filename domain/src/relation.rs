@@ -1,5 +1,5 @@
 pub struct Relation {
-    id: i32,
-    parent_task: i32,
-    child_task: i32,
+    pub id: i32,
+    pub parent_task: i32,
+    pub child_task: i32,
 }

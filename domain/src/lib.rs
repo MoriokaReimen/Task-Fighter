@@ -43,3 +43,6 @@ pub mod prelude {
     pub use crate::weekly_task_record::WeeklyTaskRecord;
     pub use crate::work_time_record::WorkTimeRecord;
 }
+
+#[cfg(test)]
+mod test_util;
