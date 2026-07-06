@@ -43,6 +43,17 @@ pub use weekly_task_database::search_weekly_task;
 pub use weekly_task_database::update_weekly_task;
 pub use weekly_task_database::upsert_weekly_task;
 
+mod duckdb_monthly_task;
+mod monthly_task_database;
+pub use monthly_task_database::delete_monthly_task;
+pub use monthly_task_database::fetch_all_monthly_task;
+pub use monthly_task_database::fetch_one_monthly_task;
+pub use monthly_task_database::get_next_monthly_task_id;
+pub use monthly_task_database::insert_monthly_task;
+pub use monthly_task_database::search_monthly_task;
+pub use monthly_task_database::update_monthly_task;
+pub use monthly_task_database::upsert_monthly_task;
+
 mod connect;
 pub use connect::DuckdbPath;
 pub use connect::connect;

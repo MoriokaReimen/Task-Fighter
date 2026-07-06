@@ -33,22 +33,23 @@ bitflags! {
 
 pub trait MonthlyTaskRecord {
     type AsyncOutput;
-    fn get_next_id(&self) -> Result<i32>;
-    fn fetch_one(&self, id: i32) -> Self::AsyncOutput;
-    fn fetch_all(
+    fn get_next_monthly_task_id(&self) -> Result<i32>;
+    fn fetch_one_monthly_task(&self, id: i32) -> Self::AsyncOutput;
+    fn fetch_all_monthly_task(
         &self,
         filter_flags: MonthlyTaskFilterFlags,
         order_flags: MonthlyTaskOrderFlags,
     ) -> Self::AsyncOutput;
-    fn search(
+    fn search_monthly_task(
         &self,
         pattern: &str,
         search_flags: MonthlyTaskSearchFlags,
         filter_flags: MonthlyTaskFilterFlags,
         order_flags: MonthlyTaskOrderFlags,
     ) -> Self::AsyncOutput;
-    fn insert(&self, task: &MonthlyTask) -> Self::AsyncOutput;
-    fn update(&self, task: &MonthlyTask) -> Self::AsyncOutput;
-    fn upsert(&self, task: &MonthlyTask) -> Self::AsyncOutput;
-    fn delete(&self, task: &MonthlyTask) -> Self::AsyncOutput;
+    fn insert_monthly_task(&self, task: &MonthlyTask) -> Self::AsyncOutput;
+    fn update_monthly_task(&self, task: &MonthlyTask) -> Self::AsyncOutput;
+    fn upsert_monthly_task(&self, task: &MonthlyTask) -> Self::AsyncOutput;
+    fn delete_monthly_task(&self, id: i32) -> Self::AsyncOutput;
+    fn sync_all_monthly_task(&self) -> Self::AsyncOutput;
 }

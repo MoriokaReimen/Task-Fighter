@@ -36,3 +36,15 @@ CREATE TABLE IF NOT EXISTS weekly_tasks (
     start_day   UTINYINT NOT NULL DEFAULT 1,
     end_day   UTINYINT NOT NULL DEFAULT 1,
 );
+-- MonthlyTask
+CREATE SEQUENCE IF NOT EXISTS monthly_tasks_id_seq START 1;
+CREATE TABLE IF NOT EXISTS monthly_tasks (
+    id          INTEGER PRIMARY KEY DEFAULT nextval('monthly_tasks_id_seq'),
+    active      BOOL NOT NULL DEFAULT true,
+    project     VARCHAR NOT NULL,
+    title       VARCHAR NOT NULL,
+    detail      VARCHAR NOT NULL,
+    priority    UTINYINT NOT NULL DEFAULT 1,
+    start_day   UTINYINT NOT NULL DEFAULT 1,
+    end_day   UTINYINT NOT NULL DEFAULT 1,
+);
