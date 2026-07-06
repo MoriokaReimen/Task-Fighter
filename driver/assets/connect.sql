@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     progress    REAL NOT NULL DEFAULT 0.0 CHECK(progress >= 0.0 AND progress <= 100.0),
     time_spent  REAL NOT NULL DEFAULT 0.0
 );
+-- DailyTask
 CREATE SEQUENCE IF NOT EXISTS daily_tasks_id_seq START 1;
 CREATE TABLE IF NOT EXISTS daily_tasks (
     id          INTEGER PRIMARY KEY DEFAULT nextval('daily_tasks_id_seq'),
@@ -22,4 +23,16 @@ CREATE TABLE IF NOT EXISTS daily_tasks (
     title       VARCHAR NOT NULL,
     detail      VARCHAR NOT NULL,
     priority    UTINYINT NOT NULL DEFAULT 1,
+);
+-- WeeklyTask
+CREATE SEQUENCE IF NOT EXISTS weekly_tasks_id_seq START 1;
+CREATE TABLE IF NOT EXISTS weekly_tasks (
+    id          INTEGER PRIMARY KEY DEFAULT nextval('weekly_tasks_id_seq'),
+    active      BOOL NOT NULL DEFAULT true,
+    project     VARCHAR NOT NULL,
+    title       VARCHAR NOT NULL,
+    detail      VARCHAR NOT NULL,
+    priority    UTINYINT NOT NULL DEFAULT 1,
+    start_day   UTINYINT NOT NULL DEFAULT 1,
+    end_day   UTINYINT NOT NULL DEFAULT 1,
 );

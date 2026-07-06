@@ -5,9 +5,21 @@ use bitflags::bitflags;
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct DailyTaskFilterFlags: u32 {
+        const Active           = 1 << 0;
+        const Inactive         = 1 << 1;
         const PriorityLow      = 1 << 2;
         const PriorityMiddle   = 1 << 3;
         const PriorityHigh     = 1 << 4;
+    }
+}
+
+impl Default for DailyTaskFilterFlags {
+    fn default() -> Self {
+        DailyTaskFilterFlags::Active
+            | DailyTaskFilterFlags::Inactive
+            | DailyTaskFilterFlags::PriorityLow
+            | DailyTaskFilterFlags::PriorityMiddle
+            | DailyTaskFilterFlags::PriorityHigh
     }
 }
 
@@ -21,6 +33,14 @@ bitflags! {
     }
 }
 
+impl Default for DailyTaskSearchFlags {
+    fn default() -> Self {
+        DailyTaskSearchFlags::SearchTitle
+            | DailyTaskSearchFlags::SearchProject
+            | DailyTaskSearchFlags::SearchDetail
+    }
+}
+
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct DailyTaskOrderFlags: u32 {
@@ -28,6 +48,12 @@ bitflags! {
         const OrderByDueDate   = 1 << 2;
         const OrderByPriority  = 1 << 5;
         const Reversed         = 1 << 8;
+    }
+}
+
+impl Default for DailyTaskOrderFlags {
+    fn default() -> Self {
+        DailyTaskOrderFlags::OrderByPriority
     }
 }
 

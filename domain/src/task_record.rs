@@ -68,7 +68,7 @@ bitflags! {
 
 impl Default for TaskOrderFlags {
     fn default() -> Self {
-        TaskOrderFlags::OrderByProgress
+        TaskOrderFlags::OrderByPriority
     }
 }
 
