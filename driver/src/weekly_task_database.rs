@@ -18,7 +18,7 @@ pub fn insert_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result
 
 fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
     if id <= 0 {
-        bail!(format!("Invlid id: {}", id));
+        bail!(format!("Invalid id: {}", id));
     }
     let mut stmt = conn.prepare("SELECT 1 FROM weekly_tasks WHERE id = ?;")?;
     let exists = stmt

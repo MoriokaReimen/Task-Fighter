@@ -1,8 +1,7 @@
 use anyhow::Result;
-use domain::{TaskPriority, MonthlyTask};
+use domain::{MonthlyTask, TaskPriority};
 use duckdb::Row;
 use duckdb::ToSql;
-use jiff::civil::Weekday;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]

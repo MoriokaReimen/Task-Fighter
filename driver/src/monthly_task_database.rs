@@ -7,7 +7,8 @@ use tracing::info;
 
 pub fn insert_monthly_task(conn: &Connection, monthly_task: &MonthlyTask) -> Result<()> {
     info!("Inserting monthly_task: {:?}", monthly_task);
-    const INSERT_TASK_SQL: &str = include_str!("../assets/monthly_task_sql/insert_monthly_task.sql");
+    const INSERT_TASK_SQL: &str =
+        include_str!("../assets/monthly_task_sql/insert_monthly_task.sql");
     let duckdb_monthly_task: DuckdbMonthlyTask = monthly_task.clone().into();
     let params = duckdb_monthly_task.to_named_params();
     let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
@@ -18,7 +19,7 @@ pub fn insert_monthly_task(conn: &Connection, monthly_task: &MonthlyTask) -> Res
 
 fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
     if id <= 0 {
-        bail!(format!("Invlid id: {}", id));
+        bail!(format!("Invalid id: {}", id));
     }
     let mut stmt = conn.prepare("SELECT 1 FROM monthly_tasks WHERE id = ?;")?;
     let exists = stmt
@@ -34,7 +35,10 @@ pub fn upsert_monthly_task(conn: &Connection, monthly_task: &MonthlyTask) -> Res
         info!("ID {} exists. Update monthly_task.", monthly_task.id);
         update_monthly_task(conn, monthly_task)?;
     } else {
-        info!("ID {} not exists. Create new monthly_task.", monthly_task.id);
+        info!(
+            "ID {} not exists. Create new monthly_task.",
+            monthly_task.id
+        );
         insert_monthly_task(conn, monthly_task)?;
     }
 
@@ -55,7 +59,8 @@ pub fn get_next_monthly_task_id(conn: &Connection) -> Result<i32> {
 
 pub fn update_monthly_task(conn: &Connection, monthly_task: &MonthlyTask) -> Result<()> {
     info!("Updating monthly_task: {:?}", monthly_task);
-    const UPDATE_TASK_SQL: &str = include_str!("../assets/monthly_task_sql/update_monthly_task.sql");
+    const UPDATE_TASK_SQL: &str =
+        include_str!("../assets/monthly_task_sql/update_monthly_task.sql");
     let duckdb_monthly_task: DuckdbMonthlyTask = monthly_task.clone().into();
 
     let params = duckdb_monthly_task.to_named_params();
@@ -99,7 +104,8 @@ pub fn search_monthly_task(
 pub fn fetch_one_monthly_task(conn: &Connection, id: i32) -> Result<MonthlyTask> {
     info!("Querying monthly_task with id: {}", id);
 
-    const FETCH_ONE_SQL: &str = include_str!("../assets/monthly_task_sql/fetch_one_monthly_task.sql");
+    const FETCH_ONE_SQL: &str =
+        include_str!("../assets/monthly_task_sql/fetch_one_monthly_task.sql");
     let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
     let duckdb_monthly_task = stmt.query_row(duckdb::named_params! { ":id": id }, |row| {
@@ -117,7 +123,8 @@ pub fn fetch_all_monthly_task(
 ) -> Result<Vec<MonthlyTask>> {
     info!("Querying monthly_tasks");
 
-    const FETCH_ALL_SQL: &str = include_str!("../assets/monthly_task_sql/fetch_all_monthly_task.sql");
+    const FETCH_ALL_SQL: &str =
+        include_str!("../assets/monthly_task_sql/fetch_all_monthly_task.sql");
 
     let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
 

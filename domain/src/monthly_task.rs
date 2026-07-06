@@ -1,7 +1,9 @@
 use crate::task::{Task, TaskPriority};
 use anyhow::{Result, bail};
 use jiff::civil::Date;
+use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MonthlyTask {
     pub id: i32,
     pub active: bool,

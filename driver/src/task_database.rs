@@ -23,7 +23,7 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
 
 fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
     if id <= 0 {
-        bail!(format!("Invlid id: {}", id));
+        bail!(format!("Invalid id: {}", id));
     }
     let mut stmt = conn.prepare("SELECT 1 FROM tasks WHERE id = ?;")?;
     let exists = stmt
