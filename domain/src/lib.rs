@@ -45,4 +45,4 @@ pub mod prelude {
 }
 
 #[cfg(test)]
-mod test_util;
+pub mod test_util;

@@ -1,3 +1,5 @@
+use crate::TaskPriority;
+
 pub(super) const PROJECTS: [&str; 20] = [
     "auth-service",
     "payment-gateway",
@@ -66,3 +68,6 @@ pub(super) const TASK_DETAILS: [&str; 20] = [
     "Write a robust bash script triggered by cron to dump production database schemas, compress them via zstd, and upload directly to AWS S3.",
     "Refactor old legacy string-based errors into a clean, strongly-typed Enum system leveraging the thiserror crate for better maintainability.",
 ];
+
+pub(super) const PRIORITIES: [TaskPriority; 3] =
+    [TaskPriority::Low, TaskPriority::Medium, TaskPriority::High];
