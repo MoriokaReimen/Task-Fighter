@@ -61,3 +61,6 @@ pub use connect::connect;
 mod duckdb_relation;
 mod relation_database;
 pub use relation_database::*;
+
+mod duckdb_work_time;
+mod work_time_database;

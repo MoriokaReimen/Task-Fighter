@@ -1,5 +1,7 @@
 use jiff::civil::Date;
+use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct WorkTime {
     pub id: i32,
     pub task_id: i32,
