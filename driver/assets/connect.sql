@@ -48,3 +48,9 @@ CREATE TABLE IF NOT EXISTS monthly_tasks (
     start_day   UTINYINT NOT NULL DEFAULT 1,
     end_day   UTINYINT NOT NULL DEFAULT 1,
 );
+-- Relation
+CREATE TABLE IF NOT EXISTS relation (
+    parent_id INTEGER,
+    child_id INTEGER,
+    PRIMARY KEY (parent_id, child_id)
+);

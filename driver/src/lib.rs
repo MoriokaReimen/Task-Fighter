@@ -57,3 +57,7 @@ pub use monthly_task_database::upsert_monthly_task;
 mod connect;
 pub use connect::DuckdbPath;
 pub use connect::connect;
+
+mod duckdb_relation;
+mod relation_database;
+pub use relation_database::*;
