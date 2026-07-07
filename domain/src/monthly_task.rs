@@ -64,3 +64,130 @@ impl MonthlyTask {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use jiff::civil::Date;
+
+    // 共通で使える有効なMonthlyTaskのヘルパー
+    fn valid_monthly_task() -> MonthlyTask {
+        MonthlyTask {
+            id: 100,
+            active: true,
+            project: "Billing".to_string(),
+            title: "Monthly Invoice".to_string(),
+            detail: "Send invoice to clients".to_string(),
+            priority: TaskPriority::High,
+            start_day: 10,
+            due_day: 15,
+        }
+    }
+
+    #[test]
+    fn test_default_impl() {
+        let default_task = MonthlyTask::default();
+        assert_eq!(default_task.id, 0);
+        assert!(default_task.active);
+        assert!(default_task.project.is_empty());
+        assert!(default_task.title.is_empty());
+        assert!(default_task.detail.is_empty());
+        assert_eq!(default_task.priority, TaskPriority::Low);
+        assert_eq!(default_task.start_day, 1);
+        assert_eq!(default_task.due_day, 1);
+    }
+
+    #[test]
+    fn test_is_valid_success() {
+        let task = valid_monthly_task();
+        assert!(task.is_valid());
+    }
+
+    #[test]
+    fn test_is_valid_failures() {
+        // 1. プロジェクト名が空
+        let mut task = valid_monthly_task();
+        task.project = "  ".to_string();
+        assert!(!task.is_valid());
+
+        // 2. タイトルが空
+        let mut task = valid_monthly_task();
+        task.title = "".to_string();
+        assert!(!task.is_valid());
+
+        // 3. start_day が範囲外 (0)
+        let mut task = valid_monthly_task();
+        task.start_day = 0;
+        assert!(!task.is_valid());
+
+        // 4. due_day が範囲外 (32)
+        let mut task = valid_monthly_task();
+        task.due_day = 32;
+        assert!(!task.is_valid());
+
+        // 5. start_day が due_day より後ろ
+        let mut task = valid_monthly_task();
+        task.start_day = 20;
+        task.due_day = 10;
+        assert!(!task.is_valid());
+    }
+
+    #[test]
+    fn test_create_task_success() {
+        let monthly_task = valid_monthly_task();
+        // 2026年7月（31日まである月）
+        let today = Date::new(2026, 7, 7).unwrap();
+
+        let result = monthly_task.create_task(&today);
+        assert!(result.is_ok());
+
+        let created_task = result.unwrap();
+
+        assert_eq!(created_task.id, monthly_task.id);
+        assert_eq!(created_task.project, monthly_task.project);
+        assert_eq!(created_task.detail, monthly_task.detail);
+        assert_eq!(created_task.priority, monthly_task.priority);
+
+        // タイトルの年月フォーマットの検証
+        assert_eq!(created_task.title, "Monthly Invoice for 2026/07");
+
+        // 日付オブジェクトが正しくマッピングされているか
+        assert_eq!(created_task.start_date, Date::new(2026, 7, 10).unwrap());
+        assert_eq!(created_task.due_date, Date::new(2026, 7, 15).unwrap());
+        assert_eq!(created_task.entry_date, today);
+    }
+
+    #[test]
+    fn test_create_task_clamp_at_month_end() {
+        // 31日として設定されたタスク
+        let mut monthly_task = valid_monthly_task();
+        monthly_task.start_day = 30;
+        monthly_task.due_day = 31;
+
+        // うるう年ではない2026年の2月（28日まで）を指定
+        let today = Date::new(2026, 2, 15).unwrap();
+
+        let result = monthly_task.create_task(&today);
+        assert!(result.is_ok());
+
+        let created_task = result.unwrap();
+
+        // 28日にクランプ（丸め込み）されていることを検証
+        assert_eq!(created_task.start_date, Date::new(2026, 2, 28).unwrap());
+        assert_eq!(created_task.due_date, Date::new(2026, 2, 28).unwrap());
+        assert_eq!(created_task.title, "Monthly Invoice for 2026/02");
+    }
+
+    #[test]
+    fn test_create_task_invalid_failure() {
+        let mut invalid_task = valid_monthly_task();
+        invalid_task.start_day = 31;
+        invalid_task.due_day = 1; // バリデーションエラーになる設定
+
+        let today = Date::new(2026, 7, 7).unwrap();
+        let result = invalid_task.create_task(&today);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "Invalid monthly task");
+    }
+}

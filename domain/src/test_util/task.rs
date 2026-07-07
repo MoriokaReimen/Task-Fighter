@@ -21,10 +21,10 @@ pub fn generate_task_sequence() -> Vec<Task> {
             let count_i32 = count as i32;
             let priority = TaskPriority::try_from(priority_num).unwrap();
             let status = TaskStatus::try_from(status_num).unwrap();
-            
+
             let project = format!("Project: {}", PROJECTS[priority_num as usize]);
             let title = format!("Title: {}", TITLES[status_num as usize]);
-            
+
             let end_date = if count < 6 {
                 None
             } else {
@@ -56,16 +56,16 @@ pub fn get_random_task() -> Task {
     let detail_idx = rand::random_range(0..TASK_DETAILS.len());
     let status_idx = rand::random_range(0..STATUSES.len());
     let priority_idx = rand::random_range(0..PRIORITIES.len());
-    
+
     let start_day = rand::random_range(1..=28);
     let start_month = rand::random_range(1..=5);
     let duration = rand::random_range(1..=14);
 
     let start_date = Date::new(2026, start_month, start_day).unwrap();
     let due_date = start_date.checked_add(duration.days()).unwrap();
-    
+
     let status = STATUSES[status_idx];
-    
+
     let progress = match status {
         TaskStatus::Pending => 0.0,
         TaskStatus::Complete => 100.0,
@@ -105,7 +105,5 @@ pub fn get_random_task() -> Task {
 }
 
 pub fn generate_random_tasks(count: i32) -> Vec<Task> {
-    (0..count.max(0))
-        .map(|_| get_random_task())
-        .collect()
+    (0..count.max(0)).map(|_| get_random_task()).collect()
 }

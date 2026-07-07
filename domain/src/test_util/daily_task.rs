@@ -7,7 +7,7 @@ pub fn generate_daily_task_sequence() -> Vec<DailyTask> {
         .map(|(idx, priority_num)| {
             let count = (idx + 1) as i32;
             let count_usize = count as usize;
-            
+
             let priority = TaskPriority::try_from(priority_num).unwrap();
             let project = format!("Project: {}", PROJECTS[count_usize]);
             let title = format!("Title: {}", TITLES[count_usize]);
@@ -42,7 +42,5 @@ pub fn get_random_daily_task() -> DailyTask {
 }
 
 pub fn generate_random_daily_task(count: i32) -> Vec<DailyTask> {
-    (0..count.max(0))
-        .map(|_| get_random_daily_task())
-        .collect()
+    (0..count.max(0)).map(|_| get_random_daily_task()).collect()
 }

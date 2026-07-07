@@ -114,3 +114,65 @@ impl WeeklyTask {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use jiff::civil::Date;
+
+    fn valid_weekly_task() -> WeeklyTask {
+        WeeklyTask {
+            id: 200,
+            active: true,
+            project: "Reporting".to_string(),
+            title: "Weekly Status".to_string(),
+            detail: "Submit weekly report".to_string(),
+            priority: TaskPriority::Medium,
+            start_day: Weekday::Monday,
+            due_day: Weekday::Friday,
+        }
+    }
+
+    // =========================================================================
+    // 基本挙動 & カレンダー計算のテスト（依存なし）
+    // =========================================================================
+    #[test]
+    fn test_default_impl() {
+        let default_task = WeeklyTask::default();
+        assert_eq!(default_task.id, 0);
+        assert!(default_task.active);
+        assert_eq!(default_task.start_day, Weekday::Monday);
+        assert_eq!(default_task.due_day, Weekday::Friday);
+    }
+
+    #[test]
+    fn test_is_valid_success() {
+        let task = valid_weekly_task();
+        assert!(task.is_valid());
+    }
+
+    #[test]
+    fn test_is_valid_failures() {
+        let mut task = valid_weekly_task();
+        task.project = "   ".to_string();
+        assert!(!task.is_valid());
+
+        let mut task = valid_weekly_task();
+        task.start_day = Weekday::Friday;
+        task.due_day = Weekday::Tuesday;
+        assert!(!task.is_valid());
+    }
+
+    #[test]
+    fn test_create_task_date_calculation() {
+        let weekly_task = valid_weekly_task();
+        let today = Date::new(2026, 7, 8).unwrap(); // 水曜日
+
+        let created_task = weekly_task.create_task(&today).unwrap();
+
+        assert_eq!(created_task.start_date, Date::new(2026, 7, 6).unwrap()); // 直近の月曜
+        assert_eq!(created_task.due_date, Date::new(2026, 7, 10).unwrap()); // 直近の金曜
+        assert_eq!(created_task.title, "Weekly Status for July Week 1");
+        assert_eq!(created_task.entry_date, today);
+    }
+}

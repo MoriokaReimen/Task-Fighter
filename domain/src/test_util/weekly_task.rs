@@ -20,7 +20,7 @@ pub fn generate_weekly_task_sequence() -> Vec<WeeklyTask> {
             // countは1から始まる（0番目の要素にアクセスしない仕様を維持）
             let count = (idx + 1) as i32;
             let count_usize = count as usize;
-            
+
             let priority = TaskPriority::try_from(priority_num).unwrap();
             let project = format!("Project: {}", PROJECTS[count_usize]);
             let title = format!("Title: {}", TITLES[count_usize]);
@@ -46,7 +46,7 @@ pub fn get_random_weekly_task() -> WeeklyTask {
     let title_idx = rand::random_range(0..TITLES.len());
     let detail_idx = rand::random_range(0..TASK_DETAILS.len());
     let priority_idx = rand::random_range(0..PRIORITIES.len());
-    
+
     let start_day_index = rand::random_range(0..WEEK_DAYS.len());
     // バグ修正: 範囲が空（0..0）になる可能性を排除し、安全に終了曜日を決定
     let end_day_index = rand::random_range(start_day_index..WEEK_DAYS.len());

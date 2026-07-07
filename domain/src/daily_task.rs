@@ -53,3 +53,89 @@ impl DailyTask {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use jiff::civil::Date;
+
+    // 共通で使える有効なDailyTaskのヘルパー
+    fn valid_daily_task() -> DailyTask {
+        DailyTask {
+            id: 42,
+            active: true,
+            project: "Routine".to_string(),
+            title: "Daily Review".to_string(),
+            detail: "Check Slack and emails".to_string(),
+            priority: TaskPriority::High,
+        }
+    }
+
+    #[test]
+    fn test_default_impl() {
+        let default_task = DailyTask::default();
+        assert_eq!(default_task.id, 0);
+        assert!(default_task.active);
+        assert!(default_task.project.is_empty());
+        assert!(default_task.title.is_empty());
+        assert!(default_task.detail.is_empty());
+        assert_eq!(default_task.priority, TaskPriority::Low);
+    }
+
+    #[test]
+    fn test_is_valid_with_valid_data() {
+        let task = valid_daily_task();
+        assert!(task.is_valid());
+    }
+
+    #[test]
+    fn test_is_valid_with_invalid_data() {
+        // プロジェクト名が空
+        let mut task = valid_daily_task();
+        task.project = "".to_string();
+        assert!(!task.is_valid());
+
+        // タイトルがスペースのみ
+        let mut task = valid_daily_task();
+        task.title = "   ".to_string();
+        assert!(!task.is_valid());
+    }
+
+    #[test]
+    fn test_create_task_success() {
+        let daily_task = valid_daily_task();
+        let today = Date::new(2026, 7, 7).unwrap();
+
+        let result = daily_task.create_task(&today);
+        assert!(result.is_ok());
+
+        let created_task = result.unwrap();
+
+        // 期待通りのマッピングがされているか検証
+        assert_eq!(created_task.id, daily_task.id);
+        assert_eq!(created_task.project, daily_task.project);
+        assert_eq!(created_task.detail, daily_task.detail);
+        assert_eq!(created_task.priority, daily_task.priority);
+
+        // タイトルの日付フォーマットが正しいか検証
+        assert_eq!(created_task.title, "Daily Review for 2026/07/07");
+
+        // 各種日付が正しく設定されているか検証
+        assert_eq!(created_task.start_date, today);
+        assert_eq!(created_task.due_date, today);
+        assert_eq!(created_task.entry_date, today);
+    }
+
+    #[test]
+    fn test_create_task_invalid_failure() {
+        let mut invalid_task = valid_daily_task();
+        invalid_task.title = "".to_string(); // 不正な状態にする
+        let today = Date::new(2026, 7, 7).unwrap();
+
+        let result = invalid_task.create_task(&today);
+
+        // エラーになることを検証
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "Invalid daily task.");
+    }
+}
