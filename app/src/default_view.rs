@@ -12,7 +12,7 @@ impl App {
     pub fn default_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // Trigger automatic tasks fetch if system is idle and no tasks are stored yet
         if matches!(self.output, CoreOutput::Idle) && self.displayed_tasks.is_none() {
-            let filter_flag = TaskFilterFlags::Active;
+            let filter_flag = TaskFilterFlags::ALL;
             let order_flag = TaskOrderFlags::OrderByPriority
                 | TaskOrderFlags::OrderByDueDate
                 | TaskOrderFlags::Reversed;
@@ -84,7 +84,7 @@ impl App {
                     .clicked()
                 {
                     info!("Reset Button Pressed");
-                    let filter_flag = TaskFilterFlags::Active;
+                    let filter_flag = TaskFilterFlags::ALL;
                     let order_flag = TaskOrderFlags::OrderByPriority
                         | TaskOrderFlags::OrderByDueDate
                         | TaskOrderFlags::Reversed;
@@ -96,28 +96,6 @@ impl App {
                     .clicked()
                 {
                     self.search_condition_modal.open();
-
-                    /*
-                    info!("Search Button Pressed");
-                    let search_flag = TaskSearchFlags::SearchTitle
-                        | TaskSearchFlags::SearchProject
-                        | TaskSearchFlags::SearchDetail
-                        | TaskSearchFlags::EnableRegex;
-                    let filter_flag = if self.only_active {
-                        TaskFilterFlags::Active
-                    } else {
-                        TaskFilterFlags::Active | TaskFilterFlags::Inactive
-                    };
-                    let order_flag = TaskOrderFlags::OrderByPriority
-                        | TaskOrderFlags::OrderByDueDate
-                        | TaskOrderFlags::Reversed;
-                    self.output = self.core.search_task(
-                        &self.scan_pattern,
-                        search_flag,
-                        filter_flag,
-                        order_flag,
-                    );
-                    */
                 }
 
                 if let ModalResult::Search(

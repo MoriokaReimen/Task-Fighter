@@ -22,4 +22,4 @@ FROM date_range r
 LEFT JOIN tasks t ON t.start_date <= r.d AND (t.end_date >= r.d OR t.end_date IS NULL)
 GROUP BY r.d
 ORDER BY r.d DESC
-LIMIT 100
+LIMIT 100;

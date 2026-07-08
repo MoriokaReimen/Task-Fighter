@@ -160,8 +160,8 @@ mod tests {
     fn setup_in_memory_db() -> Connection {
         let path = DuckdbPath::InMemory;
         let conn = connect(&path);
-        let conn = conn.unwrap();
-        conn
+        
+        conn.unwrap()
     }
 
     // テスト用のダミーDailyTaskデータを生成するヘルパー関数

@@ -7,6 +7,7 @@ pub type PlotResult = Result<Vec<(i32, i32, i32, i32)>>;
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct TaskFilterFlags: u32 {
+        const Zero             = 0;
         const Active           = 1 << 0;
         const Inactive         = 1 << 1;
         const PriorityLow      = 1 << 2;
@@ -16,26 +17,32 @@ bitflags! {
         const StatusWIP        = 1 << 6;
         const StatusComplete   = 1 << 7;
         const StatusCanceled   = 1 << 8;
+
+        const ALL = Self::Active.bits()
+            | Self::Inactive.bits()
+            | Self::PriorityLow.bits()
+            | Self::PriorityMiddle.bits()
+            | Self::PriorityHigh.bits()
+            | Self::StatusPending.bits()
+            | Self::StatusWIP.bits()
+            | Self::StatusComplete.bits()
+            | Self::StatusCanceled.bits();
+
+        const ALL_PRIORITIES = Self::PriorityLow.bits() | Self::PriorityMiddle.bits() | Self::PriorityHigh.bits();
+        const ALL_STATUSES   = Self::StatusPending.bits() | Self::StatusWIP.bits() | Self::StatusComplete.bits() | Self::StatusCanceled.bits();
     }
 }
 
 impl Default for TaskFilterFlags {
     fn default() -> Self {
-        TaskFilterFlags::Active
-            | TaskFilterFlags::Inactive
-            | TaskFilterFlags::PriorityLow
-            | TaskFilterFlags::PriorityMiddle
-            | TaskFilterFlags::PriorityHigh
-            | TaskFilterFlags::StatusPending
-            | TaskFilterFlags::StatusWIP
-            | TaskFilterFlags::StatusComplete
-            | TaskFilterFlags::StatusCanceled
+        TaskFilterFlags::ALL
     }
 }
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct TaskSearchFlags: u32 {
+        const Zero             = 0;
         const SearchTitle      = 1 << 0;
         const SearchProject    = 1 << 1;
         const SearchDetail     = 1 << 2;
@@ -54,6 +61,7 @@ impl Default for TaskSearchFlags {
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct TaskOrderFlags: u32 {
+        const Zero             = 0;
         const OrderByStatus    = 1 << 0;
         const OrderByStartDate = 1 << 1;
         const OrderByDueDate   = 1 << 2;

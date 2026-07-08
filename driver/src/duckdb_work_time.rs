@@ -68,7 +68,7 @@ mod tests {
     use super::*;
     use crate::DuckdbPath;
     use crate::connect;
-    use duckdb::Connection;
+    
     use jiff::civil::Date;
 
     // テスト用のドメインモデルモックを生成するヘルパー関数

@@ -194,7 +194,7 @@ mod tests {
         let parsed_task = DuckdbDailyTask::try_from(row)?;
 
         assert_eq!(parsed_task.id, 7);
-        assert_eq!(parsed_task.active, true);
+        assert!(parsed_task.active);
         assert_eq!(parsed_task.project, "P");
         assert_eq!(parsed_task.title, "T");
         assert_eq!(parsed_task.detail, "D");

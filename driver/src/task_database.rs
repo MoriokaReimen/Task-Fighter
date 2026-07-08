@@ -134,7 +134,7 @@ pub fn fetch_one_task(conn: &Connection, id: i32) -> Result<Task> {
     const FETCH_ONE_SQL: &str = include_str!("../assets/task_sql/fetch_one_task.sql");
     let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
-    let duckdb_task = stmt.query_row(duckdb::named_params! { ":id": id }, |row| {
+    let duckdb_task = stmt.query_row(duckdb::named_params! { "id": id }, |row| {
         DuckdbTask::try_from(row)
     })?;
 
@@ -206,7 +206,7 @@ mod tests {
     #[test]
     fn test_insert_and_exists_id_and_upsert() -> Result<()> {
         let conn = setup_test_db()?;
-        let mut task = create_test_task(1, TaskStatus::Pending);
+        let task = create_test_task(1, TaskStatus::Pending);
         insert_task(&conn, &task)?;
         let exists = exists_id(&conn, 1)?;
         assert!(exists, "Task with ID 1 should exist after insertion");
@@ -229,7 +229,7 @@ mod tests {
         assert_eq!(next_id, 1, "Initial next ID should be 1");
 
         // シーケンスを1つ進める
-        let mut task = create_test_task(1, TaskStatus::Pending);
+        let task = create_test_task(1, TaskStatus::Pending);
         insert_task(&conn, &task)?;
 
         let next_id_after = get_next_task_id(&conn)?;
@@ -243,9 +243,9 @@ mod tests {
 
     #[test]
     fn test_update_task_sets_end_date_on_completion() -> Result<()> {
-        let conn = setup_test_db()?;
+        let _conn = setup_test_db()?;
 
-        let mut task = create_test_task(11, TaskStatus::Complete); // Complete に変更
+        let task = create_test_task(11, TaskStatus::Complete); // Complete に変更
 
         // update_task 内の end_date 自動付与ロジックの検証
         let mut db_task: DuckdbTask = task.clone().into();
@@ -350,6 +350,127 @@ mod tests {
         for task in tasks {
             insert_task(&conn, &task)?;
         }
+        let filter_flags = TaskFilterFlags::Zero;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 0);
+
+        let filter_flags = TaskFilterFlags::Active;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 0);
+
+        let filter_flags = TaskFilterFlags::Inactive;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 0);
+
+        let filter_flags = TaskFilterFlags::PriorityLow;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 0);
+
+        let filter_flags = TaskFilterFlags::PriorityMiddle;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 0);
+
+        let filter_flags = TaskFilterFlags::PriorityHigh;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 0);
+
+        let filter_flags = TaskFilterFlags::StatusPending;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 0);
+
+        let filter_flags = TaskFilterFlags::StatusWIP;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 0);
+
+        let filter_flags = TaskFilterFlags::StatusComplete;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 0);
+
+        let filter_flags = TaskFilterFlags::StatusCanceled;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 0);
+
+        let filter_flags = TaskFilterFlags::ALL;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 12);
+
+        let filter_flags = TaskFilterFlags::Active
+            | TaskFilterFlags::ALL_PRIORITIES
+            | TaskFilterFlags::ALL_STATUSES;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 6);
+
+        let filter_flags = TaskFilterFlags::Inactive
+            | TaskFilterFlags::ALL_PRIORITIES
+            | TaskFilterFlags::ALL_STATUSES;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 6);
+
+        let filter_flags =
+            TaskFilterFlags::Active | TaskFilterFlags::PriorityLow | TaskFilterFlags::ALL_STATUSES;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 2);
+        println!("{:?}", task);
+
+        let filter_flags =
+            TaskFilterFlags::Active | TaskFilterFlags::PriorityLow | TaskFilterFlags::StatusPending;
+        let order_flags = TaskOrderFlags::Zero;
+        let task = fetch_all_task(&conn, filter_flags, order_flags)?;
+        assert_eq!(task.len(), 1);
+
+        let filter_flags = TaskFilterFlags::ALL;
+        let order_flags = TaskOrderFlags::OrderByPriority | TaskOrderFlags::Reversed;
+        let tasks = fetch_all_task(&conn, filter_flags, order_flags)?;
+        let task = &tasks[0];
+        assert_eq!(task.priority, TaskPriority::High);
+
+        let filter_flags = TaskFilterFlags::ALL;
+        let order_flags = TaskOrderFlags::OrderByPriority;
+        let tasks = fetch_all_task(&conn, filter_flags, order_flags)?;
+        let task = &tasks[0];
+        assert_eq!(task.priority, TaskPriority::Low);
+
+        let filter_flags = TaskFilterFlags::ALL;
+        let order_flags = TaskOrderFlags::OrderByStatus | TaskOrderFlags::Reversed;
+        let tasks = fetch_all_task(&conn, filter_flags, order_flags)?;
+        let task = &tasks[0];
+        assert_eq!(task.status, TaskStatus::Canceled);
+
+        let filter_flags = TaskFilterFlags::ALL;
+        let order_flags = TaskOrderFlags::OrderByStatus;
+        let tasks = fetch_all_task(&conn, filter_flags, order_flags)?;
+        let task = &tasks[0];
+        assert_eq!(task.status, TaskStatus::Pending);
+        Ok(())
+    }
+
+    #[test]
+    fn test_fetch_one_task() -> Result<()> {
+        let conn = setup_test_db()?;
+        let tasks = domain::test_util::generate_task_sequence();
+        for task in tasks {
+            insert_task(&conn, &task)?;
+        }
+
+        let task = fetch_one_task(&conn, 12);
+        assert!(task.is_ok());
+        let task = fetch_one_task(&conn, 13);
+        assert!(task.is_err());
+
         Ok(())
     }
 

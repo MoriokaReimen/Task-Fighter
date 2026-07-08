@@ -224,7 +224,7 @@ mod tests {
         let parsed_task = DuckdbWeeklyTask::try_from(row)?;
 
         assert_eq!(parsed_task.id, 15);
-        assert_eq!(parsed_task.active, true);
+        assert!(parsed_task.active);
         assert_eq!(parsed_task.project, "ProjW");
         assert_eq!(parsed_task.start_day, 3);
         assert_eq!(parsed_task.due_day, 6);
