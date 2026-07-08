@@ -96,7 +96,7 @@ mod tests {
             title: "TestTitle".to_string(),
             detail: "TestDetail".to_string(),
             // 実際のTaskPriorityのファクトリ、あるいは既存インスタンスを指定
-            priority: TaskPriority::try_from(priority_value as i32).unwrap_or_default(), 
+            priority: TaskPriority::try_from(priority_value as i32).unwrap_or_default(),
         }
     }
 
@@ -104,17 +104,17 @@ mod tests {
     fn test_from_daily_task_into_duckdb_daily_task() {
         // 1. DailyTask -> DuckdbDailyTask の相互変換（正常系）のテスト
         let domain_task = create_dummy_daily_task(42, 1);
-        
+
         // From トレイトの検証
         let duckdb_task = DuckdbDailyTask::from(domain_task.clone());
-        
+
         assert_eq!(duckdb_task.id, domain_task.id);
         assert_eq!(duckdb_task.active, domain_task.active);
         assert_eq!(duckdb_task.project, domain_task.project);
         assert_eq!(duckdb_task.title, domain_task.title);
         assert_eq!(duckdb_task.detail, domain_task.detail);
         // priority が正しく i32 にキャストされているか
-        assert_eq!(duckdb_task.priority, 1); 
+        assert_eq!(duckdb_task.priority, 1);
 
         // TryFrom トレイトの検証 (逆変換)
         let converted_domain_task = DailyTask::try_from(duckdb_task).unwrap();
@@ -172,7 +172,7 @@ mod tests {
     fn test_try_from_row() -> Result<()> {
         // 4. DBの Row からのパーステスト
         let conn = Connection::open_in_memory()?;
-        
+
         // ダミーのデータを一件だけ SELECT できるテーブルを作成
         conn.execute(
             "CREATE TABLE temp_tasks (id INT, active BOOL, project VARCHAR, title VARCHAR, detail VARCHAR, priority INT);",
@@ -183,14 +183,16 @@ mod tests {
             [],
         )?;
 
-        let mut stmt = conn.prepare("SELECT id, active, project, title, detail, priority FROM temp_tasks WHERE id = 7;")?;
+        let mut stmt = conn.prepare(
+            "SELECT id, active, project, title, detail, priority FROM temp_tasks WHERE id = 7;",
+        )?;
         let mut rows = stmt.query([])?;
-        
+
         let row = rows.next()?.unwrap();
-        
+
         // &Row からの TryFrom を実行
         let parsed_task = DuckdbDailyTask::try_from(row)?;
-        
+
         assert_eq!(parsed_task.id, 7);
         assert_eq!(parsed_task.active, true);
         assert_eq!(parsed_task.project, "P");

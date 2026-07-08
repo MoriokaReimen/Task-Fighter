@@ -193,19 +193,52 @@ mod tests {
         let conn = conn.unwrap();
 
         // Tables Assertion
-        assert!(exists_tasks_table(&conn)?, "'tasks' table should exist in database");
-        assert!(exists_daily_tasks_table(&conn)?, "'daily_tasks' table should exist in database");
-        assert!(exists_weekly_tasks_table(&conn)?, "'weekly_tasks' table should exist in database");
-        assert!(exists_monthly_tasks_table(&conn)?, "'monthly_tasks' table should exist in database");
-        assert!(exists_relation_table(&conn)?, "'relation' table should exist in database");
-        assert!(exists_work_time_table(&conn)?, "'work_time' table should exist in database");
+        assert!(
+            exists_tasks_table(&conn)?,
+            "'tasks' table should exist in database"
+        );
+        assert!(
+            exists_daily_tasks_table(&conn)?,
+            "'daily_tasks' table should exist in database"
+        );
+        assert!(
+            exists_weekly_tasks_table(&conn)?,
+            "'weekly_tasks' table should exist in database"
+        );
+        assert!(
+            exists_monthly_tasks_table(&conn)?,
+            "'monthly_tasks' table should exist in database"
+        );
+        assert!(
+            exists_relation_table(&conn)?,
+            "'relation' table should exist in database"
+        );
+        assert!(
+            exists_work_time_table(&conn)?,
+            "'work_time' table should exist in database"
+        );
 
         // Sequences Assertion
-        assert!(exists_tasks_id_seq(&conn)?, "'tasks_id_seq' should exist in database");
-        assert!(exists_daily_tasks_id_seq(&conn)?, "'daily_tasks_id_seq' should exist in database");
-        assert!(exists_weekly_tasks_id_seq(&conn)?, "'weekly_tasks_id_seq' should exist in database");
-        assert!(exists_monthly_tasks_id_seq(&conn)?, "'monthly_tasks_id_seq' should exist in database");
-        assert!(exists_seq_work_time_id(&conn)?, "'seq_work_time_id' should exist in database");
+        assert!(
+            exists_tasks_id_seq(&conn)?,
+            "'tasks_id_seq' should exist in database"
+        );
+        assert!(
+            exists_daily_tasks_id_seq(&conn)?,
+            "'daily_tasks_id_seq' should exist in database"
+        );
+        assert!(
+            exists_weekly_tasks_id_seq(&conn)?,
+            "'weekly_tasks_id_seq' should exist in database"
+        );
+        assert!(
+            exists_monthly_tasks_id_seq(&conn)?,
+            "'monthly_tasks_id_seq' should exist in database"
+        );
+        assert!(
+            exists_seq_work_time_id(&conn)?,
+            "'seq_work_time_id' should exist in database"
+        );
 
         Ok(())
     }

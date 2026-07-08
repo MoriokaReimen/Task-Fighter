@@ -151,10 +151,10 @@ pub fn delete_daily_task(conn: &Connection, id: i32) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use duckdb::Connection;
-    use domain::*;
-    use crate::connect;
     use crate::DuckdbPath;
+    use crate::connect;
+    use domain::*;
+    use duckdb::Connection;
 
     // テスト用のDB初期化ヘルパー関数
     fn setup_in_memory_db() -> Connection {
@@ -177,7 +177,11 @@ mod tests {
     }
 
     // 各ビットフラグのダミーインスタンス（環境に応じて空のフラグに差し替えてください）
-    fn dummy_flags() -> (DailyTaskSearchFlags, DailyTaskFilterFlags, DailyTaskOrderFlags) {
+    fn dummy_flags() -> (
+        DailyTaskSearchFlags,
+        DailyTaskFilterFlags,
+        DailyTaskOrderFlags,
+    ) {
         // 例として bits から復元するか、Default等があればそちらを使用してください
         (
             DailyTaskSearchFlags::default(),
@@ -205,7 +209,7 @@ mod tests {
     #[test]
     fn test_exists_id_validation() {
         let conn = setup_in_memory_db();
-        
+
         // 異常系: id が 0 以下のときは bail! でエラーになるか確認
         let result = exists_id(&conn, 0);
         assert!(result.is_err());
@@ -257,13 +261,13 @@ mod tests {
         let conn = setup_in_memory_db();
         let task1 = create_dummy_task(1, "Task 1");
         let task2 = create_dummy_task(2, "Task 2");
-        
+
         insert_daily_task(&conn, &task1)?;
         insert_daily_task(&conn, &task2)?;
 
         let (_, filter_flags, order_flags) = dummy_flags();
         let list = fetch_all_daily_task(&conn, filter_flags, order_flags)?;
-        
+
         assert_eq!(list.len(), 2);
         Ok(())
     }
@@ -278,9 +282,10 @@ mod tests {
         insert_daily_task(&conn, &task2)?;
 
         let (search_flags, filter_flags, order_flags) = dummy_flags();
-        
-        let search_results = search_daily_task(&conn, "Apple", search_flags, filter_flags, order_flags)?;
-        
+
+        let search_results =
+            search_daily_task(&conn, "Apple", search_flags, filter_flags, order_flags)?;
+
         assert!(search_results.iter().any(|t| t.title.contains("Apple")));
 
         Ok(())
