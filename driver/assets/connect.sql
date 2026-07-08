@@ -55,10 +55,10 @@ CREATE TABLE IF NOT EXISTS relation (
     PRIMARY KEY (parent_id, child_id)
 );
 -- WorkTime
+CREATE SEQUENCE IF NOT EXISTS seq_work_time_id;
 CREATE TABLE IF NOT EXISTS work_time (
     id INTEGER PRIMARY KEY DEFAULT nextval('seq_work_time_id'),
     task_id INTEGER NOT NULL,
     date DATE NOT NULL,
     time_spent REAL NOT NULL DEFAULT 0.0
 );
-CREATE SEQUENCE IF NOT EXISTS seq_work_time_id;

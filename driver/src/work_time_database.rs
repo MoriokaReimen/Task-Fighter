@@ -15,7 +15,7 @@ pub fn next_work_time_id(conn: &Connection) -> Result<i32> {
     Ok(next_id)
 }
 
-fn find_work_time(conn: &Connection, task_id: i32, date: &Date) -> Result<Option<WorkTime>> {
+pub fn find_work_time(conn: &Connection, task_id: i32, date: &Date) -> Result<Option<WorkTime>> {
     info!("Find work_time for task_id: {}, date: {}", task_id, date);
     const FIND_WORK_TIME_SQL: &str = include_str!("../assets/work_time_sql/find_work_time.sql");
     let mut stmt = conn.prepare(FIND_WORK_TIME_SQL)?;
@@ -33,7 +33,7 @@ fn find_work_time(conn: &Connection, task_id: i32, date: &Date) -> Result<Option
     }
 }
 
-fn list_work_time_for_task(conn: &Connection, task_id: i32) -> Result<Vec<WorkTime>> {
+pub fn list_work_time_for_task(conn: &Connection, task_id: i32) -> Result<Vec<WorkTime>> {
     info!("List work_time for task_id: {}", task_id);
 
     const LIST_WORK_TIME_FOR_TASK_SQL: &str =
