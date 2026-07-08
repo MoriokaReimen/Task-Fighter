@@ -53,8 +53,8 @@ daily_summary AS (
         date
 )
 SELECT 
-    dr.target_date AS date,       -- index: 0
-    COALESCE(ds.total_time, 0.0)  -- index: 1
+    dr.target_date AS date,
+    COALESCE(ds.total_time, 0.0)
 FROM 
     date_range dr
 LEFT JOIN 

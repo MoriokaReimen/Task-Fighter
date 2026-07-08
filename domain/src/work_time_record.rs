@@ -11,4 +11,8 @@ pub trait WorkTimeRecord {
     fn insert_work_time(&self, work_time: &WorkTime) -> Self::AsyncOutput;
     fn update_work_time(&self, work_time: &WorkTime) -> Self::AsyncOutput;
     fn upsert_work_time(&self, work_time: &WorkTime) -> Self::AsyncOutput;
+    fn get_total_work_time_by_task(&self, task_id: i32) -> Self::AsyncOutput;
+    fn get_total_work_time_by_date(&self, date: &Date) -> Self::AsyncOutput;
+    fn get_total_work_time_history(&self, start_date: &Date, end_date: &Date) -> Self::AsyncOutput;
+    fn get_total_work_time_ratio(&self, start_date: &Date, end_date: &Date) -> Self::AsyncOutput;
 }
