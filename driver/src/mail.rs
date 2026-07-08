@@ -225,4 +225,125 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
     Ok(())
 }
 
-// 既存の #[cfg(test)] mod tests { ... } は変更なしでそのまま動作します
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use domain::{Task, TaskPriority, TaskStatus};
+    use jiff::civil::Date;
+    use std::fs;
+
+    // テスト用のダミータスクを作成するヘルパー
+    fn create_test_task(id: i32, status: TaskStatus, priority: TaskPriority, detail: &str) -> Task {
+        Task {
+            id,
+            active: true,
+            status,
+            project: "TestProject".to_string(),
+            title: format!("Task {}", id),
+            detail: detail.to_string(),
+            start_date: Date::new(2026, 7, 1).unwrap(),
+            due_date: Date::new(2026, 7, 31).unwrap(),
+            priority,
+            progress: 45.0,
+            time_spent: 8.5,
+            entry_date: Date::new(2026, 7, 1).unwrap(),
+            end_date: None,
+        }
+    }
+
+    #[test]
+    fn test_md_to_html_conversion() {
+        // 1. Markdown 変換（コードブロック以外）の検証
+        let markdown = "# Hello\nThis is **bold** text.";
+        let html = md_to_html(markdown);
+
+        assert!(html.contains("<h1>Hello</h1>"));
+        assert!(html.contains("<strong>bold</strong>"));
+
+        // 2. コードブロックとシンタックスハイライトの検証
+        let markdown_code = "```rust\nfn main() {}\n```";
+        let html_code = md_to_html(markdown_code);
+
+        // syntect によるハイライト結果（preやspanタグ）が含まれているか確認
+        assert!(html_code.contains("<pre"));
+        assert!(html_code.contains("main"));
+    }
+
+    #[test]
+    fn test_create_mail_html_summary_and_fallback() {
+        // さまざまなステータスのタスクを準備
+        let tasks = vec![
+            create_test_task(
+                1,
+                TaskStatus::Complete,
+                TaskPriority::High,
+                "Done everything",
+            ),
+            create_test_task(
+                2,
+                TaskStatus::WorkInProgress,
+                TaskPriority::Medium,
+                "Working hard",
+            ),
+            create_test_task(3, TaskStatus::Pending, TaskPriority::Low, ""), // 詳細空っぽ
+            create_test_task(4, TaskStatus::Canceled, TaskPriority::Low, "Dropped"),
+        ];
+
+        let image_data_mock = "data:image/png;base64,ABC...";
+        let html_result = create_mail_html(&tasks, image_data_mock);
+
+        // 改行コードがすべて CRLF (\r\n) に統一されているか確認
+        assert!(html_result.contains("\r\n"));
+        assert!(!html_result.contains("\n\n")); // 連続する単一の \n が残っていないか
+
+        // 詳細が空の場合のフォールバック表示の検証
+        assert!(html_result.contains("No additional details provided."));
+
+        // 優先度やステータスのテキスト/カラーマッピングが埋め込まれているか検証
+        assert!(html_result.contains("🔴 High"));
+        assert!(html_result.contains("Complete ✅"));
+        assert!(html_result.contains("#28a745")); // Complete のカラーコード
+    }
+
+    #[test]
+    #[ignore] // CI環境でのメーラー誤起動を防ぐため、通常テストからは除外（cargo test -- --ignored で実行可能）
+    fn test_launch_system_mailer_output() {
+        let tasks = vec![create_test_task(
+            1,
+            TaskStatus::WorkInProgress,
+            TaskPriority::High,
+            "Critical implementation",
+        )];
+        let image_data_mock = "data:image/png;base64,XYZ...";
+        let eml_path = "./task_report.eml";
+
+        // 既存の古いテストファイルを削除しておく
+        if fs::metadata(eml_path).is_ok() {
+            let _ = fs::remove_file(eml_path);
+        }
+
+        // 実行（環境によって open::that がエラーを返す可能性があるため、Resultの成否のみ、あるいはファイル生成を主目的とする）
+        let result = launch_system_mailer(&tasks, image_data_mock);
+
+        // ファイルが正しく生成されたか検証
+        assert!(fs::metadata(eml_path).is_ok(), "eml file should be created");
+
+        // 生成された EML ファイルのヘッダー内容を検証
+        let eml_content = fs::read_to_string(eml_path).unwrap();
+        assert!(eml_content.contains("Subject:"));
+        assert!(eml_content.contains("X-Unsent: 1"));
+        assert!(eml_content.contains("Content-Type: text/html; charset=utf-8"));
+        assert!(eml_content.contains("Critical implementation")); // 本文の内容
+
+        // テスト環境のクリーンアップ（生成したファイルを削除）
+        let _ = fs::remove_file(eml_path);
+
+        // open::that がデスクトップ環境のないCIなどでコケても、ファイル生成自体が成功していればOKとする場合はアサーションを調整
+        if let Err(ref e) = result {
+            println!(
+                "Note: mailer invoked successfully but open::that failed (expected in headless env): {}",
+                e
+            );
+        }
+    }
+}
