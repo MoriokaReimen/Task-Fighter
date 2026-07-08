@@ -71,3 +71,133 @@ impl DuckdbDailyTask {
         ])
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use duckdb::Connection;
+
+    // テスト用のダミー TaskPriority
+    // ※domain::TaskPriority の実際の定義（例: Low=1, High=2 など）に合わせて調整してください
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    enum MockPriority {
+        Low = 1,
+        High = 2,
+    }
+
+    // テスト用のドメインモデルのモック
+    fn create_dummy_daily_task(id: i32, priority_value: u8) -> DailyTask {
+        // ※実際の TaskPriority::try_from などの挙動に合わせてダミーを作ります
+        // ここでは、環境に合わせて適宜マッピングを想定してください
+        DailyTask {
+            id,
+            active: true,
+            project: "TestProject".to_string(),
+            title: "TestTitle".to_string(),
+            detail: "TestDetail".to_string(),
+            // 実際のTaskPriorityのファクトリ、あるいは既存インスタンスを指定
+            priority: TaskPriority::try_from(priority_value as i32).unwrap_or_default(), 
+        }
+    }
+
+    #[test]
+    fn test_from_daily_task_into_duckdb_daily_task() {
+        // 1. DailyTask -> DuckdbDailyTask の相互変換（正常系）のテスト
+        let domain_task = create_dummy_daily_task(42, 1);
+        
+        // From トレイトの検証
+        let duckdb_task = DuckdbDailyTask::from(domain_task.clone());
+        
+        assert_eq!(duckdb_task.id, domain_task.id);
+        assert_eq!(duckdb_task.active, domain_task.active);
+        assert_eq!(duckdb_task.project, domain_task.project);
+        assert_eq!(duckdb_task.title, domain_task.title);
+        assert_eq!(duckdb_task.detail, domain_task.detail);
+        // priority が正しく i32 にキャストされているか
+        assert_eq!(duckdb_task.priority, 1); 
+
+        // TryFrom トレイトの検証 (逆変換)
+        let converted_domain_task = DailyTask::try_from(duckdb_task).unwrap();
+        assert_eq!(converted_domain_task.id, domain_task.id);
+        assert_eq!(converted_domain_task.title, domain_task.title);
+    }
+
+    #[test]
+    fn test_duckdb_daily_task_try_from_invalid_priority() {
+        // 2. 異常系: 不正な priority の値が入っていた場合に TryFrom が失敗するか
+        let invalid_duckdb_task = DuckdbDailyTask {
+            id: 1,
+            active: true,
+            project: "Proj".to_string(),
+            title: "Title".to_string(),
+            detail: "Detail".to_string(),
+            priority: 999, // 定義外の不正な値
+        };
+
+        let result = DailyTask::try_from(invalid_duckdb_task);
+        assert!(result.is_err(), "Should fail when priority is invalid");
+    }
+
+    #[test]
+    fn test_to_named_params_and_map_manipulation() {
+        // 3. to_named_params のテスト（HashMap の中身と、キー削除の応用）
+        let duckdb_task = DuckdbDailyTask {
+            id: 100,
+            active: false,
+            project: "Secret".to_string(),
+            title: "Task".to_string(),
+            detail: "Desc".to_string(),
+            priority: 2,
+        };
+
+        let mut params = duckdb_task.to_named_params();
+
+        // 正しくすべてのキーが登録されているか
+        assert!(params.contains_key("id"));
+        assert!(params.contains_key("active"));
+        assert!(params.contains_key("project"));
+        assert!(params.contains_key("title"));
+        assert!(params.contains_key("detail"));
+        assert!(params.contains_key("priority"));
+        assert_eq!(params.len(), 6);
+
+        // 先ほどの応用：特定のキー（例: id）を削除して、残りのパラメータだけを使うようなケースのシミュレート
+        let removed_id_param = params.remove("id");
+        assert!(removed_id_param.is_some());
+        assert_eq!(params.len(), 5); // id が抜けて5件になっている
+        assert!(!params.contains_key("id"));
+    }
+
+    #[test]
+    fn test_try_from_row() -> Result<()> {
+        // 4. DBの Row からのパーステスト
+        let conn = Connection::open_in_memory()?;
+        
+        // ダミーのデータを一件だけ SELECT できるテーブルを作成
+        conn.execute(
+            "CREATE TABLE temp_tasks (id INT, active BOOL, project VARCHAR, title VARCHAR, detail VARCHAR, priority INT);",
+            [],
+        )?;
+        conn.execute(
+            "INSERT INTO temp_tasks VALUES (7, true, 'P', 'T', 'D', 1);",
+            [],
+        )?;
+
+        let mut stmt = conn.prepare("SELECT id, active, project, title, detail, priority FROM temp_tasks WHERE id = 7;")?;
+        let mut rows = stmt.query([])?;
+        
+        let row = rows.next()?.unwrap();
+        
+        // &Row からの TryFrom を実行
+        let parsed_task = DuckdbDailyTask::try_from(row)?;
+        
+        assert_eq!(parsed_task.id, 7);
+        assert_eq!(parsed_task.active, true);
+        assert_eq!(parsed_task.project, "P");
+        assert_eq!(parsed_task.title, "T");
+        assert_eq!(parsed_task.detail, "D");
+        assert_eq!(parsed_task.priority, 1);
+
+        Ok(())
+    }
+}
