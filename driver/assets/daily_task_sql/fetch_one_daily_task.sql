@@ -4,6 +4,6 @@ SELECT
   project, 
   title, 
   detail, 
-  priority, 
+  priority 
 FROM daily_tasks
 WHERE id = $id;

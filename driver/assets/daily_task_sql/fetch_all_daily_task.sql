@@ -15,10 +15,6 @@ WHERE
     AND (($filter_flags & '0b11100'::INTEGER) = '0b00000'::INTEGER 
       OR (((1 << (priority + 2)) & $filter_flags) != '0b00000'::INTEGER))
 
-    -- 3. Status フィルター
-    AND (($filter_flags & '0b111100000'::INTEGER) = '0b000000000'::INTEGER
-      OR (((1 << (status + 5)) & $filter_flags) != '0b000000000'::INTEGER))
-
 -- 5. 動的ソートロジック
 ORDER BY 
     CASE 
