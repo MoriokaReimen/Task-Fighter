@@ -28,3 +28,5 @@ syntect = "5.3.0"
 open = "5.3.6"
 minijinja = "2.21.0"
 
+[dev-dependencies]
+domain = { path = "../domain", features = ["test-util"] }

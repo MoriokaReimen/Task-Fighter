@@ -44,5 +44,5 @@ pub mod prelude {
     pub use crate::work_time_record::WorkTimeRecord;
 }
 
-#[cfg(test)]
+#[cfg(feature = "test-util")]
 pub mod test_util;

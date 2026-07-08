@@ -1,7 +1,7 @@
 WITH actual_start AS (
 SELECT GREATEST(
-  CAST(?1 AS DATE), 
-  COALESCE(MIN(start_date), CAST(?1 AS DATE))
+  CAST($start_date AS DATE), 
+  COALESCE(MIN(start_date), CAST($start_date AS DATE))
 ) AS start_d 
 FROM tasks
 ),
@@ -9,7 +9,7 @@ date_range AS (
 SELECT CAST(d AS DATE) AS d
 FROM generate_series(
   (SELECT start_d FROM actual_start), 
-  CAST(?2 AS DATE), 
+  CAST($end_date AS DATE), 
   INTERVAL 1 DAY
 ) AS t(d)
 )

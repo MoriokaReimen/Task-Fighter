@@ -115,7 +115,7 @@ mod tests {
         let result = WorkTime::try_from(invalid_work_time);
         assert!(
             result.is_err(),
-            "Should fail when date string is unparseable"
+            "Should fail when date string fails in parse"
         );
     }
 
