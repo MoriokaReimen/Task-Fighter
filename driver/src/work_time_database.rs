@@ -350,8 +350,16 @@ mod tests {
 
         // 比率/割合のテスト
         let ratios = get_total_work_time_ratio(&conn, &start_date, &end_date).unwrap();
-        assert!(ratios.iter().any(|(task_id, ratio)| *task_id == 100 && *ratio > 0.0));
-        assert!(ratios.iter().any(|(task_id, ratio)| *task_id == 200 && *ratio > 0.0));
+        assert!(
+            ratios
+                .iter()
+                .any(|(task_id, ratio)| *task_id == 100 && *ratio > 0.0)
+        );
+        assert!(
+            ratios
+                .iter()
+                .any(|(task_id, ratio)| *task_id == 200 && *ratio > 0.0)
+        );
         Ok(())
     }
 }

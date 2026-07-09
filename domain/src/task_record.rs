@@ -18,7 +18,7 @@ bitflags! {
         const StatusComplete   = 1 << 7;
         const StatusCanceled   = 1 << 8;
 
-        const ALL = Self::Active.bits()
+        const All = Self::Active.bits()
             | Self::Inactive.bits()
             | Self::PriorityLow.bits()
             | Self::PriorityMiddle.bits()
@@ -28,14 +28,14 @@ bitflags! {
             | Self::StatusComplete.bits()
             | Self::StatusCanceled.bits();
 
-        const ALL_PRIORITIES = Self::PriorityLow.bits() | Self::PriorityMiddle.bits() | Self::PriorityHigh.bits();
-        const ALL_STATUSES   = Self::StatusPending.bits() | Self::StatusWIP.bits() | Self::StatusComplete.bits() | Self::StatusCanceled.bits();
+        const AllPriorities = Self::PriorityLow.bits() | Self::PriorityMiddle.bits() | Self::PriorityHigh.bits();
+        const AllStatuses   = Self::StatusPending.bits() | Self::StatusWIP.bits() | Self::StatusComplete.bits() | Self::StatusCanceled.bits();
     }
 }
 
 impl Default for TaskFilterFlags {
     fn default() -> Self {
-        TaskFilterFlags::ALL
+        TaskFilterFlags::All
     }
 }
 

@@ -1,14 +1,10 @@
-
+use crate::{Core, CoreOutput};
 use anyhow::Result;
 use domain::prelude::*;
 use domain::{Task, TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
-use driver::Connection;
- use crate::{Core, CoreOutput};
 use jiff::{ToSpan, Zoned};
 use std::sync::Arc;
-use tokio::sync::Mutex;
-use tokio::sync::oneshot::{self, Receiver};
-
+use tokio::sync::oneshot::{self};
 
 /// tokio::sync::Mutex をブロッキングタスク内で安全に取得・処理するマクロ
 macro_rules! spawn_async_db {

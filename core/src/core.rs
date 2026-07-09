@@ -1,12 +1,11 @@
 use anyhow::Result;
-use domain::prelude::*;
-use domain::{Task, TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
+use domain::DailyTask;
+use domain::Task;
 use driver::Connection;
 
-use jiff::{ToSpan, Zoned};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tokio::sync::oneshot::{self, Receiver};
+use tokio::sync::oneshot::Receiver;
 
 pub struct Core {
     pub(crate) conn: Arc<Mutex<Connection>>,
@@ -25,6 +24,15 @@ pub enum CoreOutput {
     SearchTask(Receiver<Result<Vec<Task>>>),
     MailDaily(Receiver<Result<()>>),
     PlotData(Receiver<PlotResult>),
+    /* Elements for DailyTask  */
+    DeleteDailyTask(Receiver<Result<()>>),
+    FetchAllDailyTask(Receiver<Result<Vec<DailyTask>>>),
+    FetchOneDailyTask(Receiver<Result<DailyTask>>),
+    InsertDailyTask(Receiver<Result<()>>),
+    SearchDailyTask(Receiver<Result<Vec<DailyTask>>>),
+    SyncAllDailyTask(Receiver<Result<()>>),
+    UpdateDailyTask(Receiver<Result<()>>),
+    UpsertDailyTask(Receiver<Result<()>>),
 }
 
 impl Core {
@@ -44,4 +52,3 @@ impl Core {
         })
     }
 }
-

@@ -400,27 +400,26 @@ mod tests {
         let task = fetch_all_task(&conn, filter_flags, order_flags)?;
         assert_eq!(task.len(), 0);
 
-        let filter_flags = TaskFilterFlags::ALL;
+        let filter_flags = TaskFilterFlags::All;
         let order_flags = TaskOrderFlags::Zero;
         let task = fetch_all_task(&conn, filter_flags, order_flags)?;
         assert_eq!(task.len(), 12);
 
-        let filter_flags = TaskFilterFlags::Active
-            | TaskFilterFlags::ALL_PRIORITIES
-            | TaskFilterFlags::ALL_STATUSES;
+        let filter_flags =
+            TaskFilterFlags::Active | TaskFilterFlags::AllPriorities | TaskFilterFlags::AllStatuses;
         let order_flags = TaskOrderFlags::Zero;
         let task = fetch_all_task(&conn, filter_flags, order_flags)?;
         assert_eq!(task.len(), 6);
 
         let filter_flags = TaskFilterFlags::Inactive
-            | TaskFilterFlags::ALL_PRIORITIES
-            | TaskFilterFlags::ALL_STATUSES;
+            | TaskFilterFlags::AllPriorities
+            | TaskFilterFlags::AllStatuses;
         let order_flags = TaskOrderFlags::Zero;
         let task = fetch_all_task(&conn, filter_flags, order_flags)?;
         assert_eq!(task.len(), 6);
 
         let filter_flags =
-            TaskFilterFlags::Active | TaskFilterFlags::PriorityLow | TaskFilterFlags::ALL_STATUSES;
+            TaskFilterFlags::Active | TaskFilterFlags::PriorityLow | TaskFilterFlags::AllStatuses;
         let order_flags = TaskOrderFlags::Zero;
         let task = fetch_all_task(&conn, filter_flags, order_flags)?;
         assert_eq!(task.len(), 2);
@@ -432,25 +431,25 @@ mod tests {
         let task = fetch_all_task(&conn, filter_flags, order_flags)?;
         assert_eq!(task.len(), 1);
 
-        let filter_flags = TaskFilterFlags::ALL;
+        let filter_flags = TaskFilterFlags::All;
         let order_flags = TaskOrderFlags::OrderByPriority | TaskOrderFlags::Reversed;
         let tasks = fetch_all_task(&conn, filter_flags, order_flags)?;
         let task = &tasks[0];
         assert_eq!(task.priority, TaskPriority::High);
 
-        let filter_flags = TaskFilterFlags::ALL;
+        let filter_flags = TaskFilterFlags::All;
         let order_flags = TaskOrderFlags::OrderByPriority;
         let tasks = fetch_all_task(&conn, filter_flags, order_flags)?;
         let task = &tasks[0];
         assert_eq!(task.priority, TaskPriority::Low);
 
-        let filter_flags = TaskFilterFlags::ALL;
+        let filter_flags = TaskFilterFlags::All;
         let order_flags = TaskOrderFlags::OrderByStatus | TaskOrderFlags::Reversed;
         let tasks = fetch_all_task(&conn, filter_flags, order_flags)?;
         let task = &tasks[0];
         assert_eq!(task.status, TaskStatus::Canceled);
 
-        let filter_flags = TaskFilterFlags::ALL;
+        let filter_flags = TaskFilterFlags::All;
         let order_flags = TaskOrderFlags::OrderByStatus;
         let tasks = fetch_all_task(&conn, filter_flags, order_flags)?;
         let task = &tasks[0];
