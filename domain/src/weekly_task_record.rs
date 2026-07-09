@@ -10,16 +10,19 @@ bitflags! {
         const PriorityLow      = 1 << 2;
         const PriorityMiddle   = 1 << 3;
         const PriorityHigh     = 1 << 4;
+
+        const All = Self::Active.bits()
+            | Self::Inactive.bits()
+            | Self::PriorityLow.bits()
+            | Self::PriorityMiddle.bits()
+            | Self::PriorityHigh.bits();
+        const AllPriorities = Self::PriorityLow.bits() | Self::PriorityMiddle.bits() | Self::PriorityHigh.bits();
     }
 }
 
 impl Default for WeeklyTaskFilterFlags {
     fn default() -> Self {
-        WeeklyTaskFilterFlags::Active
-            | WeeklyTaskFilterFlags::Inactive
-            | WeeklyTaskFilterFlags::PriorityLow
-            | WeeklyTaskFilterFlags::PriorityMiddle
-            | WeeklyTaskFilterFlags::PriorityHigh
+        WeeklyTaskFilterFlags::All
     }
 }
 

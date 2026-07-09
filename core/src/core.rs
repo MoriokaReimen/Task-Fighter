@@ -1,6 +1,7 @@
 use anyhow::Result;
 use domain::DailyTask;
 use domain::Task;
+use domain::WeeklyTask;
 use driver::Connection;
 
 use std::sync::Arc;
@@ -33,6 +34,15 @@ pub enum CoreOutput {
     SyncAllDailyTask(Receiver<Result<()>>),
     UpdateDailyTask(Receiver<Result<()>>),
     UpsertDailyTask(Receiver<Result<()>>),
+    /* Elements for WeeklyTask  */
+    DeleteWeeklyTask(Receiver<Result<()>>),
+    FetchAllWeeklyTask(Receiver<Result<Vec<WeeklyTask>>>),
+    FetchOneWeeklyTask(Receiver<Result<WeeklyTask>>),
+    InsertWeeklyTask(Receiver<Result<()>>),
+    SearchWeeklyTask(Receiver<Result<Vec<WeeklyTask>>>),
+    SyncAllWeeklyTask(Receiver<Result<()>>),
+    UpdateWeeklyTask(Receiver<Result<()>>),
+    UpsertWeeklyTask(Receiver<Result<()>>),
 }
 
 impl Core {

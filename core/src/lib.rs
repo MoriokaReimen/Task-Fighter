@@ -9,6 +9,7 @@ pub use tokio::sync::oneshot::error::TryRecvError;
 
 mod daily_task_record;
 mod task_record;
+mod weekly_task_record;
 
 pub mod prelude {
     pub use domain::DailyTaskRecord;
