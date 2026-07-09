@@ -1,47 +1,77 @@
-close = ❌ Close
-save = 💾 Save
-save-error = ⚠ Can not Save Task
-save-task = Save Task
-save-task-message = Do you want to save task?
-create-task = ➕ Create Task
-create-new = ✨ Create New
-email-report = 📧 Email Report
-task-list = 📋 Task List
-reset = 🔄 Reset
-search = 🔍 Search
-only-active = Only Active
-no-active = 📭 No active tasks found.
-project-empty = 📁 Project is empty.
-title-empty = ✏ Title is empty.
-save-fail = ⚠ Can not Save Task
-edit-task = 📝 Edit Task
+# --- Status / Priorities ---
+done = ✅
 active = 🔥 Active
-start-date = 📅 Start Date
-due-date = 🏁 Due Date
-progress = 📊 Progress
-time-spent = ⏳ Time Spent
-project = 📂 Project
-details = ℹ Details
+inactive = 💤 Inactive
 pending = ⏳ Pending
-work_in_progress = 🏃 In Progress
 complete = ✅ Complete
-canceled = 🚫 Canceled
-low = 🔹 Low
-medium = 🔸 Medium
+work-in-progress = 🏃 In Progress
+working-on = 🗣 Working on:
+
+priority = ⚡ Priority
 high = 🔺 High
+medium = 🔸 Medium
+low = 🔹 Low
+
+# --- Actions / Buttons ---
+create-new = ✨ Create New
+create-task = ➕ Create Task
+edit = ✏ Edit
+edit-task = 📝 Edit Task
+delete = 🗑 Delete
+save = 💾 Save
+save-task = 💾 Save Task
+cancel = 🚫 Cancel
+close = ❌ Close
+reset = 🔄 Reset
+start-work = ▶ Start Work
+stop-working = ⏹ Stop Work
+email-report = 📧 Send Report
+save-graph = 📸 Save Graph as Image
+
+# --- Messages / Dialogs ---
+save-task-message = ❓ Do you want to save this task?
+save-error = ⚠ Failed to save task.
+title-empty = ❗ Title is required.
+no-active = 📭 No tasks in progress.
+project-empty = 📁 Project is empty.
 yes = 👍 Yes
 no = 👎 No
-done = ✔
+
+# --- Labels / Fields ---
 title = 🏷 Title
-priority = ⚡ Priority
-due_date = 📅 Due Date
-edit = ✏ Edit
+details = ℹ Details
 status = 📌 Status
+project = 📂 Project
+due-date = 📅 Due Date
+start-date = 📆 Start Date
+time-spent = ⏳ Time Spent
+number-of-tasks = 🔢 Number of Tasks
+progress = 📊 Progress
 graph = 📈 Graph
-save-graph = 📸 Save Graph Image
-task-plot = 📈 Task Plot
-number-of-tasks = Number of Tasks
-cancel = 🚫 Cancel
-stop_working = 🚫 Stop Working
-working_on = 🏃 Working on:
-start_work = ▶ Start Work
+task-list = 📋 Task List
+task-plot = 🗺 Task Plot
+task-status = 🗂 Task Status
+option = ⚙ Option
+
+# --- Search / Filter / Sorting ---
+search = 🔍 Search
+search-condition = 🛠 Search Conditions
+search-condition-prompt = ⌨ Enter search keywords
+search-target = 🎯 Search Target
+enable-regex = 🔣 Enable Regular Expressions
+
+filter-settings = 🎛 Filter Settings
+status-filter = 🔎 Filter by Status
+only-active = 🟢 Only Active
+
+sorting-criteria = 📋 Sort Criteria
+order = ↕ Order
+order-setting = ⚙ Sort Settings
+register-order = 🆕 Date Created
+start-order = 🚀 Start Date
+end-date-order = 🏁 End Date
+due-date-order = ⏳ Due Date
+priority-order = ⚡ Priority
+status-order = 🚦 Status
+progress-order = 📈 Progress
+reverse-order = 🔄 Reverse Order

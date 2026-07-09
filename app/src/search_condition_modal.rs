@@ -1,3 +1,4 @@
+use crate::fl;
 use core::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 use egui::Ui;
 
@@ -45,11 +46,11 @@ impl SearchConditionModal {
         // 1. egui::Modal を一意のIDで生成
         let _ = egui::Modal::new(self.id).show(ctx, |ui| {
             // タイトルをモーダルのヘッダーとして表示
-            ui.heading("Search Condition");
+            ui.heading(fl!("search-condition"));
             ui.add_space(4.0);
 
             ui.horizontal(|ui| {
-                ui.label("Input Search Words/Pattern");
+                ui.label(fl!("search-condition-prompt"));
                 ui.add(
                     egui::TextEdit::singleline(&mut self.pattern)
                         .desired_width(ui.available_width()),
@@ -64,7 +65,7 @@ impl SearchConditionModal {
             );
             ui.columns(3, |columns| {
                 columns[1].horizontal(|ui| {
-                    if ui.button("Search").clicked() {
+                    if ui.button(fl!("search")).clicked() {
                         result = ModalResult::Search(
                             self.pattern.clone(),
                             self.filter_flags,
@@ -74,7 +75,7 @@ impl SearchConditionModal {
                         self.is_open = false;
                     }
                     ui.add_space(4.0); // ボタン間の隙間
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(fl!("cancel")).clicked() {
                         result = ModalResult::Cancel;
                         self.is_open = false;
                     }
@@ -107,34 +108,64 @@ pub fn draw_task_flags_ui(
         .auto_shrink([false; 2]) // 中身が空でもエリアを縮ませない
         .show(ui, |ui| {
             // --- 1. フィルター設定 (折りたたみ) ---
-            ui.collapsing("📁 フィルター設定", |ui| {
+            ui.collapsing(fl!("filter-settings"), |ui| {
                 ui.vertical(|ui| {
                     ui.add_space(4.0);
-                    ui.label("【状態の絞り込み】");
+                    ui.label(fl!("status-filter"));
                     ui.horizontal(|ui| {
-                        flag_checkbox(ui, filter_flags, TaskFilterFlags::Active, "有効");
-                        flag_checkbox(ui, filter_flags, TaskFilterFlags::Inactive, "無効");
+                        flag_checkbox(ui, filter_flags, TaskFilterFlags::Active, &fl!("active"));
+                        flag_checkbox(
+                            ui,
+                            filter_flags,
+                            TaskFilterFlags::Inactive,
+                            &fl!("inactive"),
+                        );
                     });
 
                     ui.separator();
-                    ui.label("【優先度】");
+                    ui.label(fl!("priority"));
                     ui.horizontal(|ui| {
-                        flag_checkbox(ui, filter_flags, TaskFilterFlags::PriorityLow, "低");
-                        flag_checkbox(ui, filter_flags, TaskFilterFlags::PriorityMiddle, "中");
-                        flag_checkbox(ui, filter_flags, TaskFilterFlags::PriorityHigh, "高");
+                        flag_checkbox(ui, filter_flags, TaskFilterFlags::PriorityLow, &fl!("low"));
+                        flag_checkbox(
+                            ui,
+                            filter_flags,
+                            TaskFilterFlags::PriorityMiddle,
+                            &fl!("medium"),
+                        );
+                        flag_checkbox(
+                            ui,
+                            filter_flags,
+                            TaskFilterFlags::PriorityHigh,
+                            &fl!("high"),
+                        );
                     });
 
                     ui.separator();
-                    ui.label("【タスクステータス】");
+                    ui.label(fl!("task-status"));
                     ui.horizontal(|ui| {
-                        flag_checkbox(ui, filter_flags, TaskFilterFlags::StatusPending, "保留");
-                        flag_checkbox(ui, filter_flags, TaskFilterFlags::StatusWIP, "進行中");
-                        flag_checkbox(ui, filter_flags, TaskFilterFlags::StatusComplete, "完了");
+                        flag_checkbox(
+                            ui,
+                            filter_flags,
+                            TaskFilterFlags::StatusPending,
+                            &fl!("pending"),
+                        );
+                        flag_checkbox(
+                            ui,
+                            filter_flags,
+                            TaskFilterFlags::StatusWIP,
+                            &fl!("work-in-progress"),
+                        );
+                        flag_checkbox(
+                            ui,
+                            filter_flags,
+                            TaskFilterFlags::StatusComplete,
+                            &fl!("complete"),
+                        );
                         flag_checkbox(
                             ui,
                             filter_flags,
                             TaskFilterFlags::StatusCanceled,
-                            "キャンセル",
+                            &fl!("cancel"),
                         );
                     });
                 });
@@ -143,28 +174,38 @@ pub fn draw_task_flags_ui(
             ui.add_space(8.0);
 
             // --- 2. 検索設定 (折りたたみ) ---
-            ui.collapsing("🔍 検索設定", |ui| {
+            ui.collapsing(fl!("search-condition"), |ui| {
                 ui.vertical(|ui| {
                     ui.add_space(4.0);
-                    ui.label("【検索対象フィールド】");
+                    ui.label(fl!("search-target"));
                     ui.horizontal(|ui| {
-                        flag_checkbox(ui, search_flags, TaskSearchFlags::SearchTitle, "タイトル");
+                        flag_checkbox(
+                            ui,
+                            search_flags,
+                            TaskSearchFlags::SearchTitle,
+                            &fl!("title"),
+                        );
                         flag_checkbox(
                             ui,
                             search_flags,
                             TaskSearchFlags::SearchProject,
-                            "プロジェクト",
+                            &fl!("project"),
                         );
-                        flag_checkbox(ui, search_flags, TaskSearchFlags::SearchDetail, "詳細");
+                        flag_checkbox(
+                            ui,
+                            search_flags,
+                            TaskSearchFlags::SearchDetail,
+                            &fl!("details"),
+                        );
                     });
 
                     ui.separator();
-                    ui.label("【オプション】");
+                    ui.label(fl!("option"));
                     flag_checkbox(
                         ui,
                         search_flags,
                         TaskSearchFlags::EnableRegex,
-                        "💡 正規表現を有効にする",
+                        &fl!("enable-regex"),
                     );
                 });
             });
@@ -172,50 +213,70 @@ pub fn draw_task_flags_ui(
             ui.add_space(8.0);
 
             // --- 3. 並び替え設定 (折りたたみ) ---
-            ui.collapsing("↕ 並び替え設定", |ui| {
+            ui.collapsing(fl!("order-setting"), |ui| {
                 ui.vertical(|ui| {
                     ui.add_space(4.0);
-                    ui.label("【ソート基準】");
+                    ui.label(fl!("sorting-criteria"));
                     ui.horizontal(|ui| {
                         flag_checkbox(
                             ui,
                             order_flags,
                             TaskOrderFlags::OrderByStatus,
-                            "ステータス順",
+                            &fl!("status-order"),
                         );
                         flag_checkbox(
                             ui,
                             order_flags,
                             TaskOrderFlags::OrderByStartDate,
-                            "開始日順",
+                            &fl!("start-order"),
                         );
-                        flag_checkbox(ui, order_flags, TaskOrderFlags::OrderByDueDate, "期限日順");
+                        flag_checkbox(
+                            ui,
+                            order_flags,
+                            TaskOrderFlags::OrderByDueDate,
+                            &fl!("due-date-order"),
+                        );
                         flag_checkbox(
                             ui,
                             order_flags,
                             TaskOrderFlags::OrderByEntryDate,
-                            "登録日順",
+                            &fl!("register-order"),
                         );
                     });
                     ui.horizontal(|ui| {
-                        flag_checkbox(ui, order_flags, TaskOrderFlags::OrderByEndDate, "完了日順");
-                        flag_checkbox(ui, order_flags, TaskOrderFlags::OrderByPriority, "優先度順");
-                        flag_checkbox(ui, order_flags, TaskOrderFlags::OrderByProgress, "進捗率順");
+                        flag_checkbox(
+                            ui,
+                            order_flags,
+                            TaskOrderFlags::OrderByEndDate,
+                            &fl!("end-date-order"),
+                        );
+                        flag_checkbox(
+                            ui,
+                            order_flags,
+                            TaskOrderFlags::OrderByPriority,
+                            &fl!("priority-order"),
+                        );
+                        flag_checkbox(
+                            ui,
+                            order_flags,
+                            TaskOrderFlags::OrderByProgress,
+                            &fl!("progress-order"),
+                        );
                         flag_checkbox(
                             ui,
                             order_flags,
                             TaskOrderFlags::OrderByTimeSpent,
-                            "消費時間順",
+                            &fl!("time-spent"),
                         );
                     });
 
                     ui.separator();
-                    ui.label("【順序】");
+                    ui.label(fl!("order"));
                     flag_checkbox(
                         ui,
                         order_flags,
                         TaskOrderFlags::Reversed,
-                        "🔄 降順 (並び替えを反転)",
+                        &fl!("reverse-order"),
                     );
                 });
             });

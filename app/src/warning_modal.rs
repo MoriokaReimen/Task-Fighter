@@ -36,6 +36,7 @@ impl WarningModal {
             ui.add_space(12.0);
             ui.vertical_centered(|ui| {
                 if ui.button("OK").clicked() {
+                    self.is_open = false;
                     ui.close()
                 }
             });

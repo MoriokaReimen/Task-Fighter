@@ -25,7 +25,7 @@ impl App {
                 }
 
                 if ui
-                    .add(Button::new(fl!("start_work")).min_size(vec2(90.0, 28.0)))
+                    .add(Button::new(fl!("start-work")).min_size(vec2(90.0, 28.0)))
                     .clicked()
                 {
                     info!("Start Work Button Pressed");

@@ -154,7 +154,7 @@ impl Graph {
                     .name(format!(
                         "{}: {}: {}",
                         date_str,
-                        fl!("work_in_progress"),
+                        fl!("work-in-progress"),
                         d.1
                     ))
                     .width(0.6),
@@ -168,7 +168,7 @@ impl Graph {
 
             canceled_bars.push(
                 Bar::new(x, d.3 as f64)
-                    .name(format!("{}: {}: {}", date_str, fl!("canceled"), d.3))
+                    .name(format!("{}: {}: {}", date_str, fl!("cancel"), d.3))
                     .width(0.6),
             );
         }
@@ -264,11 +264,11 @@ impl Graph {
             let legend_items = [
                 (fl!("pending"), egui::Color32::from_rgb(140, 160, 180)),
                 (
-                    fl!("work_in_progress"),
+                    fl!("work-in-progress"),
                     egui::Color32::from_rgb(246, 160, 84),
                 ),
                 (fl!("complete"), egui::Color32::from_rgb(78, 205, 151)),
-                (fl!("canceled"), egui::Color32::from_rgb(234, 110, 110)),
+                (fl!("cancel"), egui::Color32::from_rgb(234, 110, 110)),
             ];
 
             for (text, color) in legend_items {

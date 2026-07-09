@@ -128,9 +128,9 @@ impl<'a> TaskEdit<'a> {
         ui.label(fl!("status"));
         let statuses = [
             (TaskStatus::Pending, fl!("pending")),
-            (TaskStatus::WorkInProgress, fl!("work_in_progress")),
+            (TaskStatus::WorkInProgress, fl!("work-in-progress")),
             (TaskStatus::Complete, fl!("complete")),
-            (TaskStatus::Canceled, fl!("canceled")),
+            (TaskStatus::Canceled, fl!("cancel")),
         ];
 
         ComboBox::from_id_salt("create_status_combo")

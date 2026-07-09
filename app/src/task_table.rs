@@ -64,7 +64,7 @@ impl<'a> TaskTable<'a> {
                     });
                     header.col(|ui| {
                         ui.strong(
-                            egui::RichText::new(fl!("due_date"))
+                            egui::RichText::new(fl!("due-date"))
                                 .color(egui::Color32::from_rgb(0, 240, 255)),
                         );
                     });

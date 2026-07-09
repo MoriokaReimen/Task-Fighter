@@ -1,47 +1,77 @@
-close = ❌ 閉じる
-save = 💾 保存
-save-error = ⚠ タスクを保存できません
-save-task = 💾 タスクを保存
-save-task-message = ❓ タスクを保存しますか？
-create-task = ➕ タスク作成
+# --- Status / Priorities ---
+done = ✅
+active = 🔥 有効
+inactive = 💤 無効
+pending = ⏳ 保留
+complete = ✅ 完了
+work-in-progress = 🏃 進行中
+working-on = 🗣 作業中:
+
+priority = ⚡ 優先度
+high = 🔺 高
+medium = 🔸 中
+low = 🔹 低
+
+# --- Actions / Buttons ---
 create-new = ✨ 新規作成
-email-report = 📧 レポートを送信
-task-list = 📋 タスク一覧
+create-task = ➕ タスク作成
+edit = ✏ 編集
+edit-task = 📝 タスク編集
+delete = 🗑 削除
+save = 💾 保存
+save-task = 💾 タスクを保存
+cancel = 🚫 キャンセル
+close = ❌ 閉じる
 reset = 🔄 リセット
-search = 🔍 検索
-only-active = 進行中のみ
+start-work = ▶ 作業開始
+stop-working = ⏹ 作業終了
+email-report = 📧 レポートを送信
+save-graph = 📸 グラフを画像として保存
+
+# --- Messages / Dialogs ---
+save-task-message = ❓ タスクを保存しますか？
+save-error = ⚠ タスクを保存できませんでした。
+title-empty = ❗ タイトルは必須です。
 no-active = 📭 進行中のタスクはありません。
 project-empty = 📁 プロジェクトは空です。
-title-empty = ✏ タイトルが未入力です。
-save-fail = ⚠ タスクを保存できません
-edit-task = 📝 タスク編集
-active = 🔥 有効
-start-date = 📅 開始日
-due-date = 🏁 期限日
-progress = 📊 進捗
-time-spent = ⏳ 所要時間
-project = 📂 プロジェクト
-details = ℹ 詳細
-pending = ⏳ 保留
-work_in_progress = 🏃 進行中
-complete = ✅ 完了
-canceled = 🚫 キャンセル
-low = 🔹 低
-medium = 🔸 中
-high = 🔺 高
 yes = 👍 はい
 no = 👎 いいえ
-done = ✔
+
+# --- Labels / Fields ---
 title = 🏷 タイトル
-priority = ⚡ 優先度
-due_date = 📅 期限日
-edit = ✏ 編集
+details = ℹ 詳細
 status = 📌 ステータス
-graph = 📈 図
-save-graph = 📸 グラフを画像として保存
-task-plot = 📈 タスク図
-number-of-tasks = タスク数
-cancel = 🚫 キャンセル
-stop_working = 🚫 作業終わり
-working_on = 🏃 作業中:
-start_work = ▶ 作業開始
+project = 📂 プロジェクト
+due-date = 📅 期限日
+start-date = 📆 開始日
+time-spent = ⏳ 所要時間
+number-of-tasks = 🔢 タスク数
+progress = 📊 進捗
+graph = 📈 グラフ
+task-list = 📋 タスク一覧
+task-plot = 🗺 タスク図
+task-status = 🗂 タスク状態
+option = ⚙ オプション
+
+# --- Search / Filter / Sorting ---
+search = 🔍 検索
+search-condition = 🛠 検索条件
+search-condition-prompt = ⌨ 検索ワードを入力
+search-target = 🎯 検索対象
+enable-regex = 🔣 正規表現を有効
+
+filter-settings = 🎛 フィルター設定
+status-filter = 🔎 状態の絞り込み
+only-active = 🟢 進行中のみ
+
+sorting-criteria = 📋 ソート基準
+order = ↕ 順序
+order-setting = ⚙ 並び替え設定
+register-order = 🆕 登録順
+start-order = 🚀 開始日順
+end-date-order = 🏁 期限日順
+due-date-order = ⏳ 締切日順
+priority-order = ⚡ 優先度順
+status-order = 🚦 状態順
+progress-order = 📈 進捗順
+reverse-order = 🔄 逆順
