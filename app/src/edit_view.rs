@@ -2,6 +2,7 @@ use super::main_app::{App, AppState};
 use crate::fl;
 use crate::task_edit::TaskEdit;
 use crate::yes_no_cancel_modal::ModalResult;
+use crate::yes_no_modal;
 use core::prelude::*;
 use core::{CoreOutput, Task};
 use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
@@ -22,15 +23,6 @@ impl App {
                     info!("Close Button Pressed");
                     self.yes_no_cancel_modal
                         .open(fl!("save-task"), fl!("save-task-message"));
-                }
-
-                if ui
-                    .add(Button::new(fl!("start-work")).min_size(vec2(90.0, 28.0)))
-                    .clicked()
-                {
-                    info!("Start Work Button Pressed");
-                    self.state = AppState::Time;
-                    self.start_time = jiff::Zoned::now();
                 }
 
                 match self.yes_no_cancel_modal.show(ui) {
@@ -55,6 +47,35 @@ impl App {
                         self.displayed_tasks = None;
                     }
                     _ => {}
+                }
+                // Save Button Action
+                if ui
+                    .add(Button::new(fl!("save")).min_size(vec2(90.0, 28.0)))
+                    .clicked()
+                {
+                    info!("Save Button Pressed");
+                    self.yes_no_modal
+                        .open(fl!("save-task"), fl!("save-task-message"));
+                }
+                if self.yes_no_modal.show(ui) == yes_no_modal::ModalResult::Yes {
+                    if self.temp_task.is_saveable() {
+                        self.output = self.core.upsert_task(&self.temp_task);
+                    } else {
+                        let message = if self.temp_task.project.is_empty() {
+                            fl!("project-empty")
+                        } else {
+                            fl!("title-empty")
+                        };
+                        self.warning_modal.open(fl!("save-error"), message);
+                    }
+                }
+                if ui
+                    .add(Button::new(fl!("start-work")).min_size(vec2(90.0, 28.0)))
+                    .clicked()
+                {
+                    info!("Start Work Button Pressed");
+                    self.state = AppState::Time;
+                    self.start_time = jiff::Zoned::now();
                 }
                 self.warning_modal.show(ui);
             });

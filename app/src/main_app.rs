@@ -3,6 +3,7 @@ use crate::graph::Graph;
 use crate::search_condition_modal::SearchConditionModal;
 use crate::warning_modal::WarningModal;
 use crate::yes_no_cancel_modal::YesNoCancelModal;
+use crate::yes_no_modal::YesNoModal;
 use anyhow::Result;
 use core::{CoreOutput, Task, TryRecvError};
 use eframe::egui::Ui;
@@ -67,6 +68,7 @@ pub struct App {
     pub plot_data: Option<Vec<(i32, i32, i32, i32)>>,
     pub temp_task: Task,
     pub yes_no_cancel_modal: YesNoCancelModal,
+    pub yes_no_modal: YesNoModal,
     pub warning_modal: WarningModal,
     pub search_condition_modal: SearchConditionModal,
     pub graph: Graph,
@@ -85,6 +87,7 @@ impl App {
             plot_data: None,
             temp_task: Task::default(),
             yes_no_cancel_modal: YesNoCancelModal::new("yes_no_cancel"),
+            yes_no_modal: YesNoModal::new("yes_no"),
             warning_modal: WarningModal::new("warning"),
             search_condition_modal: SearchConditionModal::new("search_condition"),
             graph: Graph::new(),
