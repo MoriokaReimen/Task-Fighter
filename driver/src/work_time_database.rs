@@ -202,7 +202,7 @@ mod tests {
     use super::*;
     use crate::{DuckdbPath, connect};
     use anyhow::Result;
-    use domain::*;
+    
     use duckdb::Connection;
     use jiff::civil::Date;
 
@@ -218,7 +218,7 @@ mod tests {
         WorkTime {
             id,
             task_id,
-            date: date.clone(),
+            date: *date,
             time_spent,
         }
     }

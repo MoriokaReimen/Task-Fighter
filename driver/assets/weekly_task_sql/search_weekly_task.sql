@@ -9,36 +9,37 @@ SELECT
   due_day
 FROM weekly_tasks 
 WHERE 
-  -- 1. Active / Inactive フィルター (両辺をBIT型にして演算)
-  (($filter_flags & '0b011'::INTEGER) = '0b000'::INTEGER
-    OR (($filter_flags & '0b001'::INTEGER) != '0b000'::INTEGER AND active = true)
-    OR (($filter_flags & '0b010'::INTEGER) != '0b000'::INTEGER AND active = false))
-  -- 2. Priority フィルター (シフト演算結果をBITにしてからAND)
-  AND (($filter_flags & '0b11100'::INTEGER) = '0b00000'::INTEGER 
-    OR (((1 << (priority + 2)) & $filter_flags) != '0b00000'::INTEGER))
-
-  -- 4. 検索テキストフィルター (Regexp / LIKE)
+  -- 1. Active Flags (1=True, 2=False)
+  (
+    (($filter_flags & 1) != 0 AND active = true)
+    OR 
+    (($filter_flags & 2) != 0 AND active = false)
+  )
+  AND 
+  -- 2. Priority Flags (4=P0, 8=P1, 16=P2)
+  (
+    (($filter_flags & 4) != 0 AND priority = 0)
+    OR
+    (($filter_flags & 8) != 0 AND priority = 1)
+    OR
+    (($filter_flags & 16) != 0 AND priority = 2)
+  )
+  -- 4. Search Flags
   AND ($pattern = '' OR (
-    (($search_flags & '0b0001'::INTEGER) != '0b0000'::INTEGER AND (CASE WHEN ($search_flags & '0b1000'::INTEGER) != '0b0000'::INTEGER THEN regexp_matches(title, $pattern) ELSE title LIKE '%' || $pattern || '%' END))
-    OR (($search_flags & '0b0010'::INTEGER) != '0b0000'::INTEGER AND (CASE WHEN ($search_flags & '0b1000'::INTEGER) != '0b0000'::INTEGER THEN regexp_matches(project, $pattern) ELSE project LIKE '%' || $pattern || '%' END))
-    OR (($search_flags & '0b0100'::INTEGER) != '0b0000'::INTEGER AND (CASE WHEN ($search_flags & '0b1000'::INTEGER) != '0b0000'::INTEGER THEN regexp_matches(detail, $pattern) ELSE detail LIKE '%' || $pattern || '%' END))
+    -- Title Search (1=Match, 8=RegEx)
+    (($search_flags & 1) != 0 AND ((($search_flags & 8) != 0 AND regexp_matches(title, $pattern)) OR (($search_flags & 8) = 0 AND title LIKE '%' || $pattern || '%')))
+    -- Project Search (2=Match, 8=RegEx)
+    OR (($search_flags & 2) != 0 AND ((($search_flags & 8) != 0 AND regexp_matches(project, $pattern)) OR (($search_flags & 8) = 0 AND project LIKE '%' || $pattern || '%')))
+    -- Detail Search (4=Match, 8=RegEx)
+    OR (($search_flags & 4) != 0 AND ((($search_flags & 8) != 0 AND regexp_matches(detail, $pattern)) OR (($search_flags & 8) = 0 AND detail LIKE '%' || $pattern || '%')))
   ))
 
--- 5. 動的ソートロジック
-ORDER BY 
-    CASE 
-        -- 昇順 (Reversedフラグ が立っていない場合)
-        WHEN ($order_flags & '0b100000000'::INTEGER) = '0b000000000'::INTEGER THEN
-            CASE
-                WHEN ($order_flags & '0b000100000'::INTEGER) != '0b000000000'::INTEGER THEN priority::VARCHAR
-                ELSE id::VARCHAR
-            END
-    END ASC,
-    CASE 
-        -- 降順 (Reversedフラグ が立っている場合)
-        WHEN ($order_flags & '0b100000000'::INTEGER) != '0b000000000'::INTEGER THEN
-            CASE
-                WHEN ($order_flags & '0b000100000'::INTEGER) != '0b000000000'::INTEGER THEN priority::VARCHAR
-                ELSE id::VARCHAR
-            END
-    END DESC;
+-- 5. Sorting
+ORDER BY
+  -- Ascending Sort
+  CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 32) != 0  THEN priority END ASC,
+  CASE WHEN ($order_flags & 256) = 0 THEN id END ASC,
+
+  -- Descending Sort
+  CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 32) != 0  THEN priority END DESC,
+  CASE WHEN ($order_flags & 256) != 0 THEN id END DESC;
