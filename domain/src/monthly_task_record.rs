@@ -5,9 +5,23 @@ use bitflags::bitflags;
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct MonthlyTaskFilterFlags: u32 {
+        const Active           = 1 << 0;
+        const Inactive         = 1 << 1;
         const PriorityLow      = 1 << 2;
         const PriorityMiddle   = 1 << 3;
         const PriorityHigh     = 1 << 4;
+        const All = Self::Active.bits()
+            | Self::Inactive.bits()
+            | Self::PriorityLow.bits()
+            | Self::PriorityMiddle.bits()
+            | Self::PriorityHigh.bits();
+        const AllPriorities = Self::PriorityLow.bits() | Self::PriorityMiddle.bits() | Self::PriorityHigh.bits();
+    }
+}
+
+impl Default for MonthlyTaskFilterFlags {
+    fn default() -> Self {
+        MonthlyTaskFilterFlags::All
     }
 }
 
@@ -21,13 +35,27 @@ bitflags! {
     }
 }
 
+impl Default for MonthlyTaskSearchFlags {
+    fn default() -> Self {
+        MonthlyTaskSearchFlags::SearchTitle
+            | MonthlyTaskSearchFlags::SearchProject
+            | MonthlyTaskSearchFlags::SearchDetail
+    }
+}
+
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct MonthlyTaskOrderFlags: u32 {
-        const OrderByStartDate = 1 << 1;
-        const OrderByDueDate   = 1 << 2;
-        const OrderByPriority  = 1 << 5;
-        const Reversed         = 1 << 8;
+        const OrderByStartDate = 1 << 0;
+        const OrderByDueDate   = 1 << 1;
+        const OrderByPriority  = 1 << 2;
+        const Reversed         = 1 << 3;
+    }
+}
+
+impl Default for MonthlyTaskOrderFlags {
+    fn default() -> Self {
+        MonthlyTaskOrderFlags::OrderByPriority
     }
 }
 

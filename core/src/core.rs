@@ -1,5 +1,6 @@
 use anyhow::Result;
 use domain::DailyTask;
+use domain::MonthlyTask;
 use domain::Task;
 use domain::WeeklyTask;
 use driver::Connection;
@@ -43,6 +44,15 @@ pub enum CoreOutput {
     SyncAllWeeklyTask(Receiver<Result<()>>),
     UpdateWeeklyTask(Receiver<Result<()>>),
     UpsertWeeklyTask(Receiver<Result<()>>),
+    /* Elements for MonthlyTask  */
+    DeleteMonthlyTask(Receiver<Result<()>>),
+    FetchAllMonthlyTask(Receiver<Result<Vec<MonthlyTask>>>),
+    FetchOneMonthlyTask(Receiver<Result<MonthlyTask>>),
+    InsertMonthlyTask(Receiver<Result<()>>),
+    SearchMonthlyTask(Receiver<Result<Vec<MonthlyTask>>>),
+    SyncAllMonthlyTask(Receiver<Result<()>>),
+    UpdateMonthlyTask(Receiver<Result<()>>),
+    UpsertMonthlyTask(Receiver<Result<()>>),
 }
 
 impl Core {
