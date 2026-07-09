@@ -12,7 +12,7 @@ impl App {
     pub fn default_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // Trigger automatic tasks fetch if system is idle and no tasks are stored yet
         if matches!(self.output, CoreOutput::Idle) && self.displayed_tasks.is_none() {
-            let filter_flag = TaskFilterFlags::All;
+            let filter_flag = TaskFilterFlags::All & !TaskFilterFlags::Inactive;
             let order_flag = TaskOrderFlags::OrderByPriority
                 | TaskOrderFlags::OrderByDueDate
                 | TaskOrderFlags::Reversed;
@@ -84,7 +84,7 @@ impl App {
                     .clicked()
                 {
                     info!("Reset Button Pressed");
-                    let filter_flag = TaskFilterFlags::All;
+                    let filter_flag = TaskFilterFlags::All & !TaskFilterFlags::Inactive;
                     let order_flag = TaskOrderFlags::OrderByPriority
                         | TaskOrderFlags::OrderByDueDate
                         | TaskOrderFlags::Reversed;
