@@ -7,6 +7,8 @@ pub use domain::{Task, TaskPriority, TaskStatus};
 pub use domain::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 pub use tokio::sync::oneshot::error::TryRecvError;
 
+mod task_record;
+
 pub mod prelude {
     pub use domain::DailyTaskRecord;
     pub use domain::MonthlyTaskRecord;
