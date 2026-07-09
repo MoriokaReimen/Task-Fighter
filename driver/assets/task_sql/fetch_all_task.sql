@@ -43,25 +43,25 @@ WHERE
 -- 5. 動的ソートロジック
 ORDER BY 
 -- 昇順かつ各フラグがマッチしたときだけそのカラムでソート（それ以外はNULL＝ソートに影響しない）
-CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 1) != 0   THEN status::VARCHAR END ASC,
-CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 2) != 0   THEN start_date::VARCHAR END ASC,
-CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 4) != 0   THEN due_date::VARCHAR END ASC,
-CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 8) != 0   THEN entry_date::VARCHAR END ASC,
-CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 16) != 0  THEN end_date::VARCHAR END ASC,
-CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 32) != 0  THEN priority::VARCHAR END ASC,
-CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 64) != 0  THEN progress::VARCHAR END ASC,
-CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 128) != 0 THEN time_spent::VARCHAR END ASC,
+CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 1) != 0   THEN status END ASC,
+CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 2) != 0   THEN start_date END ASC,
+CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 4) != 0   THEN due_date END ASC,
+CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 8) != 0   THEN entry_date END ASC,
+CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 16) != 0  THEN end_date END ASC,
+CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 32) != 0  THEN priority END ASC,
+CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 64) != 0  THEN progress END ASC,
+CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 128) != 0 THEN time_spent END ASC,
 -- どのフラグも立っていない場合のデフォルト
-CASE WHEN ($order_flags & 256) = 0 THEN id::VARCHAR END ASC,
+CASE WHEN ($order_flags & 256) = 0 THEN id END ASC,
 -- 昇順かつ各フラグがマッチしたときだけそのカラムでソート（それ以外はNULL＝ソートに影響しない）
-CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 1) != 0   THEN status::VARCHAR END DESC,
-CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 2) != 0   THEN start_date::VARCHAR END DESC,
-CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 4) != 0   THEN due_date::VARCHAR END DESC,
-CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 8) != 0   THEN entry_date::VARCHAR END DESC,
-CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 16) != 0  THEN end_date::VARCHAR END DESC,
-CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 32) != 0  THEN priority::VARCHAR END DESC,
-CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 64) != 0  THEN progress::VARCHAR END DESC,
-CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 128) != 0 THEN time_spent::VARCHAR END DESC,
+CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 1) != 0   THEN status END DESC,
+CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 2) != 0   THEN start_date END DESC,
+CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 4) != 0   THEN due_date END DESC,
+CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 8) != 0   THEN entry_date END DESC,
+CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 16) != 0  THEN end_date END DESC,
+CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 32) != 0  THEN priority END DESC,
+CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 64) != 0  THEN progress END DESC,
+CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 128) != 0 THEN time_spent END DESC,
 -- どのフラグも立っていない場合のデフォルト
-CASE WHEN ($order_flags & 256) != 0 THEN id::VARCHAR END DESC;
+CASE WHEN ($order_flags & 256) != 0 THEN id END DESC;
 
