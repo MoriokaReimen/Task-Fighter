@@ -10,7 +10,7 @@ impl App {
         ui.ctx().request_repaint_after(Duration::from_millis(20));
 
         egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
-            let working_on = fl!("working_on");
+            let working_on = fl!("working-on");
             ui.heading(format!("{} {}", working_on, self.temp_task.title));
 
             let mut stop_watch = StopWatch::new(&self.start_time);
@@ -40,7 +40,7 @@ impl App {
                     let button_size = egui::vec2(button_width, 50.0);
 
                     // RichText でボタンの文字自体も大きく、太字にする
-                    let button_text = RichText::new(fl!("stop_working"))
+                    let button_text = RichText::new(fl!("stop-working"))
                         .size(20.0)
                         .strong()
                         .color(ui.visuals().text_color());
