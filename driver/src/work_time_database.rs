@@ -58,7 +58,8 @@ pub fn insert_work_time(conn: &Connection, work_time: &WorkTime) -> Result<()> {
     info!("Inserting work time: {:?}", work_time);
     const INSERT_WORK_TIME_SQL: &str = include_str!("../assets/work_time_sql/insert_work_time.sql");
     let duckdb_work_time: DuckdbWorkTime = work_time.clone().into();
-    let params = duckdb_work_time.to_named_params();
+    let mut params = duckdb_work_time.to_named_params();
+    let _ = params.remove("id");
     let mut stmt = conn.prepare(INSERT_WORK_TIME_SQL)?;
     stmt.execute(&params)?;
 
@@ -198,12 +199,12 @@ pub fn get_total_work_time_ratio(
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::{DuckdbPath, connect};
+    use anyhow::Result;
     use domain::*;
     use duckdb::Connection;
-    use anyhow::Result;
     use jiff::civil::Date;
-    use super::*;
 
     // --- テスト用のヘルパー関数 ---
     // インメモリのDuckDBを初期化し、必要なテーブルとシーケンスを作成します
@@ -233,7 +234,8 @@ mod tests {
         assert_eq!(id1, 1);
 
         // シーケンスを進める
-        conn.execute("SELECT nextval('seq_work_time_id');", []).unwrap();
+        conn.execute("SELECT nextval('seq_work_time_id');", [])
+            .unwrap();
 
         // last_valueが1になるため、1 + 1 = 2 が返る
         let id2 = next_work_time_id(&conn).unwrap();
@@ -241,7 +243,6 @@ mod tests {
         Ok(())
     }
 
-/*
     #[test]
     fn test_insert_and_find_work_time() -> Result<()> {
         let conn = setup_test_db()?;
@@ -353,5 +354,4 @@ mod tests {
         assert!(ratios.iter().any(|(task_id, ratio)| *task_id == 200 && *ratio > 0.0));
         Ok(())
     }
-    */
 }

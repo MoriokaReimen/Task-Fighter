@@ -160,7 +160,7 @@ mod tests {
     fn setup_in_memory_db() -> Connection {
         let path = DuckdbPath::InMemory;
         let conn = connect(&path);
-        
+
         conn.unwrap()
     }
 

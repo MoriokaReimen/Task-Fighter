@@ -36,7 +36,6 @@ pub fn connect(duckdb_path: &DuckdbPath) -> Result<Connection> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     // --- Tables ---
 
