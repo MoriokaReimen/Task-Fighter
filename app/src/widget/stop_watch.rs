@@ -7,7 +7,7 @@ pub struct StopWatch<'a> {
 }
 
 impl<'a> StopWatch<'a> {
-    pub fn new(start_time: &'a jiff::Zoned) -> Self {
+    pub const fn new(start_time: &'a jiff::Zoned) -> Self {
         Self {
             start_time,
             total_seconds: 0,
@@ -21,7 +21,7 @@ impl<'a> StopWatch<'a> {
             let hours = self.total_seconds / 3600;
             let minutes = (self.total_seconds % 3600) / 60;
             let seconds = self.total_seconds % 60;
-            let time_str = format!("{:02}:{:02}:{:02}", hours, minutes, seconds);
+            let time_str = format!("{hours:02}:{minutes:02}:{seconds:02}");
 
             let circle_zone_height = ui.available_height() * 0.25;
             let circle_zone_width = ui.available_width();
@@ -62,7 +62,7 @@ impl<'a> StopWatch<'a> {
         .response
     }
 
-    pub fn get_total_seconds(&self) -> i64 {
+    pub const fn get_total_seconds(&self) -> i64 {
         self.total_seconds
     }
 }

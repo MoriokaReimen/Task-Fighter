@@ -21,7 +21,7 @@ bitflags! {
 
 impl Default for MonthlyTaskFilterFlags {
     fn default() -> Self {
-        MonthlyTaskFilterFlags::All
+        Self::All
     }
 }
 
@@ -37,9 +37,7 @@ bitflags! {
 
 impl Default for MonthlyTaskSearchFlags {
     fn default() -> Self {
-        MonthlyTaskSearchFlags::SearchTitle
-            | MonthlyTaskSearchFlags::SearchProject
-            | MonthlyTaskSearchFlags::SearchDetail
+        Self::SearchTitle | Self::SearchProject | Self::SearchDetail
     }
 }
 
@@ -55,7 +53,7 @@ bitflags! {
 
 impl Default for MonthlyTaskOrderFlags {
     fn default() -> Self {
-        MonthlyTaskOrderFlags::OrderByPriority
+        Self::OrderByPriority
     }
 }
 

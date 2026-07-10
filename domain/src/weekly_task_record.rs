@@ -22,7 +22,7 @@ bitflags! {
 
 impl Default for WeeklyTaskFilterFlags {
     fn default() -> Self {
-        WeeklyTaskFilterFlags::All
+        Self::All
     }
 }
 
@@ -38,9 +38,7 @@ bitflags! {
 
 impl Default for WeeklyTaskSearchFlags {
     fn default() -> Self {
-        WeeklyTaskSearchFlags::SearchTitle
-            | WeeklyTaskSearchFlags::SearchProject
-            | WeeklyTaskSearchFlags::SearchDetail
+        Self::SearchTitle | Self::SearchProject | Self::SearchDetail
     }
 }
 
@@ -56,7 +54,7 @@ bitflags! {
 
 impl Default for WeeklyTaskOrderFlags {
     fn default() -> Self {
-        WeeklyTaskOrderFlags::OrderByPriority
+        Self::OrderByPriority
     }
 }
 

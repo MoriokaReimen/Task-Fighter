@@ -30,3 +30,6 @@ minijinja = "2.21.0"
 
 [dev-dependencies]
 domain = { path = "../domain", features = ["test-util"] }
+
+[lints]
+workspace = true

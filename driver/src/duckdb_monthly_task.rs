@@ -4,8 +4,8 @@ use duckdb::Row;
 use duckdb::ToSql;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) struct DuckdbMonthlyTask {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DuckdbMonthlyTask {
     pub id: i32,
     pub active: bool,
     pub project: String,
@@ -18,7 +18,7 @@ pub(crate) struct DuckdbMonthlyTask {
 
 impl From<MonthlyTask> for DuckdbMonthlyTask {
     fn from(task: MonthlyTask) -> Self {
-        DuckdbMonthlyTask {
+        Self {
             id: task.id,
             active: task.active,
             project: task.project,
@@ -36,7 +36,7 @@ impl TryFrom<DuckdbMonthlyTask> for MonthlyTask {
 
     fn try_from(duckdb_monthly_task: DuckdbMonthlyTask) -> Result<Self> {
         let priority = TaskPriority::try_from(duckdb_monthly_task.priority)?;
-        Ok(MonthlyTask {
+        Ok(Self {
             id: duckdb_monthly_task.id,
             active: duckdb_monthly_task.active,
             project: duckdb_monthly_task.project,
@@ -53,7 +53,7 @@ impl TryFrom<&Row<'_>> for DuckdbMonthlyTask {
     type Error = duckdb::Error;
 
     fn try_from(row: &Row<'_>) -> Result<Self, Self::Error> {
-        Ok(DuckdbMonthlyTask {
+        Ok(Self {
             id: row.get("id")?,
             active: row.get("active")?,
             project: row.get("project")?,

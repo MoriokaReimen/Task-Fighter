@@ -7,7 +7,8 @@ pub struct Relation {
 }
 
 impl Relation {
-    pub fn is_valid(&self) -> bool {
+    #[must_use]
+    pub const fn is_valid(&self) -> bool {
         self.parent_id > 0 && self.child_id > 0
     }
 }

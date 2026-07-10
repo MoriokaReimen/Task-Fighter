@@ -18,3 +18,5 @@ anyhow.workspace = true
 jiff.workspace = true
 tokio = { version = "1.52", features = ["full"] }
 
+[lints]
+workspace = true

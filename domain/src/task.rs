@@ -16,10 +16,10 @@ impl TryFrom<i32> for TaskPriority {
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(TaskPriority::Low),
-            1 => Ok(TaskPriority::Medium),
-            2 => Ok(TaskPriority::High),
-            _ => bail!("Invalid priority integer state: {}", value),
+            0 => Ok(Self::Low),
+            1 => Ok(Self::Medium),
+            2 => Ok(Self::High),
+            _ => bail!("Invalid priority integer state: {value}"),
         }
     }
 }
@@ -38,11 +38,11 @@ impl TryFrom<i32> for TaskStatus {
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(TaskStatus::Pending),
-            1 => Ok(TaskStatus::WorkInProgress),
-            2 => Ok(TaskStatus::Complete),
-            3 => Ok(TaskStatus::Canceled),
-            _ => bail!("Invalid task status integer state: {}", value),
+            0 => Ok(Self::Pending),
+            1 => Ok(Self::WorkInProgress),
+            2 => Ok(Self::Complete),
+            3 => Ok(Self::Canceled),
+            _ => bail!("Invalid task status integer state: {value}"),
         }
     }
 }
@@ -65,7 +65,8 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn is_saveable(&self) -> bool {
+    #[must_use]
+    pub const fn is_saveable(&self) -> bool {
         !self.project.is_empty() && !self.title.is_empty()
     }
 

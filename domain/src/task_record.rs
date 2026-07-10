@@ -35,7 +35,7 @@ bitflags! {
 
 impl Default for TaskFilterFlags {
     fn default() -> Self {
-        TaskFilterFlags::All
+        Self::All
     }
 }
 
@@ -52,9 +52,7 @@ bitflags! {
 
 impl Default for TaskSearchFlags {
     fn default() -> Self {
-        TaskSearchFlags::SearchTitle
-            | TaskSearchFlags::SearchProject
-            | TaskSearchFlags::SearchDetail
+        Self::SearchTitle | Self::SearchProject | Self::SearchDetail
     }
 }
 
@@ -76,7 +74,7 @@ bitflags! {
 
 impl Default for TaskOrderFlags {
     fn default() -> Self {
-        TaskOrderFlags::OrderByPriority
+        Self::OrderByPriority
     }
 }
 

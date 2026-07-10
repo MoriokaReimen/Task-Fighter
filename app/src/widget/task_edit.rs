@@ -9,7 +9,7 @@ pub struct TaskEdit<'a> {
 }
 
 impl<'a> TaskEdit<'a> {
-    pub fn new(task: &'a mut Task) -> Self {
+    pub const fn new(task: &'a mut Task) -> Self {
         Self { task }
     }
 

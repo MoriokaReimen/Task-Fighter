@@ -14,3 +14,5 @@ rand = { version = "0.10.2", optional = true }
 [features]
 test-util = ["dep:rand"]
 
+[lints]
+workspace = true

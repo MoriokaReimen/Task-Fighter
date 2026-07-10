@@ -39,6 +39,7 @@ impl Default for WeeklyTask {
     }
 }
 
+#[allow(clippy::trivially_copy_pass_by_ref)]
 fn serialize_weekday<S>(weekday: &Weekday, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -55,28 +56,29 @@ where
     serializer.serialize_str(name)
 }
 
-fn deserialize_weekday<'de, D>(deserializer: D) -> Result<Weekday, D::Error>
+fn deserialize_weekday<'de, D>(deserializer: D) -> std::result::Result<Weekday, D::Error>
 where
     D: Deserializer<'de>,
 {
     let s = String::deserialize(deserializer)?;
 
-    // s.as_str() で &str に変換することで、文字列リテラルで match できるようになります
-    let ret = match s.as_str() {
-        "Monday" => Weekday::Monday,
-        "Tuesday" => Weekday::Tuesday,
-        "Wednesday" => Weekday::Wednesday,
-        "Thursday" => Weekday::Thursday,
-        "Friday" => Weekday::Friday,
-        "Saturday" => Weekday::Saturday,
-        "Sunday" => Weekday::Sunday,
-        _ => Weekday::Sunday, // マッチしない場合のデフォルト値
-    };
-
-    Ok(ret)
+    // マッチしない場合は、serde::de::Error::custom を使ってエラーを返します
+    match s.as_str() {
+        "Monday" | "monday" => Ok(Weekday::Monday),
+        "Tuesday" | "tuesday" => Ok(Weekday::Tuesday),
+        "Wednesday" | "wednesday" => Ok(Weekday::Wednesday),
+        "Thursday" | "thursday" => Ok(Weekday::Thursday),
+        "Friday" | "friday" => Ok(Weekday::Friday),
+        "Saturday" | "saturday" => Ok(Weekday::Saturday),
+        "Sunday" | "sunday" => Ok(Weekday::Sunday),
+        _ => Err(serde::de::Error::custom(format!(
+            "invalid weekday string: '{s}'. Expected standard full weekday name (e.g., 'Monday')"
+        ))),
+    }
 }
 
 impl WeeklyTask {
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         !self.project.trim().is_empty()
             && !self.title.trim().is_empty()

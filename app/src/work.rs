@@ -1,6 +1,6 @@
 use core::Task;
 
-pub(crate) struct Work {
+pub struct Work {
     pub core: core::Core,
     pub output: core::CoreOutput,
     pub tasks: Option<Vec<Task>>,

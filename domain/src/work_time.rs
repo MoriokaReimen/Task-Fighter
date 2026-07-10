@@ -10,7 +10,8 @@ pub struct WorkTime {
 }
 
 impl WorkTime {
-    pub fn is_saveable(&self) -> bool {
+    #[must_use]
+    pub const fn is_saveable(&self) -> bool {
         self.task_id > 0
     }
 

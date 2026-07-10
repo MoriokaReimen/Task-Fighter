@@ -1,94 +1,58 @@
 use super::style;
-use crate::widget::Graph;
-use crate::widget::SearchConditionModal;
-use crate::widget::WarningModal;
-use crate::widget::YesNoCancelModal;
-use crate::widget::YesNoModal;
+use crate::page::{self, Page, Pages};
 use crate::work::Work;
-use core::{CoreOutput, Task, TryRecvError};
+use core::{CoreOutput, TryRecvError};
 use eframe::egui::Ui;
+use std::collections::HashMap;
 use tracing::{error, warn};
-
-/// Represents the current navigation/view state of the UI.
-pub enum AppState {
-    Default,
-    EditTask,
-    CreateTask,
-    Graph,
-    Time,
-}
 
 /// Main application state holder.
 pub struct App {
-    pub state: AppState,
-    pub core: core::Core,
-    pub work: Work,
-
-    pub output: core::CoreOutput,
-    /* Start of Included to work */
-    pub displayed_tasks: Option<Vec<Task>>,
-    pub plot_data: Option<Vec<(i32, i32, i32, i32)>>,
-    pub temp_task: Task,
-    pub start_time: jiff::Zoned,
-    /* End of included to work */
-    pub yes_no_cancel_modal: YesNoCancelModal,
-    pub yes_no_modal: YesNoModal,
-    pub warning_modal: WarningModal,
-    pub search_condition_modal: SearchConditionModal,
-    pub graph: Graph,
+    next_page: Pages,
+    work: Work,
+    pages: HashMap<Pages, Box<dyn Page>>,
 }
 
 impl App {
     /// Initializes application state and applies global UI styling.
     pub fn new(ctx: &egui::Context) -> Self {
         style::setup_style(ctx);
+        let mut pages: HashMap<Pages, Box<dyn Page>> = HashMap::new();
+        pages.insert(Pages::Main, Box::new(page::MainPage::new()));
+        pages.insert(Pages::EditTask, Box::new(page::EditTaskPage::new()));
+        pages.insert(Pages::CreateTask, Box::new(page::CreateTaskPage::new()));
+        pages.insert(Pages::Timer, Box::new(page::TimerPage::new()));
+        pages.insert(Pages::Graph, Box::new(page::GraphPage::new()));
+
         Self {
-            state: AppState::Default,
-            core: core::Core::new().unwrap(),
+            next_page: Pages::Main,
             work: Work::new(),
-
-            output: core::CoreOutput::Idle,
-            displayed_tasks: None,
-            plot_data: None,
-            temp_task: Task::default(),
-            start_time: jiff::Zoned::now(),
-
-            yes_no_cancel_modal: YesNoCancelModal::new("yes_no_cancel"),
-            yes_no_modal: YesNoModal::new("yes_no"),
-            warning_modal: WarningModal::new("warning"),
-            search_condition_modal: SearchConditionModal::new("search_condition"),
-            graph: Graph::new(),
+            pages,
         }
     }
 }
 
 impl eframe::App for App {
     /// Main UI update loop called on every frame render.
-    fn ui(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
         style::set_theme(ui.ctx());
         self.poll_background_tasks();
-
-        // Render the appropriate view based on the current application state
-        match self.state {
-            AppState::Default => self.default_page(ui, frame),
-            AppState::CreateTask => self.create_task_page(ui, frame),
-            AppState::EditTask => self.edit_task_page(ui, frame),
-            AppState::Graph => self.graph_page(ui, frame),
-            AppState::Time => self.time_page(ui, frame),
+        if let Some(page) = self.pages.get_mut(&self.next_page) {
+            self.next_page = page.show(ui, &mut self.work);
+        } else {
+            warn!("Page not found: {:?}", self.next_page);
         }
     }
 }
 
 impl App {
-    /// Non-blocking check for responses from async background tasks.
     fn poll_background_tasks(&mut self) {
-        let next_output = match &mut self.output {
+        let next_output = match &mut self.work.output {
             CoreOutput::Idle => None,
 
-            // Handle cases where tasks data needs to be saved into the UI state (`self.displayed_tasks`)
             CoreOutput::FetchAllTask(rx) => match rx.try_recv() {
                 Ok(Ok(tasks)) => {
-                    self.displayed_tasks = Some(tasks);
+                    self.work.tasks = Some(tasks);
                     Some(CoreOutput::Idle)
                 }
                 Ok(Err(e)) => {
@@ -96,7 +60,6 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
                 Err(TryRecvError::Empty) => None,
-                // 【修正3】TryRecvError::Closed を Disconnected に変更（以下すべて同様）
                 Err(TryRecvError::Closed) => {
                     error!("Channel disconnected unexpectedly (FetchActiveTasks)");
                     Some(CoreOutput::Idle)
@@ -104,7 +67,7 @@ impl App {
             },
             CoreOutput::SearchTask(rx) => match rx.try_recv() {
                 Ok(Ok(tasks)) => {
-                    self.displayed_tasks = Some(tasks);
+                    self.work.tasks = Some(tasks);
                     Some(CoreOutput::Idle)
                 }
                 Ok(Err(e)) => {
@@ -119,7 +82,7 @@ impl App {
             },
             CoreOutput::PlotData(rx) => match rx.try_recv() {
                 Ok(Ok(data)) => {
-                    self.plot_data = Some(data);
+                    self.work.plot_data = Some(data);
                     Some(CoreOutput::Idle)
                 }
                 Ok(Err(e)) => {
@@ -133,7 +96,6 @@ impl App {
                 }
             },
 
-            // Batch handle simple tasks that just transition back to Idle upon completion
             other_output => {
                 macro_rules! handle_rx {
                     ($rx:expr, $err_msg:expr) => {
@@ -166,7 +128,7 @@ impl App {
 
         // Apply state transition if a new output state is determined
         if let Some(next) = next_output {
-            self.output = next;
+            self.work.output = next;
         }
     }
 }

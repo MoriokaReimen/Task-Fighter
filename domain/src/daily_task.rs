@@ -27,6 +27,7 @@ impl Default for DailyTask {
 }
 
 impl DailyTask {
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         !self.project.trim().is_empty() && !self.title.trim().is_empty()
     }

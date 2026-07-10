@@ -3,7 +3,7 @@ use domain::{TaskPriority, TaskStatus};
 use duckdb::{Connection, params};
 use jiff::civil::Date;
 
-/// end_dateも含めたランダムなN件のタスクを生成してデータベースに挿入する
+/// `end_dateも含めたランダムなN件のタスクを生成してデータベースに挿入する`
 pub fn generate_random_tasks(conn: &Connection, n: usize) -> Result<()> {
     let projects = [
         "RustProject",
@@ -27,7 +27,7 @@ pub fn generate_random_tasks(conn: &Connection, n: usize) -> Result<()> {
     ];
     let priorities = [TaskPriority::Low, TaskPriority::Medium, TaskPriority::High];
 
-    println!("{} 件のランダムタスク（end_date対応）を生成中...", n);
+    println!("{n} 件のランダムタスク（end_date対応）を生成中...");
 
     let sql = "INSERT INTO tasks (active, status, project, title, detail, start_date, due_date, priority, progress, time_spent, entry_date, end_date) 
                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)";
@@ -103,15 +103,11 @@ pub fn generate_random_tasks(conn: &Connection, n: usize) -> Result<()> {
             ],
         )
         .context(format!(
-            "Failed to insert random task with end_date at index {}",
-            i
+            "Failed to insert random task with end_date at index {i}"
         ))?;
     }
 
-    println!(
-        "正常に end_date を含む {} 件のタスクデータが生成されました。",
-        n
-    );
+    println!("正常に end_date を含む {n} 件のタスクデータが生成されました。");
     Ok(())
 }
 

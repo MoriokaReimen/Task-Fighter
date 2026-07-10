@@ -36,7 +36,7 @@ pub fn start_app() -> Result<()> {
             Ok(app)
         }),
     )
-    .map_err(|e| anyhow::anyhow!("eframe error: {:?}", e))?;
+    .map_err(|e| anyhow::anyhow!("eframe error: {e:?}"))?;
 
     Ok(())
 }

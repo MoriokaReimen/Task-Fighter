@@ -23,7 +23,7 @@ bitflags! {
 
 impl Default for DailyTaskFilterFlags {
     fn default() -> Self {
-        DailyTaskFilterFlags::All
+        Self::All
     }
 }
 
@@ -39,9 +39,7 @@ bitflags! {
 
 impl Default for DailyTaskSearchFlags {
     fn default() -> Self {
-        DailyTaskSearchFlags::SearchTitle
-            | DailyTaskSearchFlags::SearchProject
-            | DailyTaskSearchFlags::SearchDetail
+        Self::SearchTitle | Self::SearchProject | Self::SearchDetail
     }
 }
 
@@ -57,7 +55,7 @@ bitflags! {
 
 impl Default for DailyTaskOrderFlags {
     fn default() -> Self {
-        DailyTaskOrderFlags::OrderByPriority
+        Self::OrderByPriority
     }
 }
 

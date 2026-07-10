@@ -23,15 +23,15 @@ impl TryFrom<i32> for Period {
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Period::Daily),
-            1 => Ok(Period::Weekly),
-            2 => Ok(Period::Monthly),
-            _ => bail!("Invalid period integer state: {}", value),
+            0 => Ok(Self::Daily),
+            1 => Ok(Self::Weekly),
+            2 => Ok(Self::Monthly),
+            _ => bail!("Invalid period integer state: {value}"),
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct PeriodicTask {
     pub period: Period,
     pub project: String,
@@ -225,7 +225,7 @@ pub fn initialize_periodic_tasks(conn: &Connection) -> Result<()> {
     }
 
     let content = fs::read_to_string(config_path)
-        .with_context(|| format!("Failed to read TOML file at: {:?}", config_path))?;
+        .with_context(|| format!("Failed to read TOML file at: {config_path:?}"))?;
     let data: TaskList = toml::from_str(&content)
         .with_context(|| "Failed to parse PeriodicTask matrix from TOML".to_string())?;
 

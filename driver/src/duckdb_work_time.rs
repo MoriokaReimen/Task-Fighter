@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct DuckdbWorkTime {
+pub struct DuckdbWorkTime {
     pub id: i32,
     pub task_id: i32,
     pub date: String,
@@ -16,7 +16,7 @@ pub(crate) struct DuckdbWorkTime {
 
 impl From<WorkTime> for DuckdbWorkTime {
     fn from(work_time: WorkTime) -> Self {
-        DuckdbWorkTime {
+        Self {
             id: work_time.id,
             task_id: work_time.task_id,
             date: work_time.date.to_string(),
@@ -30,7 +30,7 @@ impl TryFrom<DuckdbWorkTime> for WorkTime {
 
     fn try_from(duckdb_work_time: DuckdbWorkTime) -> Result<Self> {
         let date = Date::from_str(&duckdb_work_time.date)?;
-        Ok(WorkTime {
+        Ok(Self {
             id: duckdb_work_time.id,
             task_id: duckdb_work_time.task_id,
             date,
@@ -43,7 +43,7 @@ impl TryFrom<&Row<'_>> for DuckdbWorkTime {
     type Error = duckdb::Error;
 
     fn try_from(row: &Row<'_>) -> Result<Self, Self::Error> {
-        Ok(DuckdbWorkTime {
+        Ok(Self {
             id: row.get("id")?,
             task_id: row.get("task_id")?,
             date: row.get("date")?,

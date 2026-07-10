@@ -1,6 +1,6 @@
 use fluent_templates::static_loader;
 use std::sync::OnceLock;
-use unic_langid::LanguageIdentifier;
+use unic_langid::{langid, LanguageIdentifier};
 
 // 1. 翻訳ファイルの埋め込み
 static_loader! {
@@ -18,7 +18,7 @@ pub fn init_i18n() -> &'static LanguageIdentifier {
     CURRENT_LOCALE.get_or_init(|| {
         sys_locale::get_locale()
             .and_then(|s| s.parse::<LanguageIdentifier>().ok())
-            .unwrap_or_else(|| "en".parse().expect("Valid fallback language identifier"))
+            .unwrap_or_else(|| langid!("en")) // マクロを使って安全に初期化（絶対にパニックしません）
     })
 }
 

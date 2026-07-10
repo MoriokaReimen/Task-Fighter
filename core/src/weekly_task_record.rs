@@ -7,7 +7,7 @@ use jiff::Zoned;
 use std::sync::Arc;
 use tokio::sync::oneshot::{self};
 
-/// tokio::sync::Mutex をブロッキングタスク内で安全に取得・処理するマクロ
+/// `tokio::sync::Mutex` をブロッキングタスク内で安全に取得・処理するマクロ
 macro_rules! spawn_async_db {
     ($self:expr, $output_variant:ident, |$conn:ident| $action:expr) => {{
         let conn = Arc::clone(&$self.conn);

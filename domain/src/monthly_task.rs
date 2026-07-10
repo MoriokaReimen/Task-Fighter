@@ -31,6 +31,7 @@ impl Default for MonthlyTask {
 }
 
 impl MonthlyTask {
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         !self.project.trim().is_empty()
             && !self.title.trim().is_empty()
@@ -43,7 +44,7 @@ impl MonthlyTask {
         if !self.is_valid() {
             bail!("Invalid monthly task");
         }
-        let max_days = today.days_in_month() as i16;
+        let max_days = i16::from(today.days_in_month());
         let resolved_start_day = self.start_day.clamp(1, max_days) as i8;
         let resolved_due_day = self.due_day.clamp(1, max_days) as i8;
         let task_start_date = today.with().day(resolved_start_day).build()?;

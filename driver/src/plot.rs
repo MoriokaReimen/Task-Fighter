@@ -55,7 +55,7 @@ pub fn export_to_base64(data: &[(i32, i32, i32, i32)]) -> Result<String> {
                     let current_date = start_date - days_to_subtract.days();
                     current_date.strftime("%m/%d").to_string()
                 } else {
-                    "".to_string()
+                    String::new()
                 }
             })
             .draw()?;
@@ -135,5 +135,5 @@ pub fn export_to_base64(data: &[(i32, i32, i32, i32)]) -> Result<String> {
 
     // 8. PNGバイナリをBase64文字列にエンコードしてデータURIスキームを付与
     let base64_str = STANDARD.encode(png_buffer.into_inner());
-    Ok(format!("data:image/png;base64,{}", base64_str))
+    Ok(format!("data:image/png;base64,{base64_str}"))
 }

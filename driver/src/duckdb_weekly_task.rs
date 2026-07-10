@@ -5,8 +5,8 @@ use duckdb::ToSql;
 use jiff::civil::Weekday;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) struct DuckdbWeeklyTask {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DuckdbWeeklyTask {
     pub id: i32,
     pub active: bool,
     pub project: String,
@@ -19,15 +19,15 @@ pub(crate) struct DuckdbWeeklyTask {
 
 impl From<WeeklyTask> for DuckdbWeeklyTask {
     fn from(task: WeeklyTask) -> Self {
-        DuckdbWeeklyTask {
+        Self {
             id: task.id,
             active: task.active,
             project: task.project,
             title: task.title,
             detail: task.detail,
             priority: task.priority as i32,
-            start_day: Weekday::to_monday_zero_offset(task.start_day) as i32,
-            due_day: Weekday::to_monday_zero_offset(task.due_day) as i32,
+            start_day: i32::from(Weekday::to_monday_zero_offset(task.start_day)),
+            due_day: i32::from(Weekday::to_monday_zero_offset(task.due_day)),
         }
     }
 }
@@ -38,12 +38,12 @@ impl TryFrom<DuckdbWeeklyTask> for WeeklyTask {
     fn try_from(duckdb_weekly_task: DuckdbWeeklyTask) -> Result<Self> {
         let priority = TaskPriority::try_from(duckdb_weekly_task.priority)?;
         let start_day = Weekday::from_monday_one_offset(duckdb_weekly_task.start_day as i8)
-            .map_err(|e| anyhow::anyhow!("invalid start_day: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("invalid start_day: {e}"))?;
 
         let due_day = Weekday::from_monday_one_offset(duckdb_weekly_task.due_day as i8)
-            .map_err(|e| anyhow::anyhow!("invalid due_day: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("invalid due_day: {e}"))?;
 
-        Ok(WeeklyTask {
+        Ok(Self {
             id: duckdb_weekly_task.id,
             active: duckdb_weekly_task.active,
             project: duckdb_weekly_task.project,
@@ -60,7 +60,7 @@ impl TryFrom<&Row<'_>> for DuckdbWeeklyTask {
     type Error = duckdb::Error;
 
     fn try_from(row: &Row<'_>) -> Result<Self, Self::Error> {
-        Ok(DuckdbWeeklyTask {
+        Ok(Self {
             id: row.get("id")?,
             active: row.get("active")?,
             project: row.get("project")?,

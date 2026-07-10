@@ -19,7 +19,7 @@ pub fn connect(duckdb_path: &DuckdbPath) -> Result<Connection> {
         DuckdbPath::InDirectory(path) => {
             info!("Initializing File-based DuckDB database at: {:?}", path);
             if path.exists() && !path.is_dir() {
-                bail!(format!("The file named {:?} exists", path));
+                bail!(format!("The file named {path:?} exists"));
             }
             fs::create_dir_all(path)?;
             Connection::open(path.join("task-fighter.db"))?

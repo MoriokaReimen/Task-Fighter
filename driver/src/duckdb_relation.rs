@@ -4,15 +4,15 @@ use duckdb::Row;
 use duckdb::ToSql;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) struct DuckdbRelation {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DuckdbRelation {
     pub parent_id: i32,
     pub child_id: i32,
 }
 
 impl From<Relation> for DuckdbRelation {
     fn from(relation: Relation) -> Self {
-        DuckdbRelation {
+        Self {
             parent_id: relation.parent_id,
             child_id: relation.child_id,
         }
@@ -21,7 +21,7 @@ impl From<Relation> for DuckdbRelation {
 
 impl From<DuckdbRelation> for Relation {
     fn from(duckdb_relation: DuckdbRelation) -> Self {
-        Relation {
+        Self {
             parent_id: duckdb_relation.parent_id,
             child_id: duckdb_relation.child_id,
         }
@@ -32,7 +32,7 @@ impl TryFrom<&Row<'_>> for DuckdbRelation {
     type Error = duckdb::Error;
 
     fn try_from(row: &Row<'_>) -> Result<Self, Self::Error> {
-        Ok(DuckdbRelation {
+        Ok(Self {
             parent_id: row.get("parent_id")?,
             child_id: row.get("child_id")?,
         })

@@ -37,7 +37,7 @@ impl WarningModal {
             ui.vertical_centered(|ui| {
                 if ui.button("OK").clicked() {
                     self.is_open = false;
-                    ui.close()
+                    ui.close();
                 }
             });
         });

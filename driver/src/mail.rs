@@ -79,9 +79,7 @@ fn md_to_html(markdown_input: &str) -> String {
 
                 let highlighted_html =
                     highlighted_html_for_string(&code_accumulator, &ps, syntax, theme)
-                        .unwrap_or_else(|_| {
-                            format!("<pre><code>{}</code></pre>", code_accumulator)
-                        });
+                        .unwrap_or_else(|_| format!("<pre><code>{code_accumulator}</code></pre>"));
 
                 new_events.push(Event::Html(highlighted_html.into()));
             }
@@ -158,8 +156,8 @@ pub fn create_mail_html(tasks: &[Task], image_data: &str) -> String {
                 status_color,
                 start_date: task.start_date.strftime("%Y/%m/%d").to_string(),
                 due_date: task.due_date.strftime("%Y/%m/%d").to_string(),
-                time_spent: task.time_spent as f64,
-                progress: task.progress as f64,
+                time_spent: f64::from(task.time_spent),
+                progress: f64::from(task.progress),
                 detail_html,
             }
         })
@@ -183,7 +181,7 @@ pub fn create_mail_html(tasks: &[Task], image_data: &str) -> String {
         .expect("Failed to render template");
 
     // テスト要件を満たすため、すべての改行を確実に CRLF 形式に統一
-    rendered.replace("\r\n", "\n").replace("\n", "\r\n")
+    rendered.replace("\r\n", "\n").replace('\n', "\r\n")
 }
 
 pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
@@ -201,13 +199,13 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
         .context("Failed to task_report.eml")?;
 
     let mut eml_content = String::new();
-    let _ = write!(eml_content, "Subject: {}\r\n", raw_subject);
+    let _ = write!(eml_content, "Subject: {raw_subject}\r\n");
     eml_content.push_str("X-Unsent: 1\r\n");
     eml_content.push_str("MIME-Version: 1.0\r\n");
     eml_content.push_str("Content-Type: text/html; charset=utf-8\r\n");
     eml_content.push_str("Content-Transfer-Encoding: 8bit\r\n\r\n");
 
-    let body_crlf = html_text.replace("\r\n", "\n").replace("\n", "\r\n");
+    let body_crlf = html_text.replace("\r\n", "\n").replace('\n', "\r\n");
     eml_content.push_str(&body_crlf);
 
     temp_file

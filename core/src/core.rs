@@ -57,7 +57,7 @@ pub enum CoreOutput {
 
 impl Core {
     /// Initializes a new Core instance with an established database connection.
-    pub fn new() -> Result<Core> {
+    pub fn new() -> Result<Self> {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()?;
@@ -66,7 +66,7 @@ impl Core {
 
         let conn = driver::connect(&path)?;
         driver::initialize_periodic_tasks(&conn)?;
-        Ok(Core {
+        Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
             runtime,
         })

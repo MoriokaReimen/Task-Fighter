@@ -23,7 +23,7 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
 
 fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
     if id <= 0 {
-        bail!(format!("Invalid id: {}", id));
+        bail!(format!("Invalid id: {id}"));
     }
     let mut stmt = conn.prepare("SELECT 1 FROM tasks WHERE id = ?;")?;
     let exists = stmt
@@ -51,7 +51,7 @@ pub fn get_next_task_id(conn: &Connection) -> Result<i32> {
     let last_value: Option<i64> = conn
         .query_row(query, [], |row| row.get(0))
         .context("Failed to query next sequence value from DuckDB catalogs")?;
-    let next_id = last_value.map(|val| (val + 1) as i32).unwrap_or(1);
+    let next_id = last_value.map_or(1, |val| (val + 1) as i32);
     info!("Next task id is {}.", next_id);
 
     Ok(next_id)
