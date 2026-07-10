@@ -10,7 +10,7 @@ use tracing::info;
 
 impl App {
     /// Renders the task creation page inside separate action and workspace panels.
-    pub fn create_page(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
+    pub fn create_task_page(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout automatically places items horizontally without nested horizontal blocks

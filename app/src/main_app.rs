@@ -54,7 +54,7 @@ pub fn start_app() -> Result<()> {
 pub enum AppState {
     Default,
     Edit,
-    Create,
+    CreateTask,
     Graph,
     Time,
 }
@@ -105,7 +105,7 @@ impl eframe::App for App {
         // Render the appropriate view based on the current application state
         match self.state {
             AppState::Default => self.default_page(ui, frame),
-            AppState::Create => self.create_page(ui, frame),
+            AppState::CreateTask => self.create_task_page(ui, frame),
             AppState::Edit => self.edit_page(ui, frame),
             AppState::Graph => self.graph_page(ui, frame),
             AppState::Time => self.time_page(ui, frame),

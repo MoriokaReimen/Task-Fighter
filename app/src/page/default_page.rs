@@ -63,7 +63,7 @@ impl App {
             }
 
             if go_to_create {
-                self.state = AppState::Create;
+                self.state = AppState::CreateTask;
                 if let Ok(id) = self.core.get_next_task_id() {
                     self.temp_task.id = id;
                     info!("The next id is {}", id);
