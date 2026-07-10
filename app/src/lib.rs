@@ -1,5 +1,6 @@
 #[macro_use]
 pub mod i18n;
+mod app;
 mod main_app;
 mod page;
 mod style;

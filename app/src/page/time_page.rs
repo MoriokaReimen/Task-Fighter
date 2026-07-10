@@ -1,4 +1,4 @@
-use crate::main_app::{App, AppState};
+use crate::app::{App, AppState};
 use crate::page::{Page, Pages};
 use crate::widget::StopWatch;
 use crate::work::Work;
