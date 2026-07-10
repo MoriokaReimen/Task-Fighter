@@ -53,7 +53,7 @@ pub fn start_app() -> Result<()> {
 /// Represents the current navigation/view state of the UI.
 pub enum AppState {
     Default,
-    Edit,
+    EditTask,
     CreateTask,
     Graph,
     Time,
@@ -106,7 +106,7 @@ impl eframe::App for App {
         match self.state {
             AppState::Default => self.default_page(ui, frame),
             AppState::CreateTask => self.create_task_page(ui, frame),
-            AppState::Edit => self.edit_page(ui, frame),
+            AppState::EditTask => self.edit_task_page(ui, frame),
             AppState::Graph => self.graph_page(ui, frame),
             AppState::Time => self.time_page(ui, frame),
         }

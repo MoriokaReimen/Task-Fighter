@@ -50,7 +50,7 @@ impl App {
                         .add_sized(button_size, egui::Button::new(button_text))
                         .clicked()
                     {
-                        self.state = AppState::Edit;
+                        self.state = AppState::EditTask;
                         self.temp_task
                             .accumulate_time(stop_watch.get_total_seconds());
                     }

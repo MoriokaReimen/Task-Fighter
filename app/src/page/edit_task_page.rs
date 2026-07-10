@@ -10,7 +10,7 @@ use tracing::info;
 
 impl App {
     /// Renders the task editing page inside a dedicated panel setup.
-    pub fn edit_page(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
+    pub fn edit_task_page(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout places buttons from rightmost to leftmost

@@ -152,7 +152,7 @@ impl App {
         task_table.show(ui);
         if task_table.clicked() {
             self.temp_task = task_table.clicked_task().clone().unwrap();
-            self.state = AppState::Edit;
+            self.state = AppState::EditTask;
             info!("Edit Button Pressed: {:?}", self.temp_task);
         }
     }
