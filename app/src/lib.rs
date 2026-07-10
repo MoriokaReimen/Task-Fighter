@@ -15,4 +15,6 @@ mod yes_no_cancel_modal;
 mod yes_no_modal;
 #[macro_use]
 pub mod i18n;
+mod page;
+mod widget;
 pub use main_app::start_app;
