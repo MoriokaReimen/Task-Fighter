@@ -1,5 +1,4 @@
 use crate::main_app::{App, AppState};
-use crate::fl;
 use crate::widget::StopWatch;
 use eframe::egui::{RichText, ScrollArea, TextEdit, Ui};
 use std::time::Duration;

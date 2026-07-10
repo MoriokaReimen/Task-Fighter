@@ -1,5 +1,4 @@
 use crate::main_app::{App, AppState};
-use crate::fl;
 use crate::widget::TaskEdit;
 use crate::widget::yes_no_cancel_modal;
 use crate::widget::yes_no_modal;

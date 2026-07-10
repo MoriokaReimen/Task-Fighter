@@ -202,7 +202,7 @@ mod tests {
     use super::*;
     use crate::{DuckdbPath, connect};
     use anyhow::Result;
-    
+
     use duckdb::Connection;
     use jiff::civil::Date;
 

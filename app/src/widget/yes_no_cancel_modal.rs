@@ -1,4 +1,3 @@
-use crate::fl;
 use eframe::egui;
 
 /// ポップアップの状態を管理する構造体

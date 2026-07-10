@@ -1,4 +1,3 @@
-use crate::fl;
 use core::{Task, TaskPriority, TaskStatus};
 use eframe::egui::{
     Color32, ComboBox, DragValue, Grid, Response, RichText, ScrollArea, Slider, TextEdit, Ui,

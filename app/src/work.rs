@@ -1,18 +1,20 @@
-use core::{CoreOutput, Task};
+use core::Task;
 
 pub(crate) struct Work {
+    pub core: core::Core,
     pub output: core::CoreOutput,
-    pub displayed_tasks: Option<Vec<Task>>,
+    pub tasks: Option<Vec<Task>>,
     pub plot_data: Option<Vec<(i32, i32, i32, i32)>>,
     pub task: Task,
     pub start_time: jiff::Zoned,
 }
 
 impl Work {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
+            core: core::Core::new().unwrap(),
             output: core::CoreOutput::Idle,
-            displayed_tasks: None,
+            tasks: None,
             plot_data: None,
             task: Task::default(),
             start_time: jiff::Zoned::now(),

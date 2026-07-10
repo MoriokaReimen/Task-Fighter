@@ -4,6 +4,7 @@ use crate::widget::SearchConditionModal;
 use crate::widget::WarningModal;
 use crate::widget::YesNoCancelModal;
 use crate::widget::YesNoModal;
+use crate::work::Work;
 use anyhow::Result;
 use core::{CoreOutput, Task, TryRecvError};
 use eframe::egui::Ui;
@@ -63,16 +64,20 @@ pub enum AppState {
 pub struct App {
     pub state: AppState,
     pub core: core::Core,
+    pub work: Work,
+
     pub output: core::CoreOutput,
+    /* Start of Included to work */
     pub displayed_tasks: Option<Vec<Task>>,
     pub plot_data: Option<Vec<(i32, i32, i32, i32)>>,
     pub temp_task: Task,
+    pub start_time: jiff::Zoned,
+    /* End of included to work */
     pub yes_no_cancel_modal: YesNoCancelModal,
     pub yes_no_modal: YesNoModal,
     pub warning_modal: WarningModal,
     pub search_condition_modal: SearchConditionModal,
     pub graph: Graph,
-    pub start_time: jiff::Zoned,
 }
 
 impl App {
@@ -82,16 +87,19 @@ impl App {
         Self {
             state: AppState::Default,
             core: core::Core::new().unwrap(),
+            work: Work::new(),
+
             output: core::CoreOutput::Idle,
             displayed_tasks: None,
             plot_data: None,
             temp_task: Task::default(),
+            start_time: jiff::Zoned::now(),
+
             yes_no_cancel_modal: YesNoCancelModal::new("yes_no_cancel"),
             yes_no_modal: YesNoModal::new("yes_no"),
             warning_modal: WarningModal::new("warning"),
             search_condition_modal: SearchConditionModal::new("search_condition"),
             graph: Graph::new(),
-            start_time: jiff::Zoned::now(),
         }
     }
 }

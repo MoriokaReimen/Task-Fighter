@@ -1,7 +1,15 @@
-pub trait Page {
-    type Command;
-    type Work;
+use crate::work::Work;
 
-    fn update(&mut self, work: &Self::Work);
-    fn show(&mut self, ui: &mut egui::Ui) -> Option<Self::Command>;
+pub trait Page {
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages;
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
+pub enum Pages {
+    #[default]
+    Main, // メイン（デフォルト）画面
+    Edit,   // 編集画面
+    Create, // 作成画面
+    Graph,  // グラフ画面
+    Timer,  // タイマー（時間計測）画面
 }

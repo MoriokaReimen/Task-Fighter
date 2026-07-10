@@ -1,7 +1,6 @@
 use crate::main_app::{App, AppState};
-use crate::fl;
-use crate::widget::search_condition_modal::ModalResult;
 use crate::widget::TaskTable;
+use crate::widget::search_condition_modal::ModalResult;
 use core::prelude::*;
 use core::{CoreOutput, TaskFilterFlags, TaskOrderFlags};
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};

@@ -1,4 +1,3 @@
-use crate::fl;
 use core::{Task, TaskPriority, TaskStatus};
 use egui::{Color32, Label, Response, Ui};
 use egui_extras::{Column, TableBuilder};
