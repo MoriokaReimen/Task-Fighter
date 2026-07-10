@@ -1,5 +1,5 @@
-pub(crate) mod widget;
 pub(crate) mod graph;
+pub(crate) mod widget;
 pub(crate) use graph::*;
 pub(crate) mod search_condition_modal;
 pub(crate) use search_condition_modal::*;

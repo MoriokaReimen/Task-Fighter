@@ -8,8 +8,8 @@ pub trait Page {
 pub enum Pages {
     #[default]
     Main, // メイン（デフォルト）画面
-    Edit,   // 編集画面
-    Create, // 作成画面
-    Graph,  // グラフ画面
-    Timer,  // タイマー（時間計測）画面
+    EditTask,   // 編集画面
+    CreateTask, // 作成画面
+    Graph,      // グラフ画面
+    Timer,      // タイマー（時間計測）画面
 }
