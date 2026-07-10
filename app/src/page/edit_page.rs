@@ -1,16 +1,16 @@
-use super::main_app::{App, AppState};
+use crate::main_app::{App, AppState};
 use crate::fl;
-use crate::task_edit::TaskEdit;
-use crate::yes_no_cancel_modal::ModalResult;
-use crate::yes_no_modal;
+use crate::widget::TaskEdit;
+use crate::widget::yes_no_cancel_modal;
+use crate::widget::yes_no_modal;
 use core::prelude::*;
 use core::{CoreOutput, Task};
 use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
 
 impl App {
-    /// Renders the task editing view inside a dedicated panel setup.
-    pub fn edit_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
+    /// Renders the task editing page inside a dedicated panel setup.
+    pub fn edit_page(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout places buttons from rightmost to leftmost
@@ -26,7 +26,7 @@ impl App {
                 }
 
                 match self.yes_no_cancel_modal.show(ui) {
-                    ModalResult::Yes => {
+                    yes_no_cancel_modal::ModalResult::Yes => {
                         if self.temp_task.is_saveable() {
                             self.output = self.core.update_task(&self.temp_task);
                             self.temp_task = Task::default();
@@ -41,7 +41,7 @@ impl App {
                             self.warning_modal.open(fl!("save-fail"), message);
                         }
                     }
-                    ModalResult::No => {
+                    yes_no_cancel_modal::ModalResult::No => {
                         self.temp_task = Task::default();
                         self.state = AppState::Default;
                         self.displayed_tasks = None;

@@ -1,4 +1,4 @@
-use super::main_app::{App, AppState};
+use crate::main_app::{App, AppState};
 use crate::fl;
 use core::{CoreOutput, Task};
 use eframe::egui::{self, Align, Button, Layout, vec2};
@@ -7,8 +7,8 @@ use egui::Ui;
 use tracing::info;
 
 impl App {
-    /// Renders the task editing view inside a dedicated panel setup.
-    pub fn graph_view(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
+    /// Renders the task editing page inside a dedicated panel setup.
+    pub fn graph_page(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
         self.bottom_panel(ui);
         self.central_panel(ui);
     }

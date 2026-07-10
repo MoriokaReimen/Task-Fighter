@@ -1,9 +1,9 @@
 use super::style;
-use crate::graph::Graph;
-use crate::search_condition_modal::SearchConditionModal;
-use crate::warning_modal::WarningModal;
-use crate::yes_no_cancel_modal::YesNoCancelModal;
-use crate::yes_no_modal::YesNoModal;
+use crate::widget::Graph;
+use crate::widget::SearchConditionModal;
+use crate::widget::WarningModal;
+use crate::widget::YesNoCancelModal;
+use crate::widget::YesNoModal;
 use anyhow::Result;
 use core::{CoreOutput, Task, TryRecvError};
 use eframe::egui::Ui;
@@ -104,11 +104,11 @@ impl eframe::App for App {
 
         // Render the appropriate view based on the current application state
         match self.state {
-            AppState::Default => self.default_view(ui, frame),
-            AppState::Create => self.create_view(ui, frame),
-            AppState::Edit => self.edit_view(ui, frame),
-            AppState::Graph => self.graph_view(ui, frame),
-            AppState::Time => self.time_view(ui, frame),
+            AppState::Default => self.default_page(ui, frame),
+            AppState::Create => self.create_page(ui, frame),
+            AppState::Edit => self.edit_page(ui, frame),
+            AppState::Graph => self.graph_page(ui, frame),
+            AppState::Time => self.time_page(ui, frame),
         }
     }
 }

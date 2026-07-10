@@ -1,11 +1,11 @@
-use super::main_app::{App, AppState};
+use crate::main_app::{App, AppState};
 use crate::fl;
-use crate::stop_watch::StopWatch;
+use crate::widget::StopWatch;
 use eframe::egui::{RichText, ScrollArea, TextEdit, Ui};
 use std::time::Duration;
 
 impl App {
-    pub fn time_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
+    pub fn time_page(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // 毎フレーム再描画を要求（アニメーションを滑らかにするため）
         ui.ctx().request_repaint_after(Duration::from_millis(20));
 

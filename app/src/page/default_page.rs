@@ -1,15 +1,15 @@
-use super::main_app::{App, AppState};
+use crate::main_app::{App, AppState};
 use crate::fl;
-use crate::search_condition_modal::ModalResult;
-use crate::task_table::TaskTable;
+use crate::widget::search_condition_modal::ModalResult;
+use crate::widget::TaskTable;
 use core::prelude::*;
 use core::{CoreOutput, TaskFilterFlags, TaskOrderFlags};
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
 
 impl App {
-    /// Renders the default task list dashboard view.
-    pub fn default_view(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
+    /// Renders the default task list dashboard page.
+    pub fn default_page(&mut self, ui: &mut Ui, _: &mut eframe::Frame) {
         // Trigger automatic tasks fetch if system is idle and no tasks are stored yet
         if matches!(self.output, CoreOutput::Idle) && self.displayed_tasks.is_none() {
             let filter_flag = TaskFilterFlags::All & !TaskFilterFlags::Inactive;
