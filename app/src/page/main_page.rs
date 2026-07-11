@@ -1,4 +1,5 @@
 use crate::page::{Page, Pages};
+use crate::widget::AboutModal;
 use crate::widget::SearchConditionModal;
 use crate::widget::TaskTable;
 use crate::widget::search_condition_modal::ModalResult;
@@ -11,6 +12,7 @@ use tracing::{error, info};
 
 pub struct MainPage {
     search_condition_modal: SearchConditionModal,
+    about_modal: AboutModal,
     task_table: TaskTable,
     color_scheme_index: usize,
 }
@@ -19,6 +21,7 @@ impl MainPage {
     pub fn new() -> Self {
         Self {
             search_condition_modal: SearchConditionModal::new("main_page_search_condition"),
+            about_modal: AboutModal::new(),
             task_table: TaskTable::new(),
             color_scheme_index: 0usize,
         }
@@ -55,13 +58,18 @@ impl MainPage {
                         self.color_scheme_index += 1;
                         self.color_scheme_index %= 7;
                     }
-                    ui.button("About").clicked();
+                    if ui.button("About").clicked() {
+                        self.about_modal.open();
+                    }
                     if ui.button("Quit").clicked() {
                         ui.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
             });
         });
+
+        let ctx = ui.ctx();
+        self.about_modal.show(ctx);
     }
 
     /// メインコンテンツ（タスク一覧リスト / ローディング / 空表示）のレンダリング

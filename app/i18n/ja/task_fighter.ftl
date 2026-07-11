@@ -75,3 +75,4 @@ priority-order = ⚡ 優先度順
 status-order = 🚦 状態順
 progress-order = 📈 進捗順
 reverse-order = 🔄 逆順
+about-task-fighter = Task Fighterについて

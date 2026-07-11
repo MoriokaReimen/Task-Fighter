@@ -75,3 +75,4 @@ priority-order = ⚡ Priority
 status-order = 🚦 Status
 progress-order = 📈 Progress
 reverse-order = 🔄 Reverse Order
+about-task-fighter = About Task Fighter

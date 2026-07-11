@@ -14,3 +14,5 @@ pub mod yes_no_cancel_modal;
 pub use yes_no_cancel_modal::*;
 pub mod yes_no_modal;
 pub use yes_no_modal::*;
+pub mod about_modal;
+pub use about_modal::*;
