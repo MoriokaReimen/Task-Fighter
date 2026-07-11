@@ -65,7 +65,6 @@ impl Core {
         let path = driver::DuckdbPath::InDirectory("./runtime".into());
 
         let conn = driver::connect(&path)?;
-        driver::initialize_periodic_tasks(&conn)?;
         Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
             runtime,
