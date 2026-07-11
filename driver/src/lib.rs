@@ -57,3 +57,7 @@ pub use relation_database::*;
 mod duckdb_work_time;
 mod work_time_database;
 pub use work_time_database::*;
+
+mod config_database;
+mod duckdb_config;
+pub use config_database::*;

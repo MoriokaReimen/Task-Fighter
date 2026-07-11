@@ -35,7 +35,12 @@ mod relation;
 pub use relation::Relation;
 mod relation_record;
 
+mod config;
+pub use config::*;
+pub mod config_record;
+
 pub mod prelude {
+    pub use crate::config_record::ConfigRecord;
     pub use crate::daily_task_record::DailyTaskRecord;
     pub use crate::monthly_task_record::MonthlyTaskRecord;
     pub use crate::relation_record::RelationRecord;

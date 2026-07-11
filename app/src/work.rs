@@ -1,8 +1,10 @@
 use core::Task;
+use core::Config;
 
 pub struct Work {
     pub core: core::Core,
     pub output: core::CoreOutput,
+    pub config: Config,
     pub tasks: Option<Vec<Task>>,
     pub plot_data: Option<Vec<(i32, i32, i32, i32)>>,
     pub task: Task,
@@ -14,6 +16,7 @@ impl Work {
         Self {
             core: core::Core::new().unwrap(),
             output: core::CoreOutput::Idle,
+            config: Config::default(),
             tasks: None,
             plot_data: None,
             task: Task::default(),

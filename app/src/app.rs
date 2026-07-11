@@ -2,6 +2,7 @@ use super::style;
 use crate::page::{self, Page, Pages};
 use crate::work::Work;
 use core::{CoreOutput, TryRecvError};
+use core::prelude::*;
 use eframe::egui::Ui;
 use std::collections::HashMap;
 use tracing::{error, warn};
@@ -24,9 +25,12 @@ impl App {
         pages.insert(Pages::Timer, Box::new(page::TimerPage::new()));
         pages.insert(Pages::Graph, Box::new(page::GraphPage::new()));
 
+        let mut work = Work::new();
+        work.config = work.core.load_config().expect("Failed to load config");
+
         Self {
             next_page: Pages::Main,
-            work: Work::new(),
+            work,
             pages,
         }
     }
@@ -35,7 +39,7 @@ impl App {
 impl eframe::App for App {
     /// Main UI update loop called on every frame render.
     fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
-        style::set_theme(ui.ctx());
+        style::set_theme(ui.ctx(), &self.work);
         self.poll_background_tasks();
         if let Some(page) = self.pages.get_mut(&self.next_page) {
             self.next_page = page.show(ui, &mut self.work);
