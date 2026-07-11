@@ -4,6 +4,7 @@ pub use core::Core;
 pub use core::CoreOutput;
 pub use domain::TaskRecord;
 pub use domain::{ColorScheme, Config};
+pub use domain::{DailyTask, MonthlyTask, WeeklyTask};
 pub use domain::{Task, TaskPriority, TaskStatus};
 pub use domain::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 pub use tokio::sync::oneshot::error::TryRecvError;

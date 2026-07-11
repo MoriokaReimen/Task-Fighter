@@ -16,3 +16,5 @@ pub mod yes_no_modal;
 pub use yes_no_modal::*;
 pub mod about_modal;
 pub use about_modal::*;
+mod daily_task_edit;
+mod daily_task_table;
