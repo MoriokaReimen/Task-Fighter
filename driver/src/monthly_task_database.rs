@@ -6,9 +6,9 @@ use duckdb::Connection;
 use tracing::info;
 
 pub fn insert_monthly_task(conn: &Connection, monthly_task: &MonthlyTask) -> Result<()> {
-    info!("Inserting monthly_task: {:?}", monthly_task);
     const INSERT_TASK_SQL: &str =
         include_str!("../assets/monthly_task_sql/insert_monthly_task.sql");
+    info!("Inserting monthly_task: {:?}", monthly_task);
     let duckdb_monthly_task: DuckdbMonthlyTask = monthly_task.clone().into();
     let params = duckdb_monthly_task.to_named_params();
     let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
@@ -58,9 +58,9 @@ pub fn get_next_monthly_task_id(conn: &Connection) -> Result<i32> {
 }
 
 pub fn update_monthly_task(conn: &Connection, monthly_task: &MonthlyTask) -> Result<()> {
-    info!("Updating monthly_task: {:?}", monthly_task);
     const UPDATE_TASK_SQL: &str =
         include_str!("../assets/monthly_task_sql/update_monthly_task.sql");
+    info!("Updating monthly_task: {:?}", monthly_task);
     let duckdb_monthly_task: DuckdbMonthlyTask = monthly_task.clone().into();
 
     let params = duckdb_monthly_task.to_named_params();
@@ -78,8 +78,8 @@ pub fn search_monthly_task(
     filter_flags: MonthlyTaskFilterFlags,
     order_flags: MonthlyTaskOrderFlags,
 ) -> Result<Vec<MonthlyTask>> {
-    info!("Searching monthly_tasks with pattern: '{}'", pattern);
     const SEARCH_SQL: &str = include_str!("../assets/monthly_task_sql/search_monthly_task.sql");
+    info!("Searching monthly_tasks with pattern: '{}'", pattern);
     let mut stmt = conn.prepare(SEARCH_SQL)?;
 
     let params = duckdb::named_params! {
@@ -102,10 +102,9 @@ pub fn search_monthly_task(
 }
 
 pub fn fetch_one_monthly_task(conn: &Connection, id: i32) -> Result<MonthlyTask> {
-    info!("Querying monthly_task with id: {}", id);
-
     const FETCH_ONE_SQL: &str =
         include_str!("../assets/monthly_task_sql/fetch_one_monthly_task.sql");
+    info!("Querying monthly_task with id: {}", id);
     let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
     let duckdb_monthly_task = stmt.query_row(duckdb::named_params! { ":id": id }, |row| {
@@ -121,11 +120,9 @@ pub fn fetch_all_monthly_task(
     filter_flags: MonthlyTaskFilterFlags,
     order_flags: MonthlyTaskOrderFlags,
 ) -> Result<Vec<MonthlyTask>> {
-    info!("Querying monthly_tasks");
-
     const FETCH_ALL_SQL: &str =
         include_str!("../assets/monthly_task_sql/fetch_all_monthly_task.sql");
-
+    info!("Querying monthly_tasks");
     let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
 
     let params = duckdb::named_params! {
@@ -146,8 +143,8 @@ pub fn fetch_all_monthly_task(
 }
 
 pub fn delete_monthly_task(conn: &Connection, id: i32) -> Result<()> {
-    info!("Delete monthly task: {}", id);
     const DELETE_SQL: &str = include_str!("../assets/monthly_task_sql/delete_monthly_task.sql");
+    info!("Delete monthly task: {}", id);
     let mut stmt = conn.prepare(DELETE_SQL)?;
     stmt.execute(duckdb::named_params! { ":id": id })?;
 

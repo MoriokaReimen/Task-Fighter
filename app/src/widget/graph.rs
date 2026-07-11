@@ -28,7 +28,8 @@ impl Graph {
         let response = self.draw_plot(ui, data);
 
         if self.check_save_trigger() {
-            ui.ctx().send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::default()));
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::default()));
         }
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -56,11 +57,15 @@ impl Graph {
             })
         });
 
-        let Some(screenshot_img) = screenshot else { return };
+        let Some(screenshot_img) = screenshot else {
+            return;
+        };
 
         let pixels_per_point = ctx.pixels_per_point();
         std::thread::spawn(move || {
-            let Some(mut path) = rfd::FileDialog::new().save_file() else { return };
+            let Some(mut path) = rfd::FileDialog::new().save_file() else {
+                return;
+            };
             path.set_extension("png");
 
             let plot_image = screenshot_img.region(&rect, Some(pixels_per_point));
@@ -81,7 +86,11 @@ impl Graph {
 
     /// グラフ全体のメイン描画処理
     fn draw_plot(&mut self, ui: &mut egui::Ui, data: &[(i32, i32, i32, i32)]) -> egui::Response {
-        let max_x = if data.is_empty() { 0.0 } else { (data.len() - 1) as f64 };
+        let max_x = if data.is_empty() {
+            0.0
+        } else {
+            (data.len() - 1) as f64
+        };
         let max_y = calculate_max_y(data);
 
         // 各ステータスの積み上げグラフ（BarChart）を生成
@@ -163,18 +172,50 @@ fn build_stacked_charts(data: &[(i32, i32, i32, i32)]) -> StackedCharts {
             .map(|d| d.strftime("%Y/%m/%d").to_string())
             .unwrap_or_default();
 
-        pending.push(Bar::new(x, d.0.into()).name(format!("{}: {}: {}", date_str, fl!("pending"), d.0)).width(0.6));
-        wip.push(Bar::new(x, d.1.into()).name(format!("{}: {}: {}", date_str, fl!("work-in-progress"), d.1)).width(0.6));
-        complete.push(Bar::new(x, d.2.into()).name(format!("{}: {}: {}", date_str, fl!("complete"), d.2)).width(0.6));
-        canceled.push(Bar::new(x, d.3.into()).name(format!("{}: {}: {}", date_str, fl!("cancel"), d.3)).width(0.6));
+        pending.push(
+            Bar::new(x, d.0.into())
+                .name(format!("{}: {}: {}", date_str, fl!("pending"), d.0))
+                .width(0.6),
+        );
+        wip.push(
+            Bar::new(x, d.1.into())
+                .name(format!(
+                    "{}: {}: {}",
+                    date_str,
+                    fl!("work-in-progress"),
+                    d.1
+                ))
+                .width(0.6),
+        );
+        complete.push(
+            Bar::new(x, d.2.into())
+                .name(format!("{}: {}: {}", date_str, fl!("complete"), d.2))
+                .width(0.6),
+        );
+        canceled.push(
+            Bar::new(x, d.3.into())
+                .name(format!("{}: {}: {}", date_str, fl!("cancel"), d.3))
+                .width(0.6),
+        );
     }
 
     let c_chart = BarChart::new("", canceled).color(egui::Color32::from_rgb(234, 110, 110));
-    let o_chart = BarChart::new("", complete).color(egui::Color32::from_rgb(78, 205, 151)).stack_on(&[&c_chart]);
-    let w_chart = BarChart::new("", wip).color(egui::Color32::from_rgb(246, 160, 84)).stack_on(&[&c_chart, &o_chart]);
-    let p_chart = BarChart::new("", pending).color(egui::Color32::from_rgb(140, 160, 180)).stack_on(&[&c_chart, &o_chart, &w_chart]);
+    let o_chart = BarChart::new("", complete)
+        .color(egui::Color32::from_rgb(78, 205, 151))
+        .stack_on(&[&c_chart]);
+    let w_chart = BarChart::new("", wip)
+        .color(egui::Color32::from_rgb(246, 160, 84))
+        .stack_on(&[&c_chart, &o_chart]);
+    let p_chart = BarChart::new("", pending)
+        .color(egui::Color32::from_rgb(140, 160, 180))
+        .stack_on(&[&c_chart, &o_chart, &w_chart]);
 
-    StackedCharts { pending: p_chart, wip: w_chart, complete: o_chart, canceled: c_chart }
+    StackedCharts {
+        pending: p_chart,
+        wip: w_chart,
+        complete: o_chart,
+        canceled: c_chart,
+    }
 }
 
 /// X軸の目盛り間隔をズーム具合に合わせて動的に計算する
@@ -184,41 +225,57 @@ fn grid_spacer(input: GridInput) -> Vec<egui_plot::GridMark> {
     let end = input.bounds.1.ceil() as i64;
     let visible_width = input.bounds.1 - input.bounds.0;
 
-    let step = if visible_width <= 7.0 { 1 }
-        else if visible_width <= 15.0 { 2 }
-        else if visible_width <= 45.0 { 5 }
-        else if visible_width <= 90.0 { 10 }
-        else { 30 };
+    let step = if visible_width <= 7.0 {
+        1
+    } else if visible_width <= 15.0 {
+        2
+    } else if visible_width <= 45.0 {
+        5
+    } else if visible_width <= 90.0 {
+        10
+    } else {
+        30
+    };
 
     (start..=end)
         .filter(|&i| i % step == 0)
-        .map(|i| egui_plot::GridMark { value: i as f64, step_size: step as f64 })
+        .map(|i| egui_plot::GridMark {
+            value: i as f64,
+            step_size: step as f64,
+        })
         .collect()
 }
 
 /// グラフ左上にカスタム凡例（カラーチップとテキスト）を描画する
 fn render_legend(ui: &egui::Ui, response: &egui::Response, transform: &PlotTransform) {
     let bounds = transform.bounds();
-    
+
     // mul_add を視覚的にわかりやすい標準的な数式表記に整理
     let plot_left = (bounds.max()[0] - bounds.min()[0]).mul_add(0.03, bounds.min()[0]);
     let plot_top = (bounds.max()[1] - bounds.min()[1]).mul_add(-0.04, bounds.max()[1]);
 
-    let screen_start = transform.position_from_point(&egui_plot::PlotPoint::new(plot_left, plot_top));
+    let screen_start =
+        transform.position_from_point(&egui_plot::PlotPoint::new(plot_left, plot_top));
     let mut current_y = screen_start.y;
-    
+
     let painter = ui.painter_at(response.rect);
     let font_id = egui::FontId::proportional(12.0);
 
     let items = [
         (fl!("pending"), egui::Color32::from_rgb(140, 160, 180)),
-        (fl!("work-in-progress"), egui::Color32::from_rgb(246, 160, 84)),
+        (
+            fl!("work-in-progress"),
+            egui::Color32::from_rgb(246, 160, 84),
+        ),
         (fl!("complete"), egui::Color32::from_rgb(78, 205, 151)),
         (fl!("cancel"), egui::Color32::from_rgb(234, 110, 110)),
     ];
 
     for (text, color) in items {
-        let rect = egui::Rect::from_min_size(egui::pos2(screen_start.x, current_y), egui::vec2(14.0, 14.0));
+        let rect = egui::Rect::from_min_size(
+            egui::pos2(screen_start.x, current_y),
+            egui::vec2(14.0, 14.0),
+        );
         painter.rect_filled(rect, 2.0, color);
 
         painter.text(

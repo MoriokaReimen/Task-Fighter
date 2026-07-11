@@ -8,8 +8,8 @@ use jiff::civil::Date;
 use tracing::info;
 
 pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
-    info!("Inserting task: {:?}", task);
     const INSERT_TASK_SQL: &str = include_str!("../assets/task_sql/insert_task.sql");
+    info!("Inserting task: {:?}", task);
     let db_task: DuckdbTask = task.clone().into();
     let mut params = db_task.to_named_params();
     let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
@@ -58,8 +58,8 @@ pub fn get_next_task_id(conn: &Connection) -> Result<i32> {
 }
 
 pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
-    info!("Updating task: {:?}", task);
     const UPDATE_TASK_SQL: &str = include_str!("../assets/task_sql/update_task.sql");
+    info!("Updating task: {:?}", task);
     let mut db_task: DuckdbTask = task.clone().into();
     db_task.end_date = if task.status == TaskStatus::Complete || task.status == TaskStatus::Canceled
     {
@@ -105,8 +105,8 @@ pub fn search_task(
     filter_flags: TaskFilterFlags,
     order_flags: TaskOrderFlags,
 ) -> Result<Vec<Task>> {
-    info!("Searching tasks with pattern: '{}'", pattern);
     const SEARCH_SQL: &str = include_str!("../assets/task_sql/search_task.sql");
+    info!("Searching tasks with pattern: '{}'", pattern);
     let mut stmt = conn.prepare(SEARCH_SQL)?;
 
     let params = duckdb::named_params! {
@@ -129,9 +129,8 @@ pub fn search_task(
 }
 
 pub fn fetch_one_task(conn: &Connection, id: i32) -> Result<Task> {
-    info!("Querying task with id: {}", id);
-
     const FETCH_ONE_SQL: &str = include_str!("../assets/task_sql/fetch_one_task.sql");
+    info!("Querying task with id: {}", id);
     let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
     let duckdb_task = stmt.query_row(duckdb::named_params! { "id": id }, |row| {
@@ -147,10 +146,8 @@ pub fn fetch_all_task(
     filter_flags: TaskFilterFlags,
     order_flags: TaskOrderFlags,
 ) -> Result<Vec<Task>> {
-    info!("Querying tasks");
-
     const FETCH_ALL_SQL: &str = include_str!("../assets/task_sql/fetch_all_task.sql");
-
+    info!("Querying tasks");
     let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
 
     let params = duckdb::named_params! {

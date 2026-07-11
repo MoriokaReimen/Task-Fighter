@@ -225,7 +225,7 @@ pub fn initialize_periodic_tasks(conn: &Connection) -> Result<()> {
     }
 
     let content = fs::read_to_string(config_path)
-        .with_context(|| format!("Failed to read TOML file at: {config_path:?}"))?;
+        .with_context(|| format!("Failed to read TOML file at: {}", config_path.display()))?;
     let data: TaskList = toml::from_str(&content)
         .with_context(|| "Failed to parse PeriodicTask matrix from TOML".to_string())?;
 

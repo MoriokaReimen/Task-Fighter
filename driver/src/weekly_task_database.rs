@@ -6,8 +6,8 @@ use duckdb::Connection;
 use tracing::info;
 
 pub fn insert_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result<()> {
-    info!("Inserting weekly_task: {:?}", weekly_task);
     const INSERT_TASK_SQL: &str = include_str!("../assets/weekly_task_sql/insert_weekly_task.sql");
+    info!("Inserting weekly_task: {:?}", weekly_task);
     let duckdb_weekly_task: DuckdbWeeklyTask = weekly_task.clone().into();
     let params = duckdb_weekly_task.to_named_params();
     let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
@@ -54,8 +54,8 @@ pub fn get_next_weekly_task_id(conn: &Connection) -> Result<i32> {
 }
 
 pub fn update_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result<()> {
-    info!("Updating weekly_task: {:?}", weekly_task);
     const UPDATE_TASK_SQL: &str = include_str!("../assets/weekly_task_sql/update_weekly_task.sql");
+    info!("Updating weekly_task: {:?}", weekly_task);
     let duckdb_weekly_task: DuckdbWeeklyTask = weekly_task.clone().into();
 
     let params = duckdb_weekly_task.to_named_params();
@@ -73,8 +73,8 @@ pub fn search_weekly_task(
     filter_flags: WeeklyTaskFilterFlags,
     order_flags: WeeklyTaskOrderFlags,
 ) -> Result<Vec<WeeklyTask>> {
-    info!("Searching weekly_tasks with pattern: '{}'", pattern);
     const SEARCH_SQL: &str = include_str!("../assets/weekly_task_sql/search_weekly_task.sql");
+    info!("Searching weekly_tasks with pattern: '{}'", pattern);
     let mut stmt = conn.prepare(SEARCH_SQL)?;
 
     let params = duckdb::named_params! {
@@ -97,9 +97,8 @@ pub fn search_weekly_task(
 }
 
 pub fn fetch_one_weekly_task(conn: &Connection, id: i32) -> Result<WeeklyTask> {
-    info!("Querying weekly_task with id: {}", id);
-
     const FETCH_ONE_SQL: &str = include_str!("../assets/weekly_task_sql/fetch_one_weekly_task.sql");
+    info!("Querying weekly_task with id: {}", id);
     let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
     let duckdb_weekly_task = stmt.query_row(duckdb::named_params! { ":id": id }, |row| {
@@ -115,10 +114,8 @@ pub fn fetch_all_weekly_task(
     filter_flags: WeeklyTaskFilterFlags,
     order_flags: WeeklyTaskOrderFlags,
 ) -> Result<Vec<WeeklyTask>> {
-    info!("Querying weekly_tasks");
-
     const FETCH_ALL_SQL: &str = include_str!("../assets/weekly_task_sql/fetch_all_weekly_task.sql");
-
+    info!("Querying weekly_tasks");
     let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
 
     let params = duckdb::named_params! {
@@ -139,8 +136,8 @@ pub fn fetch_all_weekly_task(
 }
 
 pub fn delete_weekly_task(conn: &Connection, id: i32) -> Result<()> {
-    info!("Delete weekly task: {}", id);
     const DELETE_SQL: &str = include_str!("../assets/weekly_task_sql/delete_weekly_task.sql");
+    info!("Delete weekly task: {}", id);
     let mut stmt = conn.prepare(DELETE_SQL)?;
     stmt.execute(duckdb::named_params! { ":id": id })?;
 

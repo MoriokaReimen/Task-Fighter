@@ -1,6 +1,6 @@
 use fluent_templates::static_loader;
 use std::sync::OnceLock;
-use unic_langid::{langid, LanguageIdentifier};
+use unic_langid::{LanguageIdentifier, langid};
 
 // 1. 翻訳ファイルの埋め込み
 static_loader! {

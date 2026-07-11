@@ -6,9 +6,11 @@ use jiff::civil::Date;
 use tracing::info;
 
 pub fn next_work_time_id(conn: &Connection) -> Result<i32> {
-    let query =
+    const NEXT_WORK_TIME_ID_SQL: &str =
         "SELECT last_value FROM duckdb_sequences() WHERE sequence_name = 'seq_work_time_id';";
-    let last_value: i64 = conn.query_row(query, [], |row| row.get(0)).unwrap_or(0);
+    let last_value: i64 = conn
+        .query_row(NEXT_WORK_TIME_ID_SQL, [], |row| row.get(0))
+        .unwrap_or(0);
     let next_id = (last_value + 1) as i32;
     info!("Next work time id is {}.", next_id);
 
@@ -16,8 +18,8 @@ pub fn next_work_time_id(conn: &Connection) -> Result<i32> {
 }
 
 pub fn find_work_time(conn: &Connection, task_id: i32, date: &Date) -> Result<Option<WorkTime>> {
-    info!("Find work_time for task_id: {}, date: {}", task_id, date);
     const FIND_WORK_TIME_SQL: &str = include_str!("../assets/work_time_sql/find_work_time.sql");
+    info!("Find work_time for task_id: {}, date: {}", task_id, date);
     let mut stmt = conn.prepare(FIND_WORK_TIME_SQL)?;
     let params = duckdb::named_params! {
         "task_id": task_id,
@@ -34,10 +36,9 @@ pub fn find_work_time(conn: &Connection, task_id: i32, date: &Date) -> Result<Op
 }
 
 pub fn list_work_time_for_task(conn: &Connection, task_id: i32) -> Result<Vec<WorkTime>> {
-    info!("List work_time for task_id: {}", task_id);
-
     const LIST_WORK_TIME_FOR_TASK_SQL: &str =
         include_str!("../assets/work_time_sql/list_work_time_by_task.sql");
+    info!("List work_time for task_id: {}", task_id);
     let mut stmt = conn.prepare(LIST_WORK_TIME_FOR_TASK_SQL)?;
     let params = duckdb::named_params! {
         "task_id": task_id,
@@ -55,8 +56,8 @@ pub fn list_work_time_for_task(conn: &Connection, task_id: i32) -> Result<Vec<Wo
 }
 
 pub fn insert_work_time(conn: &Connection, work_time: &WorkTime) -> Result<()> {
-    info!("Inserting work time: {:?}", work_time);
     const INSERT_WORK_TIME_SQL: &str = include_str!("../assets/work_time_sql/insert_work_time.sql");
+    info!("Inserting work time: {:?}", work_time);
     let duckdb_work_time: DuckdbWorkTime = work_time.clone().into();
     let mut params = duckdb_work_time.to_named_params();
     let _ = params.remove("id");
@@ -67,8 +68,8 @@ pub fn insert_work_time(conn: &Connection, work_time: &WorkTime) -> Result<()> {
 }
 
 pub fn update_work_time(conn: &Connection, work_time: &WorkTime) -> Result<()> {
-    info!("Update work time: {:?}", work_time);
     const UPDATE_WORK_TIME_SQL: &str = include_str!("../assets/work_time_sql/update_work_time.sql");
+    info!("Update work time: {:?}", work_time);
     let duckdb_work_time: DuckdbWorkTime = work_time.clone().into();
     let params = duckdb_work_time.to_named_params();
     let mut stmt = conn.prepare(UPDATE_WORK_TIME_SQL)?;
@@ -87,10 +88,10 @@ pub fn upsert_work_time(conn: &Connection, work_time: &WorkTime) -> Result<()> {
 }
 
 fn exists_work_time_id(conn: &Connection, id: i32) -> Result<bool> {
-    info!("Check id {} exists in work_time table", id);
     const EXISTS_WORK_TIME_ID_SQL: &str =
         include_str!("../assets/work_time_sql/exists_work_time_id.sql");
 
+    info!("Check id {} exists in work_time table", id);
     let params = duckdb::named_params! {
         "id": id,
     };
@@ -101,9 +102,10 @@ fn exists_work_time_id(conn: &Connection, id: i32) -> Result<bool> {
 }
 
 pub fn get_total_work_time_by_task(conn: &Connection, task_id: i32) -> Result<f32> {
-    info!("Get total work time for: {}", task_id);
     const GET_TOTAL_WORK_TIME_BY_TASK_SQL: &str =
         include_str!("../assets/work_time_sql/get_total_work_time_by_task.sql");
+
+    info!("Get total work time for: {}", task_id);
     let params = duckdb::named_params! {"task_id": task_id};
     let total_time: f32 = conn.query_row(
         GET_TOTAL_WORK_TIME_BY_TASK_SQL,
@@ -115,9 +117,10 @@ pub fn get_total_work_time_by_task(conn: &Connection, task_id: i32) -> Result<f3
 }
 
 pub fn get_total_work_time_by_date(conn: &Connection, date: &Date) -> Result<f32> {
-    info!("Get total work time for: {}", date);
     const GET_TOTAL_WORK_TIME_BY_DATE_SQL: &str =
         include_str!("../assets/work_time_sql/get_total_work_time_by_date.sql");
+
+    info!("Get total work time for: {}", date);
     let date_str = date.to_string();
     let params = duckdb::named_params! {"date": date_str};
     let total_time: f32 = conn.query_row(
@@ -134,13 +137,13 @@ pub fn get_total_work_time_history(
     start_date: &Date,
     end_date: &Date,
 ) -> Result<Vec<(Date, f32)>> {
+    const GET_TOTAL_WORK_TIME_HISTORY_SQL: &str =
+        include_str!("../assets/work_time_sql/get_total_work_time_history.sql");
+
     info!(
         "Get total work time history from {} to {}",
         start_date, end_date
     );
-    const GET_TOTAL_WORK_TIME_HISTORY_SQL: &str =
-        include_str!("../assets/work_time_sql/get_total_work_time_history.sql");
-
     let start_date_str = start_date.to_string();
     let end_date_str = end_date.to_string();
 
@@ -168,13 +171,13 @@ pub fn get_total_work_time_ratio(
     start_date: &Date,
     end_date: &Date,
 ) -> Result<Vec<(i32, f32)>> {
+    const GET_TOTAL_WORK_TIME_RATIO_SQL: &str =
+        include_str!("../assets/work_time_sql/get_total_work_time_ratio.sql");
+
     info!(
         "Get total work time ratio from {} to {}",
         start_date, end_date
     );
-    const GET_TOTAL_WORK_TIME_RATIO_SQL: &str =
-        include_str!("../assets/work_time_sql/get_total_work_time_ratio.sql");
-
     let start_date_str = start_date.to_string();
     let end_date_str = end_date.to_string();
 

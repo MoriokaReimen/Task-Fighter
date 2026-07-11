@@ -73,8 +73,7 @@ impl SearchConditionModal {
         ui.horizontal(|ui| {
             ui.label(fl!("search-condition-prompt"));
             ui.add(
-                egui::TextEdit::singleline(&mut self.pattern)
-                    .desired_width(ui.available_width()),
+                egui::TextEdit::singleline(&mut self.pattern).desired_width(ui.available_width()),
             );
         });
     }
@@ -136,7 +135,12 @@ fn filter_section(ui: &mut Ui, flags: &mut TaskFilterFlags) {
             ui.label(fl!("task-status"));
             ui.horizontal(|ui| {
                 checkbox(ui, flags, TaskFilterFlags::StatusPending, &fl!("pending"));
-                checkbox(ui, flags, TaskFilterFlags::StatusWIP, &fl!("work-in-progress"));
+                checkbox(
+                    ui,
+                    flags,
+                    TaskFilterFlags::StatusWIP,
+                    &fl!("work-in-progress"),
+                );
                 checkbox(ui, flags, TaskFilterFlags::StatusComplete, &fl!("complete"));
                 checkbox(ui, flags, TaskFilterFlags::StatusCanceled, &fl!("cancel"));
             });
@@ -158,7 +162,12 @@ fn search_section(ui: &mut Ui, flags: &mut TaskSearchFlags) {
 
             ui.separator();
             ui.label(fl!("option"));
-            checkbox(ui, flags, TaskSearchFlags::EnableRegex, &fl!("enable-regex"));
+            checkbox(
+                ui,
+                flags,
+                TaskSearchFlags::EnableRegex,
+                &fl!("enable-regex"),
+            );
         });
     });
 }
@@ -170,16 +179,56 @@ fn order_section(ui: &mut Ui, flags: &mut TaskOrderFlags) {
             ui.add_space(4.0);
             ui.label(fl!("sorting-criteria"));
             ui.horizontal(|ui| {
-                checkbox(ui, flags, TaskOrderFlags::OrderByStatus, &fl!("status-order"));
-                checkbox(ui, flags, TaskOrderFlags::OrderByStartDate, &fl!("start-order"));
-                checkbox(ui, flags, TaskOrderFlags::OrderByDueDate, &fl!("due-date-order"));
-                checkbox(ui, flags, TaskOrderFlags::OrderByEntryDate, &fl!("register-order"));
+                checkbox(
+                    ui,
+                    flags,
+                    TaskOrderFlags::OrderByStatus,
+                    &fl!("status-order"),
+                );
+                checkbox(
+                    ui,
+                    flags,
+                    TaskOrderFlags::OrderByStartDate,
+                    &fl!("start-order"),
+                );
+                checkbox(
+                    ui,
+                    flags,
+                    TaskOrderFlags::OrderByDueDate,
+                    &fl!("due-date-order"),
+                );
+                checkbox(
+                    ui,
+                    flags,
+                    TaskOrderFlags::OrderByEntryDate,
+                    &fl!("register-order"),
+                );
             });
             ui.horizontal(|ui| {
-                checkbox(ui, flags, TaskOrderFlags::OrderByEndDate, &fl!("end-date-order"));
-                checkbox(ui, flags, TaskOrderFlags::OrderByPriority, &fl!("priority-order"));
-                checkbox(ui, flags, TaskOrderFlags::OrderByProgress, &fl!("progress-order"));
-                checkbox(ui, flags, TaskOrderFlags::OrderByTimeSpent, &fl!("time-spent"));
+                checkbox(
+                    ui,
+                    flags,
+                    TaskOrderFlags::OrderByEndDate,
+                    &fl!("end-date-order"),
+                );
+                checkbox(
+                    ui,
+                    flags,
+                    TaskOrderFlags::OrderByPriority,
+                    &fl!("priority-order"),
+                );
+                checkbox(
+                    ui,
+                    flags,
+                    TaskOrderFlags::OrderByProgress,
+                    &fl!("progress-order"),
+                );
+                checkbox(
+                    ui,
+                    flags,
+                    TaskOrderFlags::OrderByTimeSpent,
+                    &fl!("time-spent"),
+                );
             });
 
             ui.separator();

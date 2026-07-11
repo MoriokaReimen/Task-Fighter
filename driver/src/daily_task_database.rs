@@ -6,8 +6,9 @@ use duckdb::Connection;
 use tracing::info;
 
 pub fn insert_daily_task(conn: &Connection, daily_task: &DailyTask) -> Result<()> {
-    info!("Inserting daily_task: {:?}", daily_task);
     const INSERT_TASK_SQL: &str = include_str!("../assets/daily_task_sql/insert_daily_task.sql");
+
+    info!("Inserting daily_task: {:?}", daily_task);
     let duckdb_daily_task: DuckdbDailyTask = daily_task.clone().into();
     let mut params = duckdb_daily_task.to_named_params();
     let _ = params.remove("id");
@@ -55,8 +56,9 @@ pub fn get_next_daily_task_id(conn: &Connection) -> Result<i32> {
 }
 
 pub fn update_daily_task(conn: &Connection, daily_task: &DailyTask) -> Result<()> {
-    info!("Updating daily_task: {:?}", daily_task);
     const UPDATE_TASK_SQL: &str = include_str!("../assets/daily_task_sql/update_daily_task.sql");
+
+    info!("Updating daily_task: {:?}", daily_task);
     let duckdb_daily_task: DuckdbDailyTask = daily_task.clone().into();
 
     let params = duckdb_daily_task.to_named_params();
@@ -74,8 +76,9 @@ pub fn search_daily_task(
     filter_flags: DailyTaskFilterFlags,
     order_flags: DailyTaskOrderFlags,
 ) -> Result<Vec<DailyTask>> {
-    info!("Searching daily_tasks with pattern: '{}'", pattern);
     const SEARCH_SQL: &str = include_str!("../assets/daily_task_sql/search_daily_task.sql");
+
+    info!("Searching daily_tasks with pattern: '{}'", pattern);
     let mut stmt = conn.prepare(SEARCH_SQL)?;
 
     let params = duckdb::named_params! {
@@ -98,9 +101,9 @@ pub fn search_daily_task(
 }
 
 pub fn fetch_one_daily_task(conn: &Connection, id: i32) -> Result<DailyTask> {
-    info!("Querying daily_task with id: {}", id);
-
     const FETCH_ONE_SQL: &str = include_str!("../assets/daily_task_sql/fetch_one_daily_task.sql");
+
+    info!("Querying daily_task with id: {}", id);
     let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
     let duckdb_daily_task = stmt.query_row(duckdb::named_params! { "id": id }, |row| {
@@ -116,12 +119,10 @@ pub fn fetch_all_daily_task(
     filter_flags: DailyTaskFilterFlags,
     order_flags: DailyTaskOrderFlags,
 ) -> Result<Vec<DailyTask>> {
-    info!("Querying daily_tasks");
-
     const FETCH_ALL_SQL: &str = include_str!("../assets/daily_task_sql/fetch_all_daily_task.sql");
 
+    info!("Querying daily_tasks");
     let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
-
     let params = duckdb::named_params! {
         "filter_flags": filter_flags.bits() as i32,
         "order_flags": order_flags.bits() as i32,
@@ -140,8 +141,8 @@ pub fn fetch_all_daily_task(
 }
 
 pub fn delete_daily_task(conn: &Connection, id: i32) -> Result<()> {
-    info!("Delete daily task: {}", id);
     const DELETE_SQL: &str = include_str!("../assets/daily_task_sql/delete_daily_task.sql");
+    info!("Delete daily task: {}", id);
     let mut stmt = conn.prepare(DELETE_SQL)?;
     stmt.execute(duckdb::named_params! { "id": id })?;
 

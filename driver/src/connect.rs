@@ -11,21 +11,21 @@ pub enum DuckdbPath {
 }
 
 pub fn connect(duckdb_path: &DuckdbPath) -> Result<Connection> {
+    const CREATE_TABLE_SQL: &str = include_str!("../assets/connect.sql");
     let conn = match duckdb_path {
         DuckdbPath::InMemory => {
             info!("Initializing DuckDB in-memory database.");
             Connection::open_in_memory()?
         }
         DuckdbPath::InDirectory(path) => {
-            info!("Initializing File-based DuckDB database at: {:?}", path);
+            info!("Initializing File-based DuckDB database at: {path:?}");
             if path.exists() && !path.is_dir() {
-                bail!(format!("The file named {path:?} exists"));
+                bail!(format!("The file named {} exists", path.display()));
             }
             fs::create_dir_all(path)?;
             Connection::open(path.join("task-fighter.db"))?
         }
     };
-    const CREATE_TABLE_SQL: &str = include_str!("../assets/connect.sql");
     conn.execute(CREATE_TABLE_SQL, [])
         .context("Failed to connect database")?;
     info!("Database connection established.");
