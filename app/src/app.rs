@@ -33,6 +33,15 @@ impl App {
             Pages::CreateDailyTask,
             Box::new(page::CreateDailyTaskPage::new()),
         );
+        pages.insert(Pages::WeeklyMain, Box::new(page::WeeklyMainPage::new()));
+        pages.insert(
+            Pages::EditWeeklyTask,
+            Box::new(page::EditWeeklyTaskPage::new()),
+        );
+        pages.insert(
+            Pages::CreateWeeklyTask,
+            Box::new(page::CreateWeeklyTaskPage::new()),
+        );
 
         let mut work = Work::new();
         work.config = work.core.load_config().expect("Failed to load config");
@@ -103,6 +112,21 @@ impl App {
                 }
                 Ok(Err(e)) => {
                     error!("Failed to fetch daily tasks: {:?}", e);
+                    Some(CoreOutput::Idle)
+                }
+                Err(TryRecvError::Empty) => None,
+                Err(TryRecvError::Closed) => {
+                    error!("Channel disconnected unexpectedly (FetchActiveTasks)");
+                    Some(CoreOutput::Idle)
+                }
+            },
+            CoreOutput::FetchAllWeeklyTask(rx) => match rx.try_recv() {
+                Ok(Ok(weekly_tasks)) => {
+                    self.work.weekly_tasks = Some(weekly_tasks);
+                    Some(CoreOutput::Idle)
+                }
+                Ok(Err(e)) => {
+                    error!("Failed to fetch weekly tasks: {:?}", e);
                     Some(CoreOutput::Idle)
                 }
                 Err(TryRecvError::Empty) => None,

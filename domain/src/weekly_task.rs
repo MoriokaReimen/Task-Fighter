@@ -79,21 +79,22 @@ where
 
 impl WeeklyTask {
     #[must_use]
-    pub fn is_valid(&self) -> bool {
-        !self.project.trim().is_empty()
-            && !self.title.trim().is_empty()
-            && (self.start_day as u8) <= (self.due_day as u8)
+    pub fn is_saveable(&self) -> bool {
+        !self.project.trim().is_empty() && !self.title.trim().is_empty()
     }
 
     pub fn create_task(&self, today: &Date) -> Result<Task> {
-        if !self.is_valid() {
+        if !self.is_saveable() {
             bail!("Invalid weekly task");
         }
 
-        let calculation_base_date = today.tomorrow()?;
+        let task_start_date = if today.weekday() == self.start_day {
+            *today
+        } else {
+            today.nth_weekday(1, self.start_day)?
+        };
 
-        let task_start_date = calculation_base_date.nth_weekday(-1, self.start_day)?;
-        let task_due_date = calculation_base_date.nth_weekday(1, self.due_day)?;
+        let task_due_date = task_start_date.yesterday()?.nth_weekday(1, self.due_day)?;
 
         let formatted_month = task_start_date.strftime("%B");
         let week_of_month = ((task_start_date.day() - 1) / 7) + 1;
@@ -148,21 +149,21 @@ mod tests {
     }
 
     #[test]
-    fn test_is_valid_success() {
+    fn test_is_saveable_success() {
         let task = valid_weekly_task();
-        assert!(task.is_valid());
+        assert!(task.is_saveable());
     }
 
     #[test]
-    fn test_is_valid_failures() {
+    fn test_is_saveable_failures() {
         let mut task = valid_weekly_task();
         task.project = "   ".to_string();
-        assert!(!task.is_valid());
+        assert!(!task.is_saveable());
 
         let mut task = valid_weekly_task();
         task.start_day = Weekday::Friday;
         task.due_day = Weekday::Tuesday;
-        assert!(!task.is_valid());
+        assert!(!task.is_saveable());
     }
 
     #[test]

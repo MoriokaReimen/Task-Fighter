@@ -9,7 +9,9 @@ pub fn insert_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result
     const INSERT_TASK_SQL: &str = include_str!("../assets/weekly_task_sql/insert_weekly_task.sql");
     info!("Inserting weekly_task: {:?}", weekly_task);
     let duckdb_weekly_task: DuckdbWeeklyTask = weekly_task.clone().into();
-    let params = duckdb_weekly_task.to_named_params();
+    let mut params = duckdb_weekly_task.to_named_params();
+    params.remove("id");
+
     let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
     stmt.execute(&params)?;
 

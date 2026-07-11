@@ -50,6 +50,14 @@ impl MainPage {
         egui::Panel::top("top_menu_bar").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("Menu", |ui| {
+                    if ui.button("Edit Daily Task").clicked() {
+                        info!("Switch to Daily Main Page");
+                        next_page = Pages::DailyMain;
+                    }
+                    if ui.button("Edit Weekly Task").clicked() {
+                        info!("Switch to Weekly Main Page");
+                        next_page = Pages::WeeklyMain;
+                    }
                     if ui.button("Change Color Scheme").clicked() {
                         let color_scheme = COLOR_SCHEMES[self.color_scheme_index];
                         work.config.color_scheme = color_scheme;
@@ -58,10 +66,6 @@ impl MainPage {
                             .expect("Failed to save config");
                         self.color_scheme_index += 1;
                         self.color_scheme_index %= 7;
-                    }
-                    if ui.button("Edit Daily Task").clicked() {
-                        info!("Switch to Daily Main Page");
-                        next_page = Pages::DailyMain;
                     }
                     if ui.button("About").clicked() {
                         self.about_modal.open();

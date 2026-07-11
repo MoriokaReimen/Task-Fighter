@@ -37,10 +37,10 @@ impl TryFrom<DuckdbWeeklyTask> for WeeklyTask {
 
     fn try_from(duckdb_weekly_task: DuckdbWeeklyTask) -> Result<Self> {
         let priority = TaskPriority::try_from(duckdb_weekly_task.priority)?;
-        let start_day = Weekday::from_monday_one_offset(duckdb_weekly_task.start_day as i8)
+        let start_day = Weekday::from_monday_zero_offset(duckdb_weekly_task.start_day as i8)
             .map_err(|e| anyhow::anyhow!("invalid start_day: {e}"))?;
 
-        let due_day = Weekday::from_monday_one_offset(duckdb_weekly_task.due_day as i8)
+        let due_day = Weekday::from_monday_zero_offset(duckdb_weekly_task.due_day as i8)
             .map_err(|e| anyhow::anyhow!("invalid due_day: {e}"))?;
 
         Ok(Self {

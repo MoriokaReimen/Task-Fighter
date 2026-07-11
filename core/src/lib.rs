@@ -6,8 +6,10 @@ pub use domain::TaskRecord;
 pub use domain::{ColorScheme, Config};
 pub use domain::{DailyTask, MonthlyTask, WeeklyTask};
 pub use domain::{DailyTaskFilterFlags, DailyTaskOrderFlags, DailyTaskSearchFlags};
+pub use domain::{MonthlyTaskFilterFlags, MonthlyTaskOrderFlags, MonthlyTaskSearchFlags};
 pub use domain::{Task, TaskPriority, TaskStatus};
 pub use domain::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
+pub use domain::{WeeklyTaskFilterFlags, WeeklyTaskOrderFlags, WeeklyTaskSearchFlags};
 pub use tokio::sync::oneshot::error::TryRecvError;
 
 mod config_record;

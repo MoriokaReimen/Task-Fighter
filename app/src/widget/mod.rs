@@ -20,3 +20,7 @@ mod daily_task_edit;
 pub use daily_task_edit::*;
 mod daily_task_table;
 pub use daily_task_table::*;
+mod weekly_task_edit;
+pub use weekly_task_edit::*;
+mod weekly_task_table;
+pub use weekly_task_table::*;
