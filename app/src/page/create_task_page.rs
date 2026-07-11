@@ -7,7 +7,7 @@ use crate::widget::yes_no_cancel_modal;
 use crate::widget::yes_no_modal;
 use crate::work::Work;
 use core::prelude::*;
-use core::{CoreOutput, Task};
+use core::Task;
 use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
 
@@ -47,7 +47,7 @@ impl Page for CreateTaskPage {
                 match self.yes_no_cancel.show(ui) {
                     yes_no_cancel_modal::ModalResult::Yes => {
                         if work.task.is_saveable() {
-                            work.output = work.core.upsert_task(&work.task);
+                            work.outputs.push(work.core.upsert_task(&work.task));
                             work.task = Task::default();
                             next_page = Pages::Main;
                             work.tasks = None;
@@ -77,7 +77,7 @@ impl Page for CreateTaskPage {
                 }
                 if self.yes_no.show(ui) == yes_no_modal::ModalResult::Yes {
                     if work.task.is_saveable() {
-                        work.output = work.core.upsert_task(&work.task);
+                        work.outputs.push(work.core.upsert_task(&work.task));
                     } else {
                         let message = if work.task.project.is_empty() {
                             fl!("project-empty")
@@ -94,7 +94,7 @@ impl Page for CreateTaskPage {
         // --- Main Form Panel ---
         egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             ui.heading(fl!("create-task"));
-            if !matches!(work.output, CoreOutput::Idle) {
+            if !work.outputs.is_empty() {
                 ui.with_layout(
                     egui::Layout::centered_and_justified(egui::Direction::TopDown),
                     |ui| {

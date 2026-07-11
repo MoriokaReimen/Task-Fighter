@@ -93,3 +93,4 @@ duration = 期間
 monthly-task-list = ⚡ マンスリータスク一覧
 create-monthly-task =✨ マンスリータスクを作成
 edit-monthly-task = ⚡ マンスリータスクを編集
+show-only-active= 有効のみ表示

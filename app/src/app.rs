@@ -2,7 +2,7 @@ use super::style;
 use crate::page::{self, Page, Pages};
 use crate::work::Work;
 use core::prelude::*;
-use core::{CoreOutput, TryRecvError};
+use core::{CoreOutput, Receiver, TryRecvError};
 use eframe::egui::Ui;
 use std::collections::HashMap;
 use tracing::{error, warn};
@@ -81,142 +81,104 @@ impl eframe::App for App {
 
 impl App {
     fn poll_background_tasks(&mut self) {
-        let next_output = match &mut self.work.output {
-            CoreOutput::Idle => None,
+        // 1. 一時的に outputs を取り出す
+        let outputs = std::mem::take(&mut self.work.outputs);
 
-            CoreOutput::FetchAllTask(rx) => match rx.try_recv() {
-                Ok(Ok(tasks)) => {
-                    self.work.tasks = Some(tasks);
-                    Some(CoreOutput::Idle)
-                }
-                Ok(Err(e)) => {
-                    error!("Failed to fetch active tasks: {:?}", e);
-                    Some(CoreOutput::Idle)
-                }
-                Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Closed) => {
-                    error!("Channel disconnected unexpectedly (FetchActiveTasks)");
-                    Some(CoreOutput::Idle)
-                }
-            },
-            CoreOutput::SearchTask(rx) => match rx.try_recv() {
-                Ok(Ok(tasks)) => {
-                    self.work.tasks = Some(tasks);
-                    Some(CoreOutput::Idle)
-                }
-                Ok(Err(e)) => {
-                    warn!("Search query failed: {:?}", e);
-                    Some(CoreOutput::Idle)
-                }
-                Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Closed) => {
-                    error!("Channel disconnected unexpectedly (ScanTasks)");
-                    Some(CoreOutput::Idle)
-                }
-            },
-            CoreOutput::FetchAllDailyTask(rx) => match rx.try_recv() {
-                Ok(Ok(daily_tasks)) => {
-                    self.work.daily_tasks = Some(daily_tasks);
-                    Some(CoreOutput::Idle)
-                }
-                Ok(Err(e)) => {
-                    error!("Failed to fetch daily tasks: {:?}", e);
-                    Some(CoreOutput::Idle)
-                }
-                Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Closed) => {
-                    error!("Channel disconnected unexpectedly (FetchActiveTasks)");
-                    Some(CoreOutput::Idle)
-                }
-            },
-            CoreOutput::FetchAllWeeklyTask(rx) => match rx.try_recv() {
-                Ok(Ok(weekly_tasks)) => {
-                    self.work.weekly_tasks = Some(weekly_tasks);
-                    Some(CoreOutput::Idle)
-                }
-                Ok(Err(e)) => {
-                    error!("Failed to fetch weekly tasks: {:?}", e);
-                    Some(CoreOutput::Idle)
-                }
-                Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Closed) => {
-                    error!("Channel disconnected unexpectedly (FetchActiveTasks)");
-                    Some(CoreOutput::Idle)
-                }
-            },
-            CoreOutput::FetchAllMonthlyTask(rx) => match rx.try_recv() {
-                Ok(Ok(monthly_tasks)) => {
-                    self.work.monthly_tasks = Some(monthly_tasks);
-                    Some(CoreOutput::Idle)
-                }
-                Ok(Err(e)) => {
-                    error!("Failed to fetch monthly tasks: {:?}", e);
-                    Some(CoreOutput::Idle)
-                }
-                Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Closed) => {
-                    error!("Channel disconnected unexpectedly (FetchActiveTasks)");
-                    Some(CoreOutput::Idle)
-                }
-            },
-            CoreOutput::PlotData(rx) => match rx.try_recv() {
-                Ok(Ok(data)) => {
-                    self.work.plot_data = Some(data);
-                    Some(CoreOutput::Idle)
-                }
-                Ok(Err(e)) => {
-                    warn!("Plot Data failed: {:?}", e);
-                    Some(CoreOutput::Idle)
-                }
-                Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Closed) => {
-                    error!("Channel disconnected unexpectedly (plot_data)");
-                    Some(CoreOutput::Idle)
-                }
-            },
+        // 2. フィルター処理を行い、結果を再代入する
+        self.work.outputs = outputs
+            .into_iter()
+            .filter_map(|mut output| {
+                match &mut output {
+                    // データ更新を伴うタスク
+                    CoreOutput::FetchAllTask(rx) => {
+                        Self::check_rx(rx, "Failed to fetch active tasks", |d| {
+                            self.work.tasks = Some(d);
+                        })
+                        .then_some(output)
+                    }
+                    CoreOutput::SearchTask(rx) => {
+                        Self::check_rx(rx, "Search query failed", |d| self.work.tasks = Some(d))
+                            .then_some(output)
+                    }
+                    CoreOutput::FetchAllDailyTask(rx) => {
+                        Self::check_rx(rx, "Failed to fetch daily tasks", |d| {
+                            self.work.daily_tasks = Some(d);
+                        })
+                        .then_some(output)
+                    }
+                    CoreOutput::FetchAllWeeklyTask(rx) => {
+                        Self::check_rx(rx, "Failed to fetch weekly tasks", |d| {
+                            self.work.weekly_tasks = Some(d);
+                        })
+                        .then_some(output)
+                    }
+                    CoreOutput::FetchAllMonthlyTask(rx) => {
+                        Self::check_rx(rx, "Failed to fetch monthly tasks", |d| {
+                            self.work.monthly_tasks = Some(d);
+                        })
+                        .then_some(output)
+                    }
+                    CoreOutput::PlotData(rx) => {
+                        Self::check_rx(rx, "Plot Data failed", |d| self.work.plot_data = Some(d))
+                            .then_some(output)
+                    }
 
-            other_output => {
-                macro_rules! handle_rx {
-                    ($rx:expr, $err_msg:expr) => {
-                        match $rx.try_recv() {
-                            Ok(Ok(_)) => Some(CoreOutput::Idle),
-                            Ok(Err(e)) => {
-                                error!("{}: {:?}", $err_msg, e);
-                                Some(CoreOutput::Idle)
-                            }
-                            Err(TryRecvError::Empty) => None,
-                            Err(TryRecvError::Closed) => {
-                                error!("Channel disconnected unexpectedly ({})", $err_msg);
-                                Some(CoreOutput::Idle)
-                            }
-                        }
-                    };
-                }
-
-                match other_output {
-                    CoreOutput::InsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
-                    CoreOutput::UpsertTask(rx) => handle_rx!(rx, "Failed to insert task"),
-                    CoreOutput::FetchAllTask(rx) => handle_rx!(rx, "Failed to fetch all tasks"),
-                    CoreOutput::FetchOneTask(rx) => handle_rx!(rx, "Failed to fetch task by ID"),
-                    CoreOutput::UpdateTask(rx) => handle_rx!(rx, "Failed to update task"),
-                    CoreOutput::MailDaily(rx) => handle_rx!(rx, "Failed to send daily report mail"),
+                    // 副作用のみのタスク
+                    CoreOutput::InsertTask(rx) => {
+                        Self::check_rx(rx, "Failed to insert task", |()| {}).then_some(output)
+                    }
+                    CoreOutput::UpsertTask(rx) => {
+                        Self::check_rx(rx, "Failed to insert task", |()| {}).then_some(output)
+                    }
+                    CoreOutput::FetchOneTask(rx) => {
+                        Self::check_rx(rx, "Failed to fetch task by ID", |_| {}).then_some(output)
+                    }
+                    CoreOutput::UpdateTask(rx) => {
+                        Self::check_rx(rx, "Failed to update task", |()| {}).then_some(output)
+                    }
+                    CoreOutput::MailDaily(rx) => {
+                        Self::check_rx(rx, "Failed to send daily report mail", |()| {})
+                            .then_some(output)
+                    }
                     CoreOutput::SyncAllDailyTask(rx) => {
-                        handle_rx!(rx, "Failed to send daily report mail")
+                        Self::check_rx(rx, "Failed to sync daily tasks", |()| {}).then_some(output)
                     }
                     CoreOutput::SyncAllWeeklyTask(rx) => {
-                        handle_rx!(rx, "Failed to send daily report mail")
+                        Self::check_rx(rx, "Failed to sync weekly tasks", |()| {}).then_some(output)
                     }
                     CoreOutput::SyncAllMonthlyTask(rx) => {
-                        handle_rx!(rx, "Failed to send daily report mail")
+                        Self::check_rx(rx, "Failed to sync monthly tasks", |()| {}).then_some(output)
                     }
-                    _ => None,
+                    _ => None, // Remove from output for other cases.
                 }
-            }
-        };
+            })
+            .collect();
+    }
 
-        // Apply state transition if a new output state is determined
-        if let Some(next) = next_output {
-            self.work.output = next;
+    fn check_rx<T, E>(
+        rx: &mut Receiver<Result<T, E>>,
+        err_msg: &str,
+        on_success: impl FnOnce(T),
+    ) -> bool
+    where
+        E: std::fmt::Debug,
+    {
+        match rx.try_recv() {
+            Ok(Ok(data)) => {
+                on_success(data);
+                false // 完了したため残さない
+            }
+            Ok(Err(e)) => {
+                error!("{}: {:?}", err_msg, e);
+                false // エラー終了のため残さない
+            }
+            Err(TryRecvError::Empty) => {
+                true // まだ実行中なので残す
+            }
+            Err(TryRecvError::Closed) => {
+                error!("Channel disconnected unexpectedly ({})", err_msg);
+                false // 切断されたため残さない
+            }
         }
     }
 }

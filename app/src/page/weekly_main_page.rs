@@ -4,7 +4,7 @@ use crate::widget::WeeklyTaskTable; // WeeklyTaskTable をインポート
 use crate::work::Work;
 use core::ColorScheme;
 use core::prelude::*;
-use core::{CoreOutput, WeeklyTaskFilterFlags, WeeklyTaskOrderFlags}; // Weekly用のフラグを使用
+use core::{WeeklyTaskFilterFlags, WeeklyTaskOrderFlags}; // Weekly用のフラグを使用
 use egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
 
@@ -13,6 +13,7 @@ pub struct WeeklyMainPage {
     about_modal: AboutModal,
     weekly_task_table: WeeklyTaskTable, // Weekly 向けに変更
     color_scheme_index: usize,
+    show_only_active: bool,
 }
 
 impl WeeklyMainPage {
@@ -21,6 +22,7 @@ impl WeeklyMainPage {
             about_modal: AboutModal::new(),
             weekly_task_table: WeeklyTaskTable::new(), // Weekly 向けに変更
             color_scheme_index: 0usize,
+            show_only_active: true,
         }
     }
 
@@ -65,7 +67,7 @@ impl WeeklyMainPage {
         let mut next_page = Pages::WeeklyMain;
 
         // 1. ローディング状態のハンドリング
-        if !matches!(work.output, CoreOutput::Idle) {
+        if !work.outputs.is_empty() {
             ui.with_layout(
                 egui::Layout::centered_and_justified(egui::Direction::TopDown),
                 |ui| {
@@ -119,7 +121,7 @@ impl WeeklyMainPage {
                     .add(Button::new(fl!("back")).min_size(vec2(110.0, 28.0)))
                     .clicked()
                 {
-                    work.output = work.core.sync_all_weekly_task();
+                    work.outputs.push(work.core.sync_all_weekly_task());
                     work.tasks = None;
                     *next_page = Pages::Main;
                 }
@@ -146,13 +148,21 @@ impl WeeklyMainPage {
     }
 
     /// 上部コントロールバー（タイトルとリフレッシュ）
-    fn render_control_bar(&self, ui: &mut Ui, _work: &mut Work) {
+    fn render_control_bar(&mut self, ui: &mut Ui, work: &mut Work) {
         egui::Sides::new().show(
             ui,
             |ui| {
                 ui.heading(fl!("weekly-task-list"));
             },
-            |_| { /* Empty */ },
+            |ui| {
+                if ui
+                    .checkbox(&mut self.show_only_active, fl!("show-only-active"))
+                    .changed()
+                {
+                    /* Request redraw of monthly task table */
+                    work.weekly_tasks = None;
+                }
+            },
         );
     }
 }
@@ -161,13 +171,17 @@ impl Page for WeeklyMainPage {
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
         let mut next_page = Pages::WeeklyMain;
 
-        // アプリ起動時など、アイドルかつタスク未取得なら自動フェッチを実行
-        if matches!(work.output, CoreOutput::Idle) && work.weekly_tasks.is_none() {
-            let filter_flag = WeeklyTaskFilterFlags::All;
+        if work.outputs.is_empty() && work.weekly_tasks.is_none() {
+            let filter_flag = if self.show_only_active {
+                WeeklyTaskFilterFlags::All ^ WeeklyTaskFilterFlags::Inactive
+            } else {
+                WeeklyTaskFilterFlags::All
+            };
             let order_flag = WeeklyTaskOrderFlags::OrderByPriority
                 | WeeklyTaskOrderFlags::OrderByDueDay
                 | WeeklyTaskOrderFlags::Reversed;
-            work.output = work.core.fetch_all_weekly_task(filter_flag, order_flag);
+            work.outputs
+                .push(work.core.fetch_all_weekly_task(filter_flag, order_flag));
         }
 
         self.render_top_tool_bar(work, ui);

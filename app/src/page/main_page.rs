@@ -6,7 +6,7 @@ use crate::widget::search_condition_modal::ModalResult;
 use crate::work::Work;
 use core::ColorScheme;
 use core::prelude::*;
-use core::{CoreOutput, TaskFilterFlags, TaskOrderFlags};
+use core::{TaskFilterFlags, TaskOrderFlags};
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
 
@@ -91,8 +91,7 @@ impl MainPage {
     fn render_task_list_content(&mut self, work: &mut Work, ui: &mut Ui) -> Pages {
         let mut next_page = Pages::Main;
 
-        // 1. ローディング状態のハンドリング
-        if !matches!(work.output, CoreOutput::Idle) {
+        if !work.outputs.is_empty() {
             ui.with_layout(
                 egui::Layout::centered_and_justified(egui::Direction::TopDown),
                 |ui| {
@@ -166,7 +165,7 @@ impl MainPage {
         // --- クロージャの実行がすべて終わった後（Sides::show の外）で副作用を処理する ---
         if clicked_graph {
             *next_page = Pages::Graph;
-            work.output = work.core.get_plot_data();
+            work.outputs.push(work.core.get_plot_data());
         }
 
         if clicked_create {
@@ -182,7 +181,7 @@ impl MainPage {
         if clicked_email {
             info!("Email Report Button Pressed");
             if let Some(ref tasks) = work.tasks {
-                work.output = work.core.mail_daily(tasks);
+                work.outputs.push(work.core.mail_daily(tasks));
             }
         }
     }
@@ -204,7 +203,8 @@ impl MainPage {
                     {
                         info!("Reset Button Pressed");
                         let (filter_flag, order_flag) = Self::default_fetch_flags();
-                        work.output = work.core.fetch_all_task(filter_flag, order_flag);
+                        work.outputs
+                            .push(work.core.fetch_all_task(filter_flag, order_flag));
                     }
 
                     if ui
@@ -217,7 +217,8 @@ impl MainPage {
                     if let ModalResult::Search(pattern, filter, order, search) =
                         self.search_condition_modal.show(ui)
                     {
-                        work.output = work.core.search_task(&pattern, search, filter, order);
+                        work.outputs
+                            .push(work.core.search_task(&pattern, search, filter, order));
                     }
                 });
             },
@@ -230,9 +231,10 @@ impl Page for MainPage {
         let mut next_page;
 
         // アプリ起動時など、アイドルかつタスク未取得なら自動フェッチを実行
-        if matches!(work.output, CoreOutput::Idle) && work.tasks.is_none() {
+        if work.outputs.is_empty() && work.tasks.is_none() {
             let (filter_flag, order_flag) = Self::default_fetch_flags();
-            work.output = work.core.fetch_all_task(filter_flag, order_flag);
+            work.outputs
+                .push(work.core.fetch_all_task(filter_flag, order_flag));
         }
 
         next_page = self.render_top_tool_bar(work, ui);

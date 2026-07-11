@@ -1,7 +1,7 @@
 use crate::page::{Page, Pages};
 use crate::widget::Graph;
 use crate::work::Work;
-use core::{CoreOutput, Task};
+use core::Task;
 use eframe::egui::{self, Align, Button, Layout, vec2};
 use egui::Ui;
 use tracing::info;
@@ -58,7 +58,7 @@ impl GraphPage {
 
         egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             ui.heading(fl!("task-plot"));
-            if !matches!(work.output, CoreOutput::Idle) || work.plot_data.is_none() {
+            if !work.outputs.is_empty() || work.plot_data.is_none() {
                 ui.with_layout(
                     egui::Layout::centered_and_justified(egui::Direction::TopDown),
                     |ui| {

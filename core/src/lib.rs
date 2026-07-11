@@ -10,6 +10,7 @@ pub use domain::{MonthlyTaskFilterFlags, MonthlyTaskOrderFlags, MonthlyTaskSearc
 pub use domain::{Task, TaskPriority, TaskStatus};
 pub use domain::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 pub use domain::{WeeklyTaskFilterFlags, WeeklyTaskOrderFlags, WeeklyTaskSearchFlags};
+pub use tokio::sync::oneshot::Receiver;
 pub use tokio::sync::oneshot::error::TryRecvError;
 
 mod config_record;

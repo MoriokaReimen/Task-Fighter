@@ -93,3 +93,4 @@ duration = Duration
 monthly-task-list = ⚡ Monthly Tasks List
 edit-monthly-task = ⚡ Edit Monthly Tasks
 create-monthly-task =✨ Create Monthly Task
+show-only-active= Show Only Active

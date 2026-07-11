@@ -3,7 +3,7 @@ use core::{DailyTask, MonthlyTask, Task, WeeklyTask};
 
 pub struct Work {
     pub core: core::Core,
-    pub output: core::CoreOutput,
+    pub outputs: Vec<core::CoreOutput>,
     pub config: Config,
     pub tasks: Option<Vec<Task>>,
     pub daily_tasks: Option<Vec<DailyTask>>,
@@ -21,7 +21,7 @@ impl Work {
     pub fn new() -> Self {
         Self {
             core: core::Core::new().unwrap(),
-            output: core::CoreOutput::Idle,
+            outputs: Vec::new(),
             config: Config::default(),
             tasks: None,
             daily_tasks: None,

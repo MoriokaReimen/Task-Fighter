@@ -4,7 +4,7 @@ use crate::widget::DailyTaskTable; // 【変更】DailyTaskTableをインポー�
 use crate::work::Work;
 use core::ColorScheme;
 use core::prelude::*;
-use core::{CoreOutput, DailyTaskFilterFlags, DailyTaskOrderFlags};
+use core::{DailyTaskFilterFlags, DailyTaskOrderFlags};
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
 
@@ -12,6 +12,7 @@ pub struct DailyMainPage {
     about_modal: AboutModal,
     daily_task_table: DailyTaskTable, // 【変更】
     color_scheme_index: usize,
+    show_only_active: bool,
 }
 
 impl DailyMainPage {
@@ -20,6 +21,7 @@ impl DailyMainPage {
             about_modal: AboutModal::new(),
             daily_task_table: DailyTaskTable::new(), // 【変更】
             color_scheme_index: 0usize,
+            show_only_active: true,
         }
     }
 
@@ -64,7 +66,7 @@ impl DailyMainPage {
         let mut next_page = Pages::DailyMain;
 
         // 1. ローディング状態のハンドリング
-        if !matches!(work.output, CoreOutput::Idle) {
+        if !work.outputs.is_empty() {
             ui.with_layout(
                 egui::Layout::centered_and_justified(egui::Direction::TopDown),
                 |ui| {
@@ -118,7 +120,7 @@ impl DailyMainPage {
                     .add(Button::new(fl!("back")).min_size(vec2(110.0, 28.0)))
                     .clicked()
                 {
-                    work.output = work.core.sync_all_daily_task();
+                    work.outputs.push(work.core.sync_all_daily_task());
                     work.tasks = None;
                     *next_page = Pages::Main;
                 }
@@ -145,13 +147,21 @@ impl DailyMainPage {
     }
 
     /// 上部コントロールバー（タイトルとリフレッシュ）
-    fn render_control_bar(&self, ui: &mut Ui, _work: &mut Work) {
+    fn render_control_bar(&mut self, ui: &mut Ui, work: &mut Work) {
         egui::Sides::new().show(
             ui,
             |ui| {
                 ui.heading(fl!("daily-task-list"));
             },
-            |_| { /* Empty */ },
+            |ui| {
+                if ui
+                    .checkbox(&mut self.show_only_active, fl!("show-only-active"))
+                    .changed()
+                {
+                    /* Request redraw of monthly task table */
+                    work.daily_tasks = None;
+                }
+            },
         );
     }
 }
@@ -160,13 +170,17 @@ impl Page for DailyMainPage {
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
         let mut next_page = Pages::DailyMain;
 
-        // アプリ起動時など、アイドルかつタスク未取得なら自動フェッチを実行
-        if matches!(work.output, CoreOutput::Idle) && work.daily_tasks.is_none() {
-            let filter_flag = DailyTaskFilterFlags::All;
+        if work.outputs.is_empty() && work.daily_tasks.is_none() {
+            let filter_flag = if self.show_only_active {
+                DailyTaskFilterFlags::All ^ DailyTaskFilterFlags::Inactive
+            } else {
+                DailyTaskFilterFlags::All
+            };
             let order_flag = DailyTaskOrderFlags::OrderByPriority
                 | DailyTaskOrderFlags::OrderByDueDate
                 | DailyTaskOrderFlags::Reversed;
-            work.output = work.core.fetch_all_daily_task(filter_flag, order_flag);
+            work.outputs
+                .push(work.core.fetch_all_daily_task(filter_flag, order_flag));
         }
 
         self.render_top_tool_bar(work, ui);

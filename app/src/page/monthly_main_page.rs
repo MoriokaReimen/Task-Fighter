@@ -4,7 +4,7 @@ use crate::widget::MonthlyTaskTable; // MonthlyTaskTable に変更
 use crate::work::Work;
 use core::ColorScheme;
 use core::prelude::*;
-use core::{CoreOutput, MonthlyTaskFilterFlags, MonthlyTaskOrderFlags}; // Monthly用のフラグを使用
+use core::{MonthlyTaskFilterFlags, MonthlyTaskOrderFlags}; // Monthly用のフラグを使用
 use egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
 
@@ -13,6 +13,7 @@ pub struct MonthlyMainPage {
     about_modal: AboutModal,
     monthly_task_table: MonthlyTaskTable, // Monthly 向けに変更
     color_scheme_index: usize,
+    show_only_active: bool,
 }
 
 impl MonthlyMainPage {
@@ -21,6 +22,7 @@ impl MonthlyMainPage {
             about_modal: AboutModal::new(),
             monthly_task_table: MonthlyTaskTable::new(), // Monthly 向けに変更
             color_scheme_index: 0usize,
+            show_only_active: true,
         }
     }
 
@@ -65,7 +67,7 @@ impl MonthlyMainPage {
         let mut next_page = Pages::MonthlyMain; // 遷移先を MonthlyMain に変更
 
         // 1. ローディング状態のハンドリング
-        if !matches!(work.output, CoreOutput::Idle) {
+        if !work.outputs.is_empty() {
             ui.with_layout(
                 egui::Layout::centered_and_justified(egui::Direction::TopDown),
                 |ui| {
@@ -119,7 +121,7 @@ impl MonthlyMainPage {
                     .add(Button::new(fl!("back")).min_size(vec2(110.0, 28.0)))
                     .clicked()
                 {
-                    work.output = work.core.sync_all_monthly_task(); // monthly に変更
+                    work.outputs.push(work.core.sync_all_monthly_task());
                     work.tasks = None;
                     *next_page = Pages::Main;
                 }
@@ -147,13 +149,21 @@ impl MonthlyMainPage {
     }
 
     /// 上部コントロールバー（タイトルとリフレッシュ）
-    fn render_control_bar(&self, ui: &mut Ui, _work: &mut Work) {
+    fn render_control_bar(&mut self, ui: &mut Ui, work: &mut Work) {
         egui::Sides::new().show(
             ui,
             |ui| {
                 ui.heading(fl!("monthly-task-list")); // ローカライズキーを変更（必要に応じて）
             },
-            |_| { /* Empty */ },
+            |ui| {
+                if ui
+                    .checkbox(&mut self.show_only_active, fl!("show-only-active"))
+                    .changed()
+                {
+                    /* Request redraw of monthly task table */
+                    work.monthly_tasks = None;
+                }
+            },
         );
     }
 }
@@ -163,12 +173,17 @@ impl Page for MonthlyMainPage {
         let mut next_page = Pages::MonthlyMain;
 
         // アプリ起動時など、アイドルかつタスク未取得なら自動フェッチを実行
-        if matches!(work.output, CoreOutput::Idle) && work.monthly_tasks.is_none() {
-            let filter_flag = MonthlyTaskFilterFlags::All;
+        if work.outputs.is_empty() && work.monthly_tasks.is_none() {
+            let filter_flag = if self.show_only_active {
+                MonthlyTaskFilterFlags::All ^ MonthlyTaskFilterFlags::Inactive
+            } else {
+                MonthlyTaskFilterFlags::All
+            };
             let order_flag = MonthlyTaskOrderFlags::OrderByPriority
                 | MonthlyTaskOrderFlags::OrderByDueDate
                 | MonthlyTaskOrderFlags::Reversed;
-            work.output = work.core.fetch_all_monthly_task(filter_flag, order_flag); // monthly に変更
+            work.outputs
+                .push(work.core.fetch_all_monthly_task(filter_flag, order_flag));
         }
 
         self.render_top_tool_bar(work, ui);

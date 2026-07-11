@@ -7,7 +7,7 @@ use crate::widget::yes_no_cancel_modal;
 use crate::widget::yes_no_modal;
 use crate::work::Work;
 use core::prelude::*;
-use core::{CoreOutput, DailyTask}; // 【変更】DailyTask構造体を使用
+use core::DailyTask; // 【変更】DailyTask構造体を使用
 use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
 
@@ -47,7 +47,8 @@ impl Page for EditDailyTaskPage {
                 match self.yes_no_cancel.show(ui) {
                     yes_no_cancel_modal::ModalResult::Yes => {
                         if work.daily_task.is_saveable() {
-                            work.output = work.core.upsert_daily_task(&work.daily_task);
+                            work.outputs
+                                .push(work.core.upsert_daily_task(&work.daily_task));
                             work.daily_task = DailyTask::default();
                             next_page = Pages::DailyMain;
                             work.daily_tasks = None; // キャッシュをクリアして再フェッチを促す
@@ -74,7 +75,8 @@ impl Page for EditDailyTaskPage {
 
                 if self.yes_no.show(ui) == yes_no_modal::ModalResult::Yes {
                     if work.daily_task.is_saveable() {
-                        work.output = work.core.upsert_daily_task(&work.daily_task);
+                        work.outputs
+                            .push(work.core.upsert_daily_task(&work.daily_task));
                         // 保存が走った後は、メインページへ戻るように制御
                         next_page = Pages::DailyMain;
                         work.daily_tasks = None;
@@ -90,7 +92,7 @@ impl Page for EditDailyTaskPage {
         egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             ui.heading(fl!("edit-task")); // 必要に応じてヘッダーの鍵キーを変更してください
 
-            if !matches!(work.output, CoreOutput::Idle) {
+            if !work.outputs.is_empty() {
                 ui.with_layout(
                     egui::Layout::centered_and_justified(egui::Direction::TopDown),
                     |ui| {

@@ -7,7 +7,7 @@ use crate::widget::yes_no_cancel_modal;
 use crate::widget::yes_no_modal;
 use crate::work::Work;
 use core::prelude::*;
-use core::{CoreOutput, WeeklyTask}; // WeeklyTask 構造体を使用
+use core::WeeklyTask; // WeeklyTask 構造体を使用
 use egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
 
@@ -49,7 +49,8 @@ impl Page for CreateWeeklyTaskPage {
                 match self.yes_no_cancel.show(ui) {
                     yes_no_cancel_modal::ModalResult::Yes => {
                         if work.weekly_task.is_saveable() {
-                            work.output = work.core.upsert_weekly_task(&work.weekly_task);
+                            work.outputs
+                                .push(work.core.upsert_weekly_task(&work.weekly_task));
                             work.weekly_task = WeeklyTask::default();
                             next_page = Pages::WeeklyMain;
                             work.weekly_tasks = None;
@@ -76,7 +77,8 @@ impl Page for CreateWeeklyTaskPage {
 
                 if self.yes_no.show(ui) == yes_no_modal::ModalResult::Yes {
                     if work.weekly_task.is_saveable() {
-                        work.output = work.core.upsert_weekly_task(&work.weekly_task);
+                        work.outputs
+                            .push(work.core.upsert_weekly_task(&work.weekly_task));
                     } else {
                         self.warning.open(fl!("save-error"), fl!("title-empty"));
                     }
@@ -89,7 +91,7 @@ impl Page for CreateWeeklyTaskPage {
         egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             ui.heading(fl!("create-weekly-task"));
 
-            if !matches!(work.output, CoreOutput::Idle) {
+            if !work.outputs.is_empty() {
                 ui.with_layout(
                     egui::Layout::centered_and_justified(egui::Direction::TopDown),
                     |ui| {
