@@ -1,7 +1,7 @@
 use crate::page::{Page, Pages};
+use crate::widget::search_condition_modal::ModalResult;
 use crate::widget::SearchConditionModal;
 use crate::widget::TaskTable;
-use crate::widget::search_condition_modal::ModalResult;
 use crate::work::Work;
 use core::prelude::*;
 use core::{CoreOutput, TaskFilterFlags, TaskOrderFlags};
@@ -10,167 +10,167 @@ use tracing::{error, info};
 
 pub struct MainPage {
     search_condition_modal: SearchConditionModal,
+    task_table: TaskTable,
 }
 
 impl MainPage {
     pub fn new() -> Self {
         Self {
             search_condition_modal: SearchConditionModal::new("main_page_search_condition"),
+            task_table: TaskTable::new(),
         }
     }
 
-    /// Extracted helper to process and render list entries or empty state placeholders.
-    fn render_task_list_content(work: &mut Work, ui: &mut Ui) -> Pages {
-        // 【修正】初期値は「画面遷移しない（Mainのまま）」にする
+    /// デフォルトのタスク取得フラグを生成するヘルパー
+    fn default_fetch_flags() -> (TaskFilterFlags, TaskOrderFlags) {
+        let filter_flag = TaskFilterFlags::All & !TaskFilterFlags::Inactive;
+        let order_flag = TaskOrderFlags::OrderByPriority
+            | TaskOrderFlags::OrderByDueDate
+            | TaskOrderFlags::Reversed;
+        (filter_flag, order_flag)
+    }
+
+    /// メインコンテンツ（タスク一覧リスト / ローディング / 空表示）のレンダリング
+    fn render_task_list_content(&mut self, work: &mut Work, ui: &mut Ui) -> Pages {
         let mut next_page = Pages::Main;
 
+        // 1. ローディング状態のハンドリング
         if !matches!(work.output, CoreOutput::Idle) {
             ui.with_layout(
                 egui::Layout::centered_and_justified(egui::Direction::TopDown),
                 |ui| {
-                    ui.add(egui::Spinner::new().size(64.0));
+                    ui.push_id("main-page-spinner", |ui| {
+                        ui.add(egui::Spinner::new().size(64.0));
+                    });
                 },
             );
             return next_page;
         }
 
-        let Some(tasks) = work.tasks.clone() else {
+        // 2. タスクデータの存在チェック（不要な .clone() を参照に変更）
+        let Some(ref tasks) = work.tasks else {
             return next_page;
         };
 
-        // Guard 2: Display informational placeholder if dataset is zero-length
+        // 3. データが空の場合のプレースホルダー表示
         if tasks.is_empty() {
             ui.colored_label(Color32::GRAY, fl!("no-active"));
             return next_page;
         }
 
+        // 4. テーブルの描画とクリックイベントのハンドリング
         ui.separator();
-        let mut task_table = TaskTable::new(&tasks);
-        task_table.show(ui);
-        if task_table.clicked() {
-            work.task = task_table.clicked_task().unwrap();
-            // タスクがクリックされた時だけ、編集画面へ遷移させる
-            next_page = Pages::EditTask;
-            info!("Edit Button Pressed: {:?}", work.task);
+        self.task_table.show(ui, tasks);
+        
+        if self.task_table.clicked() {
+            if let Some(clicked_task) = self.task_table.clicked_task() {
+                work.task = clicked_task;
+                next_page = Pages::EditTask;
+                info!("Edit Button Pressed: {:?}", work.task);
+            }
         }
 
         next_page
+    }
+    /// 下部アクションパネルの描画と遷移・副作用の処理
+    fn render_bottom_panel(&self, ui: &mut Ui, work: &mut Work, next_page: &mut Pages) {
+        // クロージャの外側でクリックフラグを用意する（これらは単なる bool なので安全に共有・コピー可能）
+        let mut clicked_graph = false;
+        let mut clicked_create = false;
+        let mut clicked_email = false;
+
+        egui::containers::Sides::new().show(
+            ui,
+            |ui| {
+                if ui.add(Button::new(fl!("graph")).min_size(vec2(110.0, 28.0))).clicked() {
+                    clicked_graph = true;
+                }
+            },
+            |ui| {
+                if ui.add(Button::new(fl!("create-new")).min_size(vec2(110.0, 28.0))).clicked() {
+                    clicked_create = true;
+                }
+                
+                if ui.add(Button::new(fl!("email-report")).min_size(vec2(120.0, 28.0))).clicked() {
+                    clicked_email = true;
+                }
+            },
+        );
+
+        // --- クロージャの実行がすべて終わった後（Sides::show の外）で副作用を処理する ---
+        if clicked_graph {
+            *next_page = Pages::Graph;
+            work.output = work.core.get_plot_data();
+        }
+
+        if clicked_create {
+            *next_page = Pages::CreateTask;
+            if let Ok(id) = work.core.get_next_task_id() {
+                work.task.id = id;
+                info!("The next id is {}", id);
+            } else { error!("Failed to get id") }
+        }
+
+        if clicked_email {
+            info!("Email Report Button Pressed");
+            if let Some(ref tasks) = work.tasks {
+                work.output = work.core.mail_daily(tasks);
+            }
+        }
+    }
+
+    /// 検索・リセットコントロールバーの描画
+    fn render_search_control_bar(&mut self, ui: &mut Ui, work: &mut Work) {
+        ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
+            if ui.add(Button::new(fl!("reset")).min_size(vec2(80.0, 28.0))).clicked() {
+                info!("Reset Button Pressed");
+                let (filter_flag, order_flag) = Self::default_fetch_flags();
+                work.output = work.core.fetch_all_task(filter_flag, order_flag);
+            }
+
+            if ui.add(Button::new(fl!("search")).min_size(vec2(80.0, 28.0))).clicked() {
+                self.search_condition_modal.open();
+            }
+
+            if let ModalResult::Search(pattern, filter, order, search) = self.search_condition_modal.show(ui) {
+                work.output = work.core.search_task(&pattern, search, filter, order);
+            }
+        });
     }
 }
 
 impl Page for MainPage {
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
-        // 【修正】デフォルトは現在のページ（Main）にとどまる
         let mut next_page = Pages::Main;
 
-        // Trigger automatic tasks fetch if system is idle and no tasks are stored yet
+        // アプリ起動時など、アイドルかつタスク未取得なら自動フェッチを実行
         if matches!(work.output, CoreOutput::Idle) && work.tasks.is_none() {
-            let filter_flag = TaskFilterFlags::All & !TaskFilterFlags::Inactive;
-            let order_flag = TaskOrderFlags::OrderByPriority
-                | TaskOrderFlags::OrderByDueDate
-                | TaskOrderFlags::Reversed;
+            let (filter_flag, order_flag) = Self::default_fetch_flags();
             work.output = work.core.fetch_all_task(filter_flag, order_flag);
         }
 
         // --- Bottom Action Panel ---
-        egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
-            let mut go_to_graph = false;
-            let mut go_to_create = false;
-
-            egui::containers::Sides::new().show(
-                ui,
-                |ui| {
-                    if ui
-                        .add(Button::new(fl!("graph")).min_size(vec2(110.0, 28.0)))
-                        .clicked()
-                    {
-                        go_to_graph = true;
-                    }
-                },
-                |ui| {
-                    if ui
-                        .add(Button::new(fl!("create-new")).min_size(vec2(110.0, 28.0)))
-                        .clicked()
-                    {
-                        go_to_create = true;
-                    }
-                    if ui
-                        .add(Button::new(fl!("email-report")).min_size(vec2(120.0, 28.0)))
-                        .clicked()
-                    {
-                        info!("Email Report Button Pressed");
-                        if let Some(ref tasks) = work.tasks {
-                            work.output = work.core.mail_daily(tasks);
-                        }
-                    }
-                },
-            );
-
-            if go_to_graph {
-                next_page = Pages::Graph;
-                work.output = work.core.get_plot_data();
-            }
-
-            if go_to_create {
-                next_page = Pages::CreateTask;
-                if let Ok(id) = work.core.get_next_task_id() {
-                    work.task.id = id;
-                    info!("The next id is {}", id);
-                } else {
-                    error!("Failed to get id");
-                }
-            }
+        egui::Panel::bottom("bottom_panel").show(ui, |ui| {
+            self.render_bottom_panel(ui, work, &mut next_page);
         });
 
         // --- Central Dashboard Content ---
-        egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
+        egui::CentralPanel::default().show(ui, |ui| {
             ui.heading(fl!("task-list"));
 
-            // Search Control Bar Layout
-            ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
-                if ui
-                    .add(Button::new(fl!("reset")).min_size(vec2(80.0, 28.0)))
-                    .clicked()
-                {
-                    info!("Reset Button Pressed");
-                    let filter_flag = TaskFilterFlags::All & !TaskFilterFlags::Inactive;
-                    let order_flag = TaskOrderFlags::OrderByPriority
-                        | TaskOrderFlags::OrderByDueDate
-                        | TaskOrderFlags::Reversed;
-                    work.output = work.core.fetch_all_task(filter_flag, order_flag);
-                }
+            // 検索バーのレンダリング
+            self.render_search_control_bar(ui, work);
 
-                if ui
-                    .add(Button::new(fl!("search")).min_size(vec2(80.0, 28.0)))
-                    .clicked()
-                {
-                    self.search_condition_modal.open();
-                }
-
-                if let ModalResult::Search(
-                    pattern,
-                    task_filter_flag,
-                    task_order_flag,
-                    task_search_flag,
-                ) = self.search_condition_modal.show(ui)
-                {
-                    work.output = work.core.search_task(
-                        &pattern,
-                        task_search_flag,
-                        task_filter_flag,
-                        task_order_flag,
-                    );
-                }
-            });
-
-            // Scrollable Workspace Panels
+            // スクロール可能なタスク一覧ワークスペース
             ScrollArea::vertical()
+                .id_salt("main-page-scroll")
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
                     ui.with_layout(Layout::top_down(Align::LEFT), |ui| {
-                        // 【修正】リスト側で画面遷移（EditTaskなど）が発生した場合のみ上書きする。
-                        // すでに下部パネル等で遷移先が指定されている場合は、上書きをスキップする。
-                        let list_next_page = Self::render_task_list_content(work, ui);
+                        let list_next_page = self.render_task_list_content(work, ui);
+                        
+                        // 下部パネル等で別のページ（GraphやCreateTask）への遷移が決まっていない場合のみ、
+                        // リスト内の要素クリック（EditTask）による遷移を適用する
                         if matches!(next_page, Pages::Main) {
                             next_page = list_next_page;
                         }

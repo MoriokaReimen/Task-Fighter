@@ -1,5 +1,5 @@
 use super::super::{Task, TaskPriority, TaskStatus};
-use super::constants::*;
+use super::constants::{PROJECTS, TITLES, TASK_DETAILS, PRIORITIES};
 use jiff::ToSpan;
 use jiff::civil::Date;
 
@@ -10,6 +10,7 @@ const STATUSES: [TaskStatus; 4] = [
     TaskStatus::Canceled,
 ];
 
+#[must_use]
 pub fn generate_task_sequence() -> Vec<Task> {
     let base_date = Date::new(1970, 1, 1).unwrap();
     let base_end_date = Date::new(1970, 1, 10).unwrap();
@@ -50,6 +51,7 @@ pub fn generate_task_sequence() -> Vec<Task> {
         .collect()
 }
 
+#[must_use]
 pub fn get_random_task() -> Task {
     let project_idx = rand::random_range(0..PROJECTS.len());
     let title_idx = rand::random_range(0..TITLES.len());
@@ -104,6 +106,7 @@ pub fn get_random_task() -> Task {
     }
 }
 
+#[must_use]
 pub fn generate_random_tasks(count: i32) -> Vec<Task> {
     (0..count.max(0)).map(|_| get_random_task()).collect()
 }

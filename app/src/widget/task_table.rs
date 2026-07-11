@@ -3,33 +3,36 @@ use egui::{Color32, Label, Response, RichText, Ui};
 use egui_extras::{Column, TableBuilder};
 
 #[derive(Debug)]
-pub struct TaskTable<'a> {
-    tasks: &'a [Task],
+pub struct TaskTable {
     pub clicked: bool,
     pub clicked_task: Option<Task>,
 }
 
-impl<'a> TaskTable<'a> {
-    pub const fn new(tasks: &'a [Task]) -> Self {
+impl TaskTable {
+    pub const fn new() -> Self {
         Self {
-            tasks,
             clicked: false,
             clicked_task: None,
         }
     }
 
-    pub const fn clicked(&self) -> bool {
-        self.clicked
+    pub const fn clicked(&mut self) -> bool {
+        let ret = self.clicked;
+        self.clicked = false;
+        ret
     }
 
-    pub fn clicked_task(&self) -> Option<Task> {
-        self.clicked_task.clone()
+    pub fn clicked_task(&mut self) -> Option<Task> {
+        let ret = self.clicked_task.clone();
+        self.clicked_task = None;
+        ret
     }
 
     /// メインのテーブル描画エントリーポイント
-    pub fn show(&mut self, ui: &mut Ui) -> Response {
+    pub fn show(&mut self, ui: &mut Ui, tasks: &[Task]) -> Response {
         let inner = ui.scope(|ui| {
             TableBuilder::new(ui)
+                .id_salt("task-table-builder")
                 .striped(true)
                 .column(Column::exact(40.0)) // Checkbox
                 .column(Column::remainder()) // Title
@@ -39,8 +42,8 @@ impl<'a> TaskTable<'a> {
                 .column(Column::exact(60.0)) // Edit Button
                 .header(28.0, |header| self.render_header(header))
                 .body(|body| {
-                    body.rows(28.0, self.tasks.len(), |mut row| {
-                        let task = &self.tasks[row.index()];
+                    body.rows(28.0, tasks.len(), |mut row| {
+                        let task = &tasks[row.index()];
 
                         row.col(|ui| self.render_status_check(ui, task));
                         row.col(|ui| self.render_title(ui, task));

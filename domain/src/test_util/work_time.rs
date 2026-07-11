@@ -1,6 +1,7 @@
 use super::super::WorkTime;
 use jiff::civil::Date;
 
+#[must_use]
 pub fn get_random_work_time(task_id: i32) -> WorkTime {
     let random_day = rand::random_range(1..=28);
     let random_month = rand::random_range(1..=12);
@@ -14,6 +15,7 @@ pub fn get_random_work_time(task_id: i32) -> WorkTime {
     }
 }
 
+#[must_use]
 pub fn generate_random_work_time(task_id: i32, count: i32) -> Vec<WorkTime> {
     (0..count.max(0))
         .map(|_| get_random_work_time(task_id))

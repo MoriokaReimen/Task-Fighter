@@ -1,6 +1,7 @@
 use super::super::{DailyTask, TaskPriority};
-use super::constants::*;
+use super::constants::{PROJECTS, TITLES, TASK_DETAILS, PRIORITIES};
 
+#[must_use]
 pub fn generate_daily_task_sequence() -> Vec<DailyTask> {
     (0..=2)
         .enumerate()
@@ -24,6 +25,7 @@ pub fn generate_daily_task_sequence() -> Vec<DailyTask> {
         .collect()
 }
 
+#[must_use]
 pub fn get_random_daily_task() -> DailyTask {
     let project_idx = rand::random_range(0..PROJECTS.len());
     // バグ修正: TITLESの取得にPROJECTSの配列と長さを使っていたのを修正
@@ -41,6 +43,7 @@ pub fn get_random_daily_task() -> DailyTask {
     }
 }
 
+#[must_use]
 pub fn generate_random_daily_task(count: i32) -> Vec<DailyTask> {
     (0..count.max(0)).map(|_| get_random_daily_task()).collect()
 }

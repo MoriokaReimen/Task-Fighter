@@ -29,7 +29,7 @@ impl EditTaskPage {
 
 impl Page for EditTaskPage {
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
-        let mut next_page = Pages::CreateTask;
+        let mut next_page = Pages::EditTask;
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout places buttons from rightmost to leftmost

@@ -1,5 +1,5 @@
 use super::super::{TaskPriority, WeeklyTask};
-use super::constants::*;
+use super::constants::{PROJECTS, TITLES, TASK_DETAILS, PRIORITIES};
 use jiff::civil::Weekday;
 
 const WEEK_DAYS: [Weekday; 7] = [
@@ -13,6 +13,7 @@ const WEEK_DAYS: [Weekday; 7] = [
 ];
 
 /// 優先度に基づいた週次タスクシーケンスを生成する
+#[must_use]
 pub fn generate_weekly_task_sequence() -> Vec<WeeklyTask> {
     (0..=2)
         .enumerate()
@@ -40,6 +41,7 @@ pub fn generate_weekly_task_sequence() -> Vec<WeeklyTask> {
 }
 
 /// ランダムな属性を持つ単一の週次タスクを生成する
+#[must_use]
 pub fn get_random_weekly_task() -> WeeklyTask {
     let project_idx = rand::random_range(0..PROJECTS.len());
     // バグ修正: TITLESの取得にPROJECTS.len()とPROJECTS配列を使っていたのを修正
@@ -64,6 +66,7 @@ pub fn get_random_weekly_task() -> WeeklyTask {
 }
 
 /// 指定された数のランダムな週次タスクを含むリストを生成する
+#[must_use]
 pub fn generate_random_weekly_task(count: i32) -> Vec<WeeklyTask> {
     (0..count.max(0))
         .map(|_| get_random_weekly_task())
