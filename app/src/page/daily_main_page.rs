@@ -145,7 +145,7 @@ impl DailyMainPage {
     }
 
     /// 上部コントロールバー（タイトルとリフレッシュ）
-    fn render_control_bar(&mut self, ui: &mut Ui, _work: &mut Work) {
+    fn render_control_bar(&self, ui: &mut Ui, _work: &mut Work) {
         egui::Sides::new().show(
             ui,
             |ui| {

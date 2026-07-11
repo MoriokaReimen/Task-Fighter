@@ -52,7 +52,5 @@ impl AboutModal {
                 },
             );
         });
-
-        ();
     }
 }

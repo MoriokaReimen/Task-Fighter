@@ -23,6 +23,13 @@ pub use edit_weekly_task_page::*;
 mod create_weekly_task_page;
 pub use create_weekly_task_page::*;
 
+mod monthly_main_page;
+pub use monthly_main_page::*;
+mod edit_monthly_task_page;
+pub use edit_monthly_task_page::*;
+mod create_monthly_task_page;
+pub use create_monthly_task_page::*;
+
 pub trait Page {
     fn show(&mut self, ui: &mut egui::Ui, work: &mut crate::work::Work) -> Pages;
 }

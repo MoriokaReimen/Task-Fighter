@@ -24,3 +24,7 @@ mod weekly_task_edit;
 pub use weekly_task_edit::*;
 mod weekly_task_table;
 pub use weekly_task_table::*;
+mod monthly_task_edit;
+pub use monthly_task_edit::*;
+mod monthly_task_table;
+pub use monthly_task_table::*;

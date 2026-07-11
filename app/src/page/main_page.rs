@@ -58,6 +58,10 @@ impl MainPage {
                         info!("Switch to Weekly Main Page");
                         next_page = Pages::WeeklyMain;
                     }
+                    if ui.button("Edit Monthly Task").clicked() {
+                        info!("Switch to Monthly Main Page");
+                        next_page = Pages::MonthlyMain;
+                    }
                     if ui.button("Change Color Scheme").clicked() {
                         let color_scheme = COLOR_SCHEMES[self.color_scheme_index];
                         work.config.color_scheme = color_scheme;
@@ -223,7 +227,7 @@ impl MainPage {
 
 impl Page for MainPage {
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
-        let mut next_page = Pages::Main;
+        let mut next_page;
 
         // アプリ起動時など、アイドルかつタスク未取得なら自動フェッチを実行
         if matches!(work.output, CoreOutput::Idle) && work.tasks.is_none() {

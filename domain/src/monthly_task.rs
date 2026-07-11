@@ -32,7 +32,7 @@ impl Default for MonthlyTask {
 
 impl MonthlyTask {
     #[must_use]
-    pub fn is_valid(&self) -> bool {
+    pub fn is_saveable(&self) -> bool {
         !self.project.trim().is_empty()
             && !self.title.trim().is_empty()
             && (1..=31).contains(&self.start_day)
@@ -41,7 +41,7 @@ impl MonthlyTask {
     }
 
     pub fn create_task(&self, today: &Date) -> Result<Task> {
-        if !self.is_valid() {
+        if !self.is_saveable() {
             bail!("Invalid monthly task");
         }
         let max_days = i16::from(today.days_in_month());
@@ -99,38 +99,38 @@ mod tests {
     }
 
     #[test]
-    fn test_is_valid_success() {
+    fn test_is_saveable_success() {
         let task = valid_monthly_task();
-        assert!(task.is_valid());
+        assert!(task.is_saveable());
     }
 
     #[test]
-    fn test_is_valid_failures() {
+    fn test_is_saveable_failures() {
         // 1. プロジェクト名が空
         let mut task = valid_monthly_task();
         task.project = "  ".to_string();
-        assert!(!task.is_valid());
+        assert!(!task.is_saveable());
 
         // 2. タイトルが空
         let mut task = valid_monthly_task();
         task.title = String::new();
-        assert!(!task.is_valid());
+        assert!(!task.is_saveable());
 
         // 3. start_day が範囲外 (0)
         let mut task = valid_monthly_task();
         task.start_day = 0;
-        assert!(!task.is_valid());
+        assert!(!task.is_saveable());
 
         // 4. due_day が範囲外 (32)
         let mut task = valid_monthly_task();
         task.due_day = 32;
-        assert!(!task.is_valid());
+        assert!(!task.is_saveable());
 
         // 5. start_day が due_day より後ろ
         let mut task = valid_monthly_task();
         task.start_day = 20;
         task.due_day = 10;
-        assert!(!task.is_valid());
+        assert!(!task.is_saveable());
     }
 
     #[test]

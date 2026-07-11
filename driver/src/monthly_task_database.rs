@@ -10,7 +10,8 @@ pub fn insert_monthly_task(conn: &Connection, monthly_task: &MonthlyTask) -> Res
         include_str!("../assets/monthly_task_sql/insert_monthly_task.sql");
     info!("Inserting monthly_task: {:?}", monthly_task);
     let duckdb_monthly_task: DuckdbMonthlyTask = monthly_task.clone().into();
-    let params = duckdb_monthly_task.to_named_params();
+    let mut params = duckdb_monthly_task.to_named_params();
+    params.remove("id");
     let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
     stmt.execute(&params)?;
 

@@ -42,6 +42,15 @@ impl App {
             Pages::CreateWeeklyTask,
             Box::new(page::CreateWeeklyTaskPage::new()),
         );
+        pages.insert(Pages::MonthlyMain, Box::new(page::MonthlyMainPage::new()));
+        pages.insert(
+            Pages::EditMonthlyTask,
+            Box::new(page::EditMonthlyTaskPage::new()),
+        );
+        pages.insert(
+            Pages::CreateMonthlyTask,
+            Box::new(page::CreateMonthlyTaskPage::new()),
+        );
 
         let mut work = Work::new();
         work.config = work.core.load_config().expect("Failed to load config");
@@ -127,6 +136,21 @@ impl App {
                 }
                 Ok(Err(e)) => {
                     error!("Failed to fetch weekly tasks: {:?}", e);
+                    Some(CoreOutput::Idle)
+                }
+                Err(TryRecvError::Empty) => None,
+                Err(TryRecvError::Closed) => {
+                    error!("Channel disconnected unexpectedly (FetchActiveTasks)");
+                    Some(CoreOutput::Idle)
+                }
+            },
+            CoreOutput::FetchAllMonthlyTask(rx) => match rx.try_recv() {
+                Ok(Ok(monthly_tasks)) => {
+                    self.work.monthly_tasks = Some(monthly_tasks);
+                    Some(CoreOutput::Idle)
+                }
+                Ok(Err(e)) => {
+                    error!("Failed to fetch monthly tasks: {:?}", e);
                     Some(CoreOutput::Idle)
                 }
                 Err(TryRecvError::Empty) => None,
