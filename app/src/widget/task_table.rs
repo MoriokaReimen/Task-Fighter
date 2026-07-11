@@ -45,17 +45,40 @@ impl TaskTable {
                     body.rows(28.0, tasks.len(), |mut row| {
                         let task = &tasks[row.index()];
 
-                        row.col(|ui| self.render_status_check(ui, task));
-                        row.col(|ui| self.render_title(ui, task));
-                        row.col(|ui| self.render_priority(ui, task));
-                        row.col(|ui| self.render_due_date(ui, task));
-                        row.col(|ui| self.render_progress(ui, task));
-                        row.col(|ui| self.render_edit_button(ui, task));
+                        // 各行（タスク）ごとに一意なベースIDを生成
+                        let row_id = egui::Id::new(("task-row", task.id));
+
+                        // ★ 修正ポイント: 各カラムごとにIDが衝突しないよう、ユニークな文字列をコンバイナ（ID合成）します
+                        row.col(|ui| {
+                            ui.push_id(row_id.with("status"), |ui| {
+                                self.render_status_check(ui, task);
+                            });
+                        });
+                        row.col(|ui| {
+                            ui.push_id(row_id.with("title"), |ui| self.render_title(ui, task));
+                        });
+                        row.col(|ui| {
+                            ui.push_id(row_id.with("priority"), |ui| {
+                                self.render_priority(ui, task);
+                            });
+                        });
+                        row.col(|ui| {
+                            ui.push_id(row_id.with("due"), |ui| self.render_due_date(ui, task));
+                        });
+                        row.col(|ui| {
+                            ui.push_id(row_id.with("progress"), |ui| {
+                                self.render_progress(ui, task);
+                            });
+                        });
+                        row.col(|ui| {
+                            ui.push_id(row_id.with("edit"), |ui| self.render_edit_button(ui, task));
+                        });
                     });
                 });
         });
         inner.response
     }
+
     /// テーブルヘッダーの描画
     fn render_header(&self, mut header: egui_extras::TableRow<'_, '_>) {
         let text_color = Color32::from_rgb(0, 240, 255);

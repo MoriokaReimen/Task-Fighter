@@ -1,7 +1,7 @@
 use crate::page::{Page, Pages};
-use crate::widget::search_condition_modal::ModalResult;
 use crate::widget::SearchConditionModal;
 use crate::widget::TaskTable;
+use crate::widget::search_condition_modal::ModalResult;
 use crate::work::Work;
 use core::prelude::*;
 use core::{CoreOutput, TaskFilterFlags, TaskOrderFlags};
@@ -61,7 +61,7 @@ impl MainPage {
         // 4. テーブルの描画とクリックイベントのハンドリング
         ui.separator();
         self.task_table.show(ui, tasks);
-        
+
         if self.task_table.clicked() {
             if let Some(clicked_task) = self.task_table.clicked_task() {
                 work.task = clicked_task;
@@ -82,16 +82,25 @@ impl MainPage {
         egui::containers::Sides::new().show(
             ui,
             |ui| {
-                if ui.add(Button::new(fl!("graph")).min_size(vec2(110.0, 28.0))).clicked() {
+                if ui
+                    .add(Button::new(fl!("graph")).min_size(vec2(110.0, 28.0)))
+                    .clicked()
+                {
                     clicked_graph = true;
                 }
             },
             |ui| {
-                if ui.add(Button::new(fl!("create-new")).min_size(vec2(110.0, 28.0))).clicked() {
+                if ui
+                    .add(Button::new(fl!("create-new")).min_size(vec2(110.0, 28.0)))
+                    .clicked()
+                {
                     clicked_create = true;
                 }
-                
-                if ui.add(Button::new(fl!("email-report")).min_size(vec2(120.0, 28.0))).clicked() {
+
+                if ui
+                    .add(Button::new(fl!("email-report")).min_size(vec2(120.0, 28.0)))
+                    .clicked()
+                {
                     clicked_email = true;
                 }
             },
@@ -108,7 +117,9 @@ impl MainPage {
             if let Ok(id) = work.core.get_next_task_id() {
                 work.task.id = id;
                 info!("The next id is {}", id);
-            } else { error!("Failed to get id") }
+            } else {
+                error!("Failed to get id");
+            }
         }
 
         if clicked_email {
@@ -122,17 +133,25 @@ impl MainPage {
     /// 検索・リセットコントロールバーの描画
     fn render_search_control_bar(&mut self, ui: &mut Ui, work: &mut Work) {
         ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
-            if ui.add(Button::new(fl!("reset")).min_size(vec2(80.0, 28.0))).clicked() {
+            if ui
+                .add(Button::new(fl!("reset")).min_size(vec2(80.0, 28.0)))
+                .clicked()
+            {
                 info!("Reset Button Pressed");
                 let (filter_flag, order_flag) = Self::default_fetch_flags();
                 work.output = work.core.fetch_all_task(filter_flag, order_flag);
             }
 
-            if ui.add(Button::new(fl!("search")).min_size(vec2(80.0, 28.0))).clicked() {
+            if ui
+                .add(Button::new(fl!("search")).min_size(vec2(80.0, 28.0)))
+                .clicked()
+            {
                 self.search_condition_modal.open();
             }
 
-            if let ModalResult::Search(pattern, filter, order, search) = self.search_condition_modal.show(ui) {
+            if let ModalResult::Search(pattern, filter, order, search) =
+                self.search_condition_modal.show(ui)
+            {
                 work.output = work.core.search_task(&pattern, search, filter, order);
             }
         });
@@ -168,7 +187,7 @@ impl Page for MainPage {
                 .show(ui, |ui| {
                     ui.with_layout(Layout::top_down(Align::LEFT), |ui| {
                         let list_next_page = self.render_task_list_content(work, ui);
-                        
+
                         // 下部パネル等で別のページ（GraphやCreateTask）への遷移が決まっていない場合のみ、
                         // リスト内の要素クリック（EditTask）による遷移を適用する
                         if matches!(next_page, Pages::Main) {

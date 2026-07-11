@@ -1,5 +1,5 @@
 use super::super::{DailyTask, TaskPriority};
-use super::constants::{PROJECTS, TITLES, TASK_DETAILS, PRIORITIES};
+use super::constants::{PRIORITIES, PROJECTS, TASK_DETAILS, TITLES};
 
 #[must_use]
 pub fn generate_daily_task_sequence() -> Vec<DailyTask> {

@@ -1,5 +1,5 @@
 use super::super::{Task, TaskPriority, TaskStatus};
-use super::constants::{PROJECTS, TITLES, TASK_DETAILS, PRIORITIES};
+use super::constants::{PRIORITIES, PROJECTS, TASK_DETAILS, TITLES};
 use jiff::ToSpan;
 use jiff::civil::Date;
 

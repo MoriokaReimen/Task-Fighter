@@ -40,7 +40,8 @@ impl Page for CreateTaskPage {
                     .clicked()
                 {
                     info!("Close Button Pressed");
-                    self.yes_no_cancel.open(fl!("save-task"), fl!("save-task-message"));
+                    self.yes_no_cancel
+                        .open(fl!("save-task"), fl!("save-task-message"));
                 }
 
                 match self.yes_no_cancel.show(ui) {

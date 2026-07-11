@@ -1,5 +1,5 @@
 use super::super::{TaskPriority, WeeklyTask};
-use super::constants::{PROJECTS, TITLES, TASK_DETAILS, PRIORITIES};
+use super::constants::{PRIORITIES, PROJECTS, TASK_DETAILS, TITLES};
 use jiff::civil::Weekday;
 
 const WEEK_DAYS: [Weekday; 7] = [
