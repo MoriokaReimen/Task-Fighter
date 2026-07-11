@@ -24,9 +24,21 @@ impl App {
         pages.insert(Pages::CreateTask, Box::new(page::CreateTaskPage::new()));
         pages.insert(Pages::Timer, Box::new(page::TimerPage::new()));
         pages.insert(Pages::Graph, Box::new(page::GraphPage::new()));
+        pages.insert(Pages::DailyMain, Box::new(page::DailyMainPage::new()));
+        pages.insert(
+            Pages::EditDailyTask,
+            Box::new(page::EditDailyTaskPage::new()),
+        );
+        pages.insert(
+            Pages::CreateDailyTask,
+            Box::new(page::CreateDailyTaskPage::new()),
+        );
 
         let mut work = Work::new();
         work.config = work.core.load_config().expect("Failed to load config");
+        work.core.sync_all_daily_task();
+        work.core.sync_all_weekly_task();
+        work.core.sync_all_monthly_task();
 
         Self {
             next_page: Pages::Main,
@@ -84,6 +96,21 @@ impl App {
                     Some(CoreOutput::Idle)
                 }
             },
+            CoreOutput::FetchAllDailyTask(rx) => match rx.try_recv() {
+                Ok(Ok(daily_tasks)) => {
+                    self.work.daily_tasks = Some(daily_tasks);
+                    Some(CoreOutput::Idle)
+                }
+                Ok(Err(e)) => {
+                    error!("Failed to fetch daily tasks: {:?}", e);
+                    Some(CoreOutput::Idle)
+                }
+                Err(TryRecvError::Empty) => None,
+                Err(TryRecvError::Closed) => {
+                    error!("Channel disconnected unexpectedly (FetchActiveTasks)");
+                    Some(CoreOutput::Idle)
+                }
+            },
             CoreOutput::PlotData(rx) => match rx.try_recv() {
                 Ok(Ok(data)) => {
                     self.work.plot_data = Some(data);
@@ -125,6 +152,15 @@ impl App {
                     CoreOutput::FetchOneTask(rx) => handle_rx!(rx, "Failed to fetch task by ID"),
                     CoreOutput::UpdateTask(rx) => handle_rx!(rx, "Failed to update task"),
                     CoreOutput::MailDaily(rx) => handle_rx!(rx, "Failed to send daily report mail"),
+                    CoreOutput::SyncAllDailyTask(rx) => {
+                        handle_rx!(rx, "Failed to send daily report mail")
+                    }
+                    CoreOutput::SyncAllWeeklyTask(rx) => {
+                        handle_rx!(rx, "Failed to send daily report mail")
+                    }
+                    CoreOutput::SyncAllMonthlyTask(rx) => {
+                        handle_rx!(rx, "Failed to send daily report mail")
+                    }
                     _ => None,
                 }
             }

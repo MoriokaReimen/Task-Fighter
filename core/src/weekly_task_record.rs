@@ -111,6 +111,9 @@ impl WeeklyTaskRecord for Core {
                 let today = Zoned::now().date();
 
                 for weekly_task in weekly_tasks {
+                    if !weekly_task.active {
+                        continue;
+                    }
                     let task = weekly_task.create_task(&today)?;
                     // 2. 既存のタスク一覧を取得
                     let filter_flags = TaskFilterFlags::All;
@@ -123,9 +126,8 @@ impl WeeklyTaskRecord for Core {
                         filter_flags,
                         order_flags,
                     )?;
-                    let is_already_exists = !existing_tasks.is_empty();
 
-                    if !is_already_exists {
+                    if existing_tasks.is_empty() {
                         // 3. 未登録ならインサートを実行
                         driver::insert_task(c, &task)?;
                     }

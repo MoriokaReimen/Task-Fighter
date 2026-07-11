@@ -19,7 +19,7 @@ impl AboutModal {
 
     pub fn show(&mut self, ctx: &egui::Context) {
         if !self.is_open {
-            return ;
+            return;
         }
 
         let _modal = egui::Modal::new(self.id).show(ctx, |ui| {

@@ -36,7 +36,7 @@ impl MainPage {
         (filter_flag, order_flag)
     }
 
-    fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) {
+    fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) -> Pages {
         const COLOR_SCHEMES: [ColorScheme; 7] = [
             ColorScheme::LightBlue,
             ColorScheme::DarkOrange,
@@ -46,6 +46,7 @@ impl MainPage {
             ColorScheme::Violet,
             ColorScheme::Chrome,
         ];
+        let mut next_page = Pages::Main;
         egui::Panel::top("top_menu_bar").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("Menu", |ui| {
@@ -57,6 +58,10 @@ impl MainPage {
                             .expect("Failed to save config");
                         self.color_scheme_index += 1;
                         self.color_scheme_index %= 7;
+                    }
+                    if ui.button("Edit Daily Task").clicked() {
+                        info!("Switch to Daily Main Page");
+                        next_page = Pages::DailyMain;
                     }
                     if ui.button("About").clicked() {
                         self.about_modal.open();
@@ -70,6 +75,8 @@ impl MainPage {
 
         let ctx = ui.ctx();
         self.about_modal.show(ctx);
+
+        next_page
     }
 
     /// メインコンテンツ（タスク一覧リスト / ローディング / 空表示）のレンダリング
@@ -220,7 +227,7 @@ impl Page for MainPage {
             work.output = work.core.fetch_all_task(filter_flag, order_flag);
         }
 
-        self.render_top_tool_bar(work, ui);
+        next_page = self.render_top_tool_bar(work, ui);
 
         // --- Bottom Action Panel ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui| {

@@ -28,13 +28,13 @@ impl Default for DailyTask {
 
 impl DailyTask {
     #[must_use]
-    pub fn is_valid(&self) -> bool {
+    pub fn is_saveable(&self) -> bool {
         !self.project.trim().is_empty() && !self.title.trim().is_empty()
     }
 
     pub fn create_task(&self, today: &Date) -> Result<Task> {
-        if !self.is_valid() {
-            bail!("Invalid daily task.");
+        if !self.is_saveable() {
+            bail!("Insaveable daily task.");
         }
 
         let title_with_date = format!("{} for {}", self.title, today.strftime("%Y/%m/%d"));
@@ -61,7 +61,7 @@ mod tests {
     use jiff::civil::Date;
 
     // 共通で使える有効なDailyTaskのヘルパー
-    fn valid_daily_task() -> DailyTask {
+    fn saveable_daily_task() -> DailyTask {
         DailyTask {
             id: 42,
             active: true,
@@ -84,27 +84,27 @@ mod tests {
     }
 
     #[test]
-    fn test_is_valid_with_valid_data() {
-        let task = valid_daily_task();
-        assert!(task.is_valid());
+    fn test_is_saveable_with_saveable_data() {
+        let task = saveable_daily_task();
+        assert!(task.is_saveable());
     }
 
     #[test]
-    fn test_is_valid_with_invalid_data() {
+    fn test_is_saveable_with_insaveable_data() {
         // プロジェクト名が空
-        let mut task = valid_daily_task();
+        let mut task = saveable_daily_task();
         task.project = String::new();
-        assert!(!task.is_valid());
+        assert!(!task.is_saveable());
 
         // タイトルがスペースのみ
-        let mut task = valid_daily_task();
+        let mut task = saveable_daily_task();
         task.title = "   ".to_string();
-        assert!(!task.is_valid());
+        assert!(!task.is_saveable());
     }
 
     #[test]
     fn test_create_task_success() {
-        let daily_task = valid_daily_task();
+        let daily_task = saveable_daily_task();
         let today = Date::new(2026, 7, 7).unwrap();
 
         let result = daily_task.create_task(&today);
@@ -128,15 +128,15 @@ mod tests {
     }
 
     #[test]
-    fn test_create_task_invalid_failure() {
-        let mut invalid_task = valid_daily_task();
-        invalid_task.title = String::new(); // 不正な状態にする
+    fn test_create_task_insaveable_failure() {
+        let mut insaveable_task = saveable_daily_task();
+        insaveable_task.title = String::new(); // 不正な状態にする
         let today = Date::new(2026, 7, 7).unwrap();
 
-        let result = invalid_task.create_task(&today);
+        let result = insaveable_task.create_task(&today);
 
         // エラーになることを検証
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err().to_string(), "Invalid daily task.");
+        assert_eq!(result.unwrap_err().to_string(), "Insaveable daily task.");
     }
 }
