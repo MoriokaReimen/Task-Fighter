@@ -94,7 +94,7 @@ mod tests {
             project: "MonthlyProject".to_string(),
             title: "MonthlyTitle".to_string(),
             detail: "MonthlyDetail".to_string(),
-            priority: TaskPriority::try_from(priority_value as i32).unwrap_or_default(),
+            priority: TaskPriority::try_from(i32::from(priority_value)).unwrap_or_default(),
             start_day: 1,
             due_day: 25,
         }

@@ -113,7 +113,7 @@ mod tests {
 
         // 2. タイトルが空
         let mut task = valid_monthly_task();
-        task.title = "".to_string();
+        task.title = String::new();
         assert!(!task.is_valid());
 
         // 3. start_day が範囲外 (0)

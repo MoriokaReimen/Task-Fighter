@@ -1,5 +1,5 @@
-use core::Task;
 use core::Config;
+use core::Task;
 
 pub struct Work {
     pub core: core::Core,

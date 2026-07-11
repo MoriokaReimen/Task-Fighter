@@ -93,7 +93,7 @@ mod tests {
     fn test_is_valid_with_invalid_data() {
         // プロジェクト名が空
         let mut task = valid_daily_task();
-        task.project = "".to_string();
+        task.project = String::new();
         assert!(!task.is_valid());
 
         // タイトルがスペースのみ
@@ -130,7 +130,7 @@ mod tests {
     #[test]
     fn test_create_task_invalid_failure() {
         let mut invalid_task = valid_daily_task();
-        invalid_task.title = "".to_string(); // 不正な状態にする
+        invalid_task.title = String::new(); // 不正な状態にする
         let today = Date::new(2026, 7, 7).unwrap();
 
         let result = invalid_task.create_task(&today);

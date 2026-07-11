@@ -77,14 +77,6 @@ mod tests {
     use super::*;
     use duckdb::Connection;
 
-    // テスト用のダミー TaskPriority
-    // ※domain::TaskPriority の実際の定義（例: Low=1, High=2 など）に合わせて調整してください
-    #[derive(Debug, Clone, Copy, PartialEq)]
-    enum MockPriority {
-        Low = 1,
-        High = 2,
-    }
-
     // テスト用のドメインモデルのモック
     fn create_dummy_daily_task(id: i32, priority_value: u8) -> DailyTask {
         // ※実際の TaskPriority::try_from などの挙動に合わせてダミーを作ります
@@ -96,7 +88,7 @@ mod tests {
             title: "TestTitle".to_string(),
             detail: "TestDetail".to_string(),
             // 実際のTaskPriorityのファクトリ、あるいは既存インスタンスを指定
-            priority: TaskPriority::try_from(priority_value as i32).unwrap_or_default(),
+            priority: TaskPriority::try_from(i32::from(priority_value)).unwrap_or_default(),
         }
     }
 

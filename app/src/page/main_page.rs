@@ -3,6 +3,7 @@ use crate::widget::SearchConditionModal;
 use crate::widget::TaskTable;
 use crate::widget::search_condition_modal::ModalResult;
 use crate::work::Work;
+use core::ColorScheme;
 use core::prelude::*;
 use core::{CoreOutput, TaskFilterFlags, TaskOrderFlags};
 use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
@@ -11,6 +12,7 @@ use tracing::{error, info};
 pub struct MainPage {
     search_condition_modal: SearchConditionModal,
     task_table: TaskTable,
+    color_scheme_index: usize,
 }
 
 impl MainPage {
@@ -18,6 +20,7 @@ impl MainPage {
         Self {
             search_condition_modal: SearchConditionModal::new("main_page_search_condition"),
             task_table: TaskTable::new(),
+            color_scheme_index: 0usize,
         }
     }
 
@@ -28,6 +31,37 @@ impl MainPage {
             | TaskOrderFlags::OrderByDueDate
             | TaskOrderFlags::Reversed;
         (filter_flag, order_flag)
+    }
+
+    fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) {
+        const COLOR_SCHEMES: [ColorScheme; 7] = [
+            ColorScheme::LightBlue,
+            ColorScheme::DarkOrange,
+            ColorScheme::WindowsLight,
+            ColorScheme::WindowsDark,
+            ColorScheme::Sakura,
+            ColorScheme::Violet,
+            ColorScheme::Chrome,
+        ];
+        egui::Panel::top("top_menu_bar").show(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
+                ui.menu_button("Menu", |ui| {
+                    if ui.button("Change Color Scheme").clicked() {
+                        let color_scheme = COLOR_SCHEMES[self.color_scheme_index];
+                        work.config.color_scheme = color_scheme;
+                        work.core
+                            .save_config(&work.config)
+                            .expect("Failed to save config");
+                        self.color_scheme_index += 1;
+                        self.color_scheme_index %= 7;
+                    }
+                    ui.button("About").clicked();
+                    if ui.button("Quit").clicked() {
+                        ui.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                });
+            });
+        });
     }
 
     /// メインコンテンツ（タスク一覧リスト / ローディング / 空表示）のレンダリング
@@ -130,31 +164,41 @@ impl MainPage {
         }
     }
 
-    /// 検索・リセットコントロールバーの描画
     fn render_search_control_bar(&mut self, ui: &mut Ui, work: &mut Work) {
-        ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
-            if ui
-                .add(Button::new(fl!("reset")).min_size(vec2(80.0, 28.0)))
-                .clicked()
-            {
-                info!("Reset Button Pressed");
-                let (filter_flag, order_flag) = Self::default_fetch_flags();
-                work.output = work.core.fetch_all_task(filter_flag, order_flag);
-            }
+        // show メソッドに左・右それぞれの描画クロージャを渡します
+        egui::Sides::new().show(
+            ui,
+            // 1. 左側に配置する要素
+            |ui| {
+                ui.heading(fl!("task-list"));
+            },
+            // 2. 右側に配置する要素
+            |ui| {
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if ui
+                        .add(Button::new(fl!("reset")).min_size(vec2(80.0, 28.0)))
+                        .clicked()
+                    {
+                        info!("Reset Button Pressed");
+                        let (filter_flag, order_flag) = Self::default_fetch_flags();
+                        work.output = work.core.fetch_all_task(filter_flag, order_flag);
+                    }
 
-            if ui
-                .add(Button::new(fl!("search")).min_size(vec2(80.0, 28.0)))
-                .clicked()
-            {
-                self.search_condition_modal.open();
-            }
+                    if ui
+                        .add(Button::new(fl!("search")).min_size(vec2(80.0, 28.0)))
+                        .clicked()
+                    {
+                        self.search_condition_modal.open();
+                    }
 
-            if let ModalResult::Search(pattern, filter, order, search) =
-                self.search_condition_modal.show(ui)
-            {
-                work.output = work.core.search_task(&pattern, search, filter, order);
-            }
-        });
+                    if let ModalResult::Search(pattern, filter, order, search) =
+                        self.search_condition_modal.show(ui)
+                    {
+                        work.output = work.core.search_task(&pattern, search, filter, order);
+                    }
+                });
+            },
+        );
     }
 }
 
@@ -168,6 +212,8 @@ impl Page for MainPage {
             work.output = work.core.fetch_all_task(filter_flag, order_flag);
         }
 
+        self.render_top_tool_bar(work, ui);
+
         // --- Bottom Action Panel ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui| {
             self.render_bottom_panel(ui, work, &mut next_page);
@@ -175,8 +221,6 @@ impl Page for MainPage {
 
         // --- Central Dashboard Content ---
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading(fl!("task-list"));
-
             // 検索バーのレンダリング
             self.render_search_control_bar(ui, work);
 

@@ -81,25 +81,29 @@ impl TaskTable {
 
     /// テーブルヘッダーの描画
     fn render_header(&self, mut header: egui_extras::TableRow<'_, '_>) {
-        let text_color = Color32::from_rgb(0, 240, 255);
+        let get_theme_color = |ui: &egui::Ui| {
+            ui.visuals()
+                .override_text_color
+                .unwrap_or_else(|| ui.visuals().widgets.inactive.text_color())
+        };
 
         header.col(|ui| {
-            ui.strong(RichText::new(fl!("done")).color(text_color));
+            ui.strong(RichText::new(fl!("done")).color(get_theme_color(ui)));
         });
         header.col(|ui| {
-            ui.strong(RichText::new(fl!("title")).color(text_color));
+            ui.strong(RichText::new(fl!("title")).color(get_theme_color(ui)));
         });
         header.col(|ui| {
-            ui.strong(RichText::new(fl!("priority")).color(text_color));
+            ui.strong(RichText::new(fl!("priority")).color(get_theme_color(ui)));
         });
         header.col(|ui| {
-            ui.strong(RichText::new(fl!("due-date")).color(text_color));
+            ui.strong(RichText::new(fl!("due-date")).color(get_theme_color(ui)));
         });
         header.col(|ui| {
-            ui.strong(RichText::new(fl!("progress")).color(text_color));
+            ui.strong(RichText::new(fl!("progress")).color(get_theme_color(ui)));
         });
         header.col(|ui| {
-            ui.strong(RichText::new(fl!("edit")).color(text_color));
+            ui.strong(RichText::new(fl!("edit")).color(get_theme_color(ui)));
         });
     }
 

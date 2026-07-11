@@ -1,13 +1,9 @@
-
-use crate::{Core, CoreOutput};
+use crate::Core;
 use anyhow::Result;
-use domain::prelude::*;
 use domain::Config;
-use std::sync::Arc;
-use tokio::sync::oneshot::{self};
+use domain::prelude::*;
 
 impl ConfigRecord for Core {
-
     fn save_config(&self, config: &Config) -> Result<()> {
         self.runtime.block_on(async {
             let conn = self.conn.lock().await;

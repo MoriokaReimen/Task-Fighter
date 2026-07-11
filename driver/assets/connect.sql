@@ -63,9 +63,8 @@ CREATE TABLE IF NOT EXISTS work_time (
     time_spent REAL NOT NULL DEFAULT 0.0
 );
 -- Config
-CREATE TYPE IF NOT EXISTS color_scheme_enum AS ENUM ('LightBlue');
 CREATE TABLE IF NOT EXISTS config (
     id INTEGER PRIMARY KEY,
-    color_scheme color_scheme_enum NOT NULL
+    color_scheme INTEGER NOT NULL
 );
 

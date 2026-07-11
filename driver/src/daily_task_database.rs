@@ -228,7 +228,7 @@ mod tests {
         assert_eq!(fetched_inserted.title, "Initial Title");
 
         // 2回目: 存在するので Update されるはず
-        let mut updated_task = task.clone();
+        let mut updated_task = task;
         updated_task.title = "Upserted Title".to_string();
         upsert_daily_task(&conn, &updated_task)?;
 

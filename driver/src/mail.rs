@@ -237,7 +237,7 @@ mod tests {
             active: true,
             status,
             project: "TestProject".to_string(),
-            title: format!("Task {}", id),
+            title: format!("Task {id}"),
             detail: detail.to_string(),
             start_date: Date::new(2026, 7, 1).unwrap(),
             due_date: Date::new(2026, 7, 31).unwrap(),
@@ -339,8 +339,7 @@ mod tests {
         // open::that がデスクトップ環境のないCIなどでコケても、ファイル生成自体が成功していればOKとする場合はアサーションを調整
         if let Err(ref e) = result {
             println!(
-                "Note: mailer invoked successfully but open::that failed (expected in headless env): {}",
-                e
+                "Note: mailer invoked successfully but open::that failed (expected in headless env): {e}"
             );
         }
     }

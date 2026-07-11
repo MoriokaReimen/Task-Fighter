@@ -30,43 +30,30 @@ impl TryFrom<DuckdbConfig> for Config {
     }
 }
 
-// =========================================================================
-// 2. Private helper functions for ColorScheme mapping (avoids orphan rules)
-// =========================================================================
-const fn color_scheme_to_str(scheme: ColorScheme) -> &'static str {
-    match scheme {
-        ColorScheme::LightBlue => "LightBlue",
-        // Add other variants here as they are introduced
-    }
-}
-
-fn color_scheme_from_str(s: &str) -> Option<ColorScheme> {
-    match s {
-        "LightBlue" => Some(ColorScheme::LightBlue),
-        _ => None,
-    }
-}
-
-// =========================================================================
-// 3. duckdb crate trait implementations for Native ENUM mapping
-// =========================================================================
-
-// Rust -> DuckDB (Converts internal enum variant into an ENUM string for database insertion)
 impl ToSql for DuckdbConfig {
     fn to_sql(&self) -> DuckdbResult<ToSqlOutput<'_>> {
-        let val_str = color_scheme_to_str(self.color_scheme);
-        Ok(ToSqlOutput::from(val_str.to_string()))
+        // ColorScheme -> i32
+        let val_i32 = i32::from(self.color_scheme);
+
+        // DuckDBの整数型へマッピングして出力
+        Ok(ToSqlOutput::from(val_i32))
     }
 }
 
-// DuckDB -> Rust (Extracts the ENUM string from the database and rebuilds the struct)
 impl FromSql for DuckdbConfig {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        // Native DuckDB ENUM types can be safely extracted as a string via ValueRef
-        let s = value.as_str()?;
+        // 修正：ValueRef を i32 自体の FromSql 実装に委ねて安全にパースします。
+        // これにより、DuckDB 内部の整数表現（TinyInt, BigIntなど）の差異を自動で吸収してくれます。
+        let val_i32 = i32::column_result(value)?;
 
-        let color_scheme = color_scheme_from_str(s).ok_or_else(|| {
-            FromSqlError::Other(format!("Retrieved undefined ColorScheme from DuckDB: {s}").into())
+        // i32 から ColorScheme へ変換
+        let color_scheme = ColorScheme::try_from(val_i32).map_err(|err| {
+            FromSqlError::Other(
+                format!(
+                    "Retrieved undefined ColorScheme id from DuckDB: {val_i32} (Detail: {err})"
+                )
+                .into(),
+            )
         })?;
 
         Ok(Self { color_scheme })

@@ -182,7 +182,7 @@ mod tests {
             active: true,
             status,
             project: "ProjectA".to_string(),
-            title: format!("TaskTitle {}", id),
+            title: format!("TaskTitle {id}"),
             detail: "Detail text".to_string(),
             start_date: Date::new(2026, 7, 1).unwrap(),
             due_date: Date::new(2026, 7, 10).unwrap(),
@@ -343,7 +343,7 @@ mod tests {
     #[test]
     fn test_fetch_all_task() -> Result<()> {
         let conn = setup_test_db()?;
-        let tasks = domain::test_util::generate_task_sequence();
+        let tasks = domain::test_util::generate_task_sequence()?;
         for task in tasks {
             insert_task(&conn, &task)?;
         }
@@ -420,7 +420,7 @@ mod tests {
         let order_flags = TaskOrderFlags::Zero;
         let task = fetch_all_task(&conn, filter_flags, order_flags)?;
         assert_eq!(task.len(), 2);
-        println!("{:?}", task);
+        println!("{task:?}");
 
         let filter_flags =
             TaskFilterFlags::Active | TaskFilterFlags::PriorityLow | TaskFilterFlags::StatusPending;
@@ -457,7 +457,7 @@ mod tests {
     #[test]
     fn test_fetch_one_task() -> Result<()> {
         let conn = setup_test_db()?;
-        let tasks = domain::test_util::generate_task_sequence();
+        let tasks = domain::test_util::generate_task_sequence()?;
         for task in tasks {
             insert_task(&conn, &task)?;
         }
@@ -473,7 +473,7 @@ mod tests {
     #[test]
     fn test_search_and_fetch_named_params_structures() -> Result<()> {
         let conn = setup_test_db()?;
-        let tasks = domain::test_util::generate_task_sequence();
+        let tasks = domain::test_util::generate_task_sequence()?;
         for task in tasks {
             insert_task(&conn, &task)?;
         }
