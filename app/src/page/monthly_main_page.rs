@@ -39,24 +39,24 @@ impl MonthlyMainPage {
         let mut next_page = Pages::MonthlyMain;
         egui::Panel::top("top_menu_bar").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
-                ui.menu_button("Menu", |ui| {
-                    if ui.button("Edit Task").clicked() {
+                ui.menu_button(fl!("menu"), |ui| {
+                    if ui.button(fl!("edit-task")).clicked() {
                         info!("Switch to Main Page");
                         work.outputs.push(work.core.sync_all_monthly_task());
                         work.tasks = None;
                         next_page = Pages::Main;
                     }
-                    if ui.button("Edit Daily Task").clicked() {
+                    if ui.button(fl!("edit-daily-task")).clicked() {
                         info!("Switch to Weekly Main Page");
                         work.daily_tasks = None;
                         next_page = Pages::DailyMain;
                     }
-                    if ui.button("Edit Weekly Task").clicked() {
+                    if ui.button(fl!("edit-weekly-task")).clicked() {
                         info!("Switch to Weekly Main Page");
                         work.weekly_tasks = None;
                         next_page = Pages::WeeklyMain;
                     }
-                    if ui.button("Change Color Scheme").clicked() {
+                    if ui.button(fl!("change-color-scheme")).clicked() {
                         let color_scheme = COLOR_SCHEMES[self.color_scheme_index];
                         work.config.color_scheme = color_scheme;
                         work.core
@@ -65,10 +65,10 @@ impl MonthlyMainPage {
                         self.color_scheme_index += 1;
                         self.color_scheme_index %= 7;
                     }
-                    if ui.button("About").clicked() {
+                    if ui.button(fl!("about")).clicked() {
                         self.about_modal.open();
                     }
-                    if ui.button("Quit").clicked() {
+                    if ui.button(fl!("quit")).clicked() {
                         ui.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
