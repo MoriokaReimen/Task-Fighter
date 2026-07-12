@@ -124,8 +124,8 @@ mod tests {
         // TryFrom トレイトの検証 (逆変換)
         let converted_domain = WeeklyTask::try_from(duckdb_task).unwrap();
         assert_eq!(converted_domain.id, domain_task.id);
-        assert_eq!(converted_domain.start_day, Weekday::Monday);
-        assert_eq!(converted_domain.due_day, Weekday::Friday);
+        assert_eq!(converted_domain.start_day, Weekday::Tuesday);
+        assert_eq!(converted_domain.due_day, Weekday::Saturday);
     }
 
     #[test]

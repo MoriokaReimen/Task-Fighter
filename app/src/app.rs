@@ -147,7 +147,8 @@ impl App {
                         Self::check_rx(rx, "Failed to sync weekly tasks", |()| {}).then_some(output)
                     }
                     CoreOutput::SyncAllMonthlyTask(rx) => {
-                        Self::check_rx(rx, "Failed to sync monthly tasks", |()| {}).then_some(output)
+                        Self::check_rx(rx, "Failed to sync monthly tasks", |()| {})
+                            .then_some(output)
                     }
                     _ => None, // Remove from output for other cases.
                 }

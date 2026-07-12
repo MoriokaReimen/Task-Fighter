@@ -6,8 +6,8 @@ use crate::widget::YesNoModal;
 use crate::widget::yes_no_cancel_modal;
 use crate::widget::yes_no_modal;
 use crate::work::Work;
-use core::prelude::*;
 use core::WeeklyTask; // WeeklyTask 構造体を使用
+use core::prelude::*;
 use egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
 

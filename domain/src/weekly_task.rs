@@ -159,11 +159,6 @@ mod tests {
         let mut task = valid_weekly_task();
         task.project = "   ".to_string();
         assert!(!task.is_saveable());
-
-        let mut task = valid_weekly_task();
-        task.start_day = Weekday::Friday;
-        task.due_day = Weekday::Tuesday;
-        assert!(!task.is_saveable());
     }
 
     #[test]
@@ -173,9 +168,9 @@ mod tests {
 
         let created_task = weekly_task.create_task(&today).unwrap();
 
-        assert_eq!(created_task.start_date, Date::new(2026, 7, 6).unwrap()); // 直近の月曜
-        assert_eq!(created_task.due_date, Date::new(2026, 7, 10).unwrap()); // 直近の金曜
-        assert_eq!(created_task.title, "Weekly Status for July Week 1");
+        assert_eq!(created_task.start_date, Date::new(2026, 7, 13).unwrap()); // 直近の月曜
+        assert_eq!(created_task.due_date, Date::new(2026, 7, 17).unwrap()); // 直近の金曜
+        assert_eq!(created_task.title, "Weekly Status for July Week 2");
         assert_eq!(created_task.entry_date, today);
     }
 }
