@@ -2,7 +2,7 @@ Task-Fighter
 ==========================================================================
 ![icon.png](./doc/icon.png)
 
-Private task management software with simple UI.
+Personal task management software with simple UI.
 
 # Screen Shot
 ![Screenshot1](./doc/Screenshot1.png)

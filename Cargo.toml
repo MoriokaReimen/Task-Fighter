@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["driver", "core", "app", "main", "utility", "domain"]
+default-members = ["main"]
 
 [workspace.dependencies]
 tracing = { version = "^0.1", features = ["log"] }
@@ -32,3 +33,4 @@ cast_precision_loss = "allow"
 cast_sign_loss = "allow"
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
+

@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+# Refresh Desktop Cache
+if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then
+  if [ -x "$(command -v update-desktop-database)" ]; then
+    update-desktop-database -q || true
+  fi
+fi
+
+# Remove all configuration files for the case of purge
+if [ "$1" = "purge" ]; then
+  echo "Purging task-fighter data..."
+  rm -rf /home/*/.config/task-fighter
+  rm -rf /home/*/.local/share/task-fighter
+  rm -rf /root/.config/task-fighter
+fi

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Task-Fighter
+Comment=Personal task management software with simple UI.
+Exec=task-fighter
+Icon=task-fighter
+Terminal=false
+Categories=Utility;
