@@ -228,8 +228,6 @@ impl MainPage {
 
 impl Page for MainPage {
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
-        let mut next_page;
-
         // アプリ起動時など、アイドルかつタスク未取得なら自動フェッチを実行
         if work.outputs.is_empty() && work.tasks.is_none() {
             let (filter_flag, order_flag) = Self::default_fetch_flags();
@@ -237,7 +235,7 @@ impl Page for MainPage {
                 .push(work.core.fetch_all_task(filter_flag, order_flag));
         }
 
-        next_page = self.render_top_tool_bar(work, ui);
+        let mut next_page = self.render_top_tool_bar(work, ui);
 
         // --- Bottom Action Panel ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui| {

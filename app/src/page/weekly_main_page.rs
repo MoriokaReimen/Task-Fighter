@@ -26,7 +26,7 @@ impl WeeklyMainPage {
         }
     }
 
-    fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) {
+    fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) -> Pages {
         const COLOR_SCHEMES: [ColorScheme; 7] = [
             ColorScheme::LightBlue,
             ColorScheme::DarkOrange,
@@ -36,9 +36,26 @@ impl WeeklyMainPage {
             ColorScheme::Violet,
             ColorScheme::Chrome,
         ];
+        let mut next_page = Pages::WeeklyMain;
         egui::Panel::top("top_menu_bar").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("Menu", |ui| {
+                    if ui.button("Edit Task").clicked() {
+                        info!("Switch to Main Page");
+                        work.outputs.push(work.core.sync_all_monthly_task());
+                        work.tasks = None;
+                        next_page = Pages::Main;
+                    }
+                    if ui.button("Edit Daily Task").clicked() {
+                        info!("Switch to Daily Main Page");
+                        work.daily_tasks = None;
+                        next_page = Pages::DailyMain;
+                    }
+                    if ui.button("Edit Monthly Task").clicked() {
+                        info!("Switch to Monthly Main Page");
+                        work.monthly_tasks = None;
+                        next_page = Pages::MonthlyMain;
+                    }
                     if ui.button("Change Color Scheme").clicked() {
                         let color_scheme = COLOR_SCHEMES[self.color_scheme_index];
                         work.config.color_scheme = color_scheme;
@@ -60,6 +77,7 @@ impl WeeklyMainPage {
 
         let ctx = ui.ctx();
         self.about_modal.show(ctx);
+        next_page
     }
 
     /// メインコンテンツ（WeeklyTask一覧リスト / ローディング / 空表示）のレンダリング
@@ -169,8 +187,6 @@ impl WeeklyMainPage {
 
 impl Page for WeeklyMainPage {
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
-        let mut next_page = Pages::WeeklyMain;
-
         if work.outputs.is_empty() && work.weekly_tasks.is_none() {
             let filter_flag = if self.show_only_active {
                 WeeklyTaskFilterFlags::All ^ WeeklyTaskFilterFlags::Inactive
@@ -184,7 +200,7 @@ impl Page for WeeklyMainPage {
                 .push(work.core.fetch_all_weekly_task(filter_flag, order_flag));
         }
 
-        self.render_top_tool_bar(work, ui);
+        let mut next_page = self.render_top_tool_bar(work, ui);
 
         // --- Bottom Action Panel ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui| {
