@@ -83,8 +83,13 @@ jobs:
           if: contains(matrix.TARGET, 'linux')
           run: cargo install cross --git https://github.com/cross-rs/cross
 
-        - name: Cargo Build
-          if: matrix.TARGET == 'aarch64-unknown-linux-gnu' || matrix.TARGET == 'armv7-unknown-linux-gnueabihf'
+        - name: Install cargo-deb
+          if: contains(matrix.TARGET, 'linux')
+          shell: bash
+          run: cargo install cargo-deb
+
+        - name: Build debian package with cross
+          if: contains(matrix.TARGET, 'linux')
           shell: bash
           env:
             CROSS_CONTAINER_ENV_PASS: "RUSTFLAGS FONTCONFIG_SYS_STATIC FREETYPE_SYS_STATIC DUCKDB_NO_PKG_CONFIG"
@@ -93,11 +98,10 @@ jobs:
             FREETYPE_SYS_STATIC: "1"
             PKG_CONFIG_ALLOW_CROSS: ${{ matrix.PKG_CONFIG_ALLOW_CROSS }}
             RUSTFLAGS: "-C link-arg=-latomic -C link-arg=-lfontconfig"
-          run: |
-              cross build --verbose --release --target=${{ matrix.TARGET }}
+          run: cross deb --target ${{ matrix.TARGET }}
 
         - name: Cargo Build
-          if: matrix.TARGET != 'aarch64-unknown-linux-gnu' && matrix.TARGET != 'armv7-unknown-linux-gnueabihf'
+          if: "!contains(matrix.TARGET, 'linux')"
           shell: bash
           run: |
             if [ "${{ contains(matrix.TARGET, 'linux') }}" = "true" ]; then
@@ -146,3 +150,19 @@ jobs:
           run: |
             version="${{ needs.create-release.outputs.version }}"
             gh release upload "$version" ${{ env.ASSET }} ${{ env.ASSET_SUM }} --clobber
+
+        - name: Find deb file
+          if: contains(matrix.TARGET, 'linux')
+          run: |
+            DEB_PATH=$(ls target/${{ matrix.TARGET }}/debian/*.deb)
+            echo "DEB_PATH=$DEB_PATH" >> $GITHUB_ENV
+            echo "Found deb package at: $DEB_PATH"
+
+        - name: Upload debian packages
+          if: contains(matrix.TARGET, 'linux')
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          shell: bash
+          run: |
+            version="${{ needs.create-release.outputs.version }}"
+            gh release upload "$version" ${{ env.DEB_PATH }} --clobber
