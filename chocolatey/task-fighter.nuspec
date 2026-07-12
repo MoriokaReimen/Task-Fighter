@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>task-fighter</id>
+    <version>8.2.3</version>
+    <title>Task Fighter</title>
+    <authors>MoriokaReimen</authors>
+    <projectUrl>https://github.com/MoriokaReimen/Task-Fighter</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <tags>task-fighter gui productivity task</tags>
+    <copyright>Copyright (c) 2026 MoriokaReimen</copyright>
+    <licenseUrl>https://github.com/MoriokaReimen/Task-Fighter/blob/main/LICENSE</licenseUrl>
+    <bugTrackerUrl>https://github.com/MoriokaReimen/Task-Fighter/issues</bugTrackerUrl>
+    <projectSourceUrl>https://github.com/MoriokaReimen/Task-Fighter</projectSourceUrl>
+    <packageSourceUrl>https://github.com/MoriokaReimen/Task-Fighter/tree/main/chocolatey</packageSourceUrl>
+    <summary>Personal task management software with simple UI.</summary>
+    <description>Personal task management software with simple UI.</description>
+  </metadata>
+  <files>
+    <!-- this section controls what actually gets packaged into the Chocolatey package -->
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
+
+

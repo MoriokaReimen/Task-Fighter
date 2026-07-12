@@ -2,3 +2,4 @@
 *.db
 *.eml
 /runtime
+*.nupkg
