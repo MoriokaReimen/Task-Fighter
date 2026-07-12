@@ -98,7 +98,9 @@ jobs:
             FREETYPE_SYS_STATIC: "1"
             PKG_CONFIG_ALLOW_CROSS: ${{ matrix.PKG_CONFIG_ALLOW_CROSS }}
             RUSTFLAGS: "-C link-arg=-latomic -C link-arg=-lfontconfig"
-          run: cargo deb --target ${{ matrix.TARGET }} --cross
+          run: |
+            cross build --verbose --release --target=${{ matrix.TARGET }}
+            cargo deb --verbose --target ${{ matrix.TARGET }} --no-build
 
         - name: Cargo Build
           if: "!contains(matrix.TARGET, 'linux')"

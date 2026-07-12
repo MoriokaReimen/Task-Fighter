@@ -1,6 +1,6 @@
 [package]
 name = "utility"
-version = "8.2.1"
+version = "8.2.2"
 edition = "2024"
 authors = ["MoriokaReimen <menschenjager.mark.neun@gmail.com>"]
 description = "Personal task management application."
