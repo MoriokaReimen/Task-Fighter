@@ -4,7 +4,7 @@ SELECT
   project, 
   title, 
   detail, 
-  priority, 
+  priority
 FROM daily_tasks 
 WHERE 
   -- 1. Active Flags (1=True, 2=False)

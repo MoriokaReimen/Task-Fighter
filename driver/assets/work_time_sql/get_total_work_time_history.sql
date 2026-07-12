@@ -20,8 +20,6 @@ daily_summary AS (
     GROUP BY 
         date
 )
-
--- 3. 日付一覧に作業時間を左結合（LEFT JOIN）し、空の日は 0.0 に埋める
 SELECT 
     CAST(dr.target_date AS VARCHAR) AS date,
     COALESCE(ds.total_time, 0.0) AS total_time

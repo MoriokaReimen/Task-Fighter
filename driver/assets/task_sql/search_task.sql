@@ -5,12 +5,12 @@ SELECT
   project, 
   title, 
   detail, 
-  start_date::VARCHAR AS start_date, -- ::VARCHAR を追加
-  due_date::VARCHAR AS due_date,     -- ::VARCHAR を追加
+  start_date::VARCHAR AS start_date,
+  due_date::VARCHAR AS due_date,
   priority, 
   progress, 
   time_spent, 
-  entry_date::VARCHAR AS entry_date, -- ::VARCHAR を追加
+  entry_date::VARCHAR AS entry_date,
   end_date::VARCHAR AS end_date
 FROM tasks 
 WHERE 
