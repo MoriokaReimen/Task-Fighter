@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "7.0.22"
+version = "8.2.0"
 edition = "2024"
 authors = ["MoriokaReimen <menschenjager.mark.neun@gmail.com>"]
 description = "Personal task management application."
