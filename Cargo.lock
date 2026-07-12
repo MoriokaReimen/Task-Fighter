@@ -1185,6 +1185,7 @@ name = "core"
 version = "7.0.22"
 dependencies = [
  "anyhow",
+ "dirs",
  "domain",
  "driver",
  "jiff",

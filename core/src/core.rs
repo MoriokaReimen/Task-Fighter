@@ -4,10 +4,12 @@ use domain::MonthlyTask;
 use domain::Task;
 use domain::WeeklyTask;
 use driver::Connection;
+use std::path::PathBuf;
 
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::sync::oneshot::Receiver;
+use tracing::info;
 
 pub struct Core {
     pub(crate) conn: Arc<Mutex<Connection>>,
@@ -61,7 +63,9 @@ impl Core {
             .enable_all()
             .build()?;
 
-        let path = driver::DuckdbPath::InDirectory("./runtime".into());
+        let config_dir_path = get_config_dir_path()?;
+        info!("Set config directory path to {}", config_dir_path.display());
+        let path = driver::DuckdbPath::InDirectory(config_dir_path);
 
         let conn = driver::connect(&path)?;
         Ok(Self {
@@ -69,4 +73,17 @@ impl Core {
             runtime,
         })
     }
+}
+
+pub fn get_config_dir_path() -> Result<PathBuf, std::io::Error> {
+    let mut config_dir_path = dirs::config_dir().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Failed to find the OS configuration directory",
+        )
+    })?;
+
+    config_dir_path.push("task-fighter");
+
+    Ok(config_dir_path)
 }
