@@ -82,7 +82,7 @@ if (Test-Path $installScriptPath) {
     $content = $content -replace '(?m)(^\s*\$checksum32\s*=\s*)(''.*?'')', "`$1'$newChecksum32'"
     $content = $content -replace '(?m)(^\s*\$checksum64\s*=\s*)(''.*?'')', "`$1'$newChecksum64'"
     
-    Set-Content -Path $installScriptPath -Value $content -Encoding UTF8
+    Set-Content -Path $installScriptPath -Value $content.TrimEnd() -Encoding UTF8
 }
 
 # VERIFICATION.txt の書き換え
@@ -91,18 +91,17 @@ if (Test-Path $verificationPath) {
     Write-Host "Updating VERIFICATION.txt..." -ForegroundColor Cyan
     $vContent = Get-Content $verificationPath -Raw
 
-    # 1. バージョン表記の更新 (例: Version 8.2.4 や version 8.2.4 にマッチ)
-    $vContent = $vContent -replace "(?i)(version\s+)[0-9.]+", "`${1}$version"
+    # 1. バージョン表記の更新 (例: version 8.2.1 を version 8.2.4 等に更新)
+    $vContent =$vContent -replace "(?i)(version\s+)[0-9.]+", "`${1}$version"
 
     # 2. i686 (32-bit) のハッシュ値の更新
-    # 行頭から「- i686」で始まる行のハッシュ値部分（コロンの直後）を書き換え
-    $vContent = $vContent -replace "(?m)(^\s*-\s*i686.*:\s*)[A-Fa-f0-9]{64}", "`${1}$newChecksum32"
+    # コロンの後のシングルクォートで囲まれた中身（ダミー文字やXが入っていても可）を新しいハッシュに置き換え
+    $vContent = $vContent -replace "(?m)(^\s*-\s*i686.*:\s*)('.*?')", "`${1}'$newChecksum32'"
 
     # 3. x86_64 (64-bit) のハッシュ値の更新
-    # 行頭から「- x86_64」で始まる行のハッシュ値部分（コロンの直後）を書き換え
-    $vContent = $vContent -replace "(?m)(^\s*-\s*x86_64.*:\s*)[A-Fa-f0-9]{64}", "`${1}$newChecksum64"
+    $vContent =$vContent -replace "(?m)(^\s*-\s*x86_64.*:\s*)('.*?')", "`${1}'$newChecksum64'"
 
-    Set-Content -Path $verificationPath -Value $vContent -Encoding UTF8
+    Set-Content -Path $verificationPath -Value $vContent.TrimEnd() -Encoding UTF8
 }
 
 # .nuspec ファイルのバージョンとリリースノートの書き換え
@@ -117,7 +116,7 @@ if (Test-Path $nuspecPath) {
     # 2. <releaseNotes>タグの書き換え（もしnuspecに定義されていれば自動更新）
     $content = $content -replace "<releaseNotes>.*?</releaseNotes>", "<releaseNotes>https://github.com/MoriokaReimen/Task-Fighter/releases/tag/v$version</releaseNotes>"
     
-    Set-Content -Path $nuspecPath -Value $content -Encoding UTF8
+    Set-Content -Path $nuspecPath -Value $content.TrimEnd() -Encoding UTF8
 }
 
 

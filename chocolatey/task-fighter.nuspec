@@ -30,4 +30,3 @@
     <file src="tools\**" target="tools" />
   </files>
 </package>
-

@@ -33,5 +33,3 @@ $shortcutFile = Join-Path $desktopPath "Task-Fighter.lnk"
 
 Write-Host "Creating desktop shortcut: $shortcutFile" -ForegroundColor Cyan
 Install-ChocolateyShortcut -ShortcutFilePath $shortcutFile -TargetPath $exePath
-
-
