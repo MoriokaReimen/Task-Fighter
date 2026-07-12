@@ -5,7 +5,10 @@
     <version>8.2.4</version>
     <title>Task Fighter</title>
     <authors>MoriokaReimen</authors>
+    <owners>MoriokaReimen</owners>
     <projectUrl>https://github.com/MoriokaReimen/Task-Fighter</projectUrl>
+    <iconUrl>https://cdn.jsdelivr.net/gh/MoriokaReimen/Task-Fighter@main/doc/icon.png</iconUrl>
+    <docsUrl>https://github.com/MoriokaReimen/Task-Fighter/blob/main/README.md</docsUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <tags>task-fighter gui productivity task</tags>
     <copyright>Copyright (c) 2026 MoriokaReimen</copyright>
@@ -13,12 +16,18 @@
     <bugTrackerUrl>https://github.com/MoriokaReimen/Task-Fighter/issues</bugTrackerUrl>
     <projectSourceUrl>https://github.com/MoriokaReimen/Task-Fighter</projectSourceUrl>
     <packageSourceUrl>https://github.com/MoriokaReimen/Task-Fighter/tree/main/chocolatey</packageSourceUrl>
+    <releaseNotes>https://github.com/MoriokaReimen/Task-Fighter/releases/tag/v8.2.4</releaseNotes>
     <summary>Personal task management software with simple UI.</summary>
-    <description>Personal task management software with simple UI.</description>
+    <description>
+    Task Fighter is a personal task management software featuring a simple and intuitive graphical user interface (GUI). 
+    It helps users organize daily tasks efficiently, boost productivity, and keep track of pending items without complex configurations.
+    </description>
+    <dependencies>
+      <dependency id="chocolatey" version="2.0.0" />
+    </dependencies>
   </metadata>
   <files>
     <file src="tools\**" target="tools" />
   </files>
 </package>
-
 

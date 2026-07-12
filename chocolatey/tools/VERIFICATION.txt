@@ -1,0 +1,13 @@
+﻿VERIFICATION INFORMATION
+
+How to verify the binaries:
+1. The binaries are downloaded directly from the official GitHub Release page:
+   https://github.com/MoriokaReimen/Task-Fighter/releases
+
+2. You can verify the SHA256 checksums manually by checking the official release assets or by downloading the file and running:
+   Get-FileHash -Path "path\to\downloaded.zip" -Algorithm SHA256
+
+Checksums for version 8.2.4:
+- i686 (32-bit): 'F620F6269E40146F3C2F9BADEC7985C4C88D9AA8E0AE903DCEADD822BB8F3FA2'
+- x86_64 (64-bit): '9EAE318C30974864F80ED8F4CA65CC0689597E0A3430623A27B7C8E64848BD5A'
+
