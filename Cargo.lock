@@ -248,6 +248,7 @@ dependencies = [
  "egui_plot",
  "fluent 0.17.0",
  "fluent-templates",
+ "font-kit",
  "fs_extra",
  "image 0.25.10",
  "jiff",

@@ -29,6 +29,7 @@ egui_plot = "^0.36"
 rfd = "0.17.2"
 image = "^0.25"
 bitflags = "2.13.0"
+font-kit = "0.14.3"
 
 [build-dependencies]
 vergen-gitcl = "10.0.1"

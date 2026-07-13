@@ -1,12 +1,48 @@
 use crate::work::Work;
 use core::ColorScheme;
 use egui::{Color32, CornerRadius, Stroke};
+use font_kit::handle::Handle;
+use font_kit::properties::Properties;
+use font_kit::source::SystemSource;
+use std::sync::Arc;
+
+fn setup_system_font(ctx: &egui::Context) {
+    let source = SystemSource::new();
+    let font_handle = source
+        .select_best_match(
+            &[font_kit::family_name::FamilyName::SansSerif],
+            &Properties::new(),
+        )
+        .expect("Failed to find a system font");
+
+    let font_data = match font_handle {
+        Handle::Path { path, .. } => {
+            std::fs::read(path).expect("Failed to read font file")
+        }
+        Handle::Memory { bytes, .. } => {
+            bytes.to_vec()
+        }
+    };
+
+    let mut fonts = egui::FontDefinitions::default();
+
+    fonts.font_data.insert(
+        "system_sans".to_owned(),
+        Arc::new(egui::FontData::from_owned(font_data)),
+    );
+
+    if let Some(vec) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
+        vec.insert(0, "system_sans".to_owned());
+    }
+
+    ctx.set_fonts(fonts);
+}
 
 /// Global setup for application style, including scale, fonts, and spacing.
 pub fn setup_style(ctx: &egui::Context) {
     // Adjust scale and load custom fonts
     ctx.set_pixels_per_point(1.5);
-    setup_custom_fonts(ctx);
+    setup_system_font(ctx);
 
     // Fine-tune global spacing layout
     ctx.global_style_mut(|style| {
@@ -547,29 +583,3 @@ fn set_light_blue(ctx: &egui::Context) {
     ctx.set_visuals(visuals);
 }
 
-/// Loads Noto Sans JP and registers it as the primary fallback font.
-fn setup_custom_fonts(ctx: &egui::Context) {
-    let mut fonts = egui::FontDefinitions::default();
-
-    // Insert Japanese TrueType Font data
-    fonts.font_data.insert(
-        "japanese_font".to_owned(),
-        egui::FontData::from_static(include_bytes!("../assets/NotoSansJP-Regular.ttf")).into(),
-    );
-
-    // Set Japanese font as top priority for Proportional text
-    fonts
-        .families
-        .entry(egui::FontFamily::Proportional)
-        .or_default()
-        .insert(0, "japanese_font".to_owned());
-
-    // Set Japanese font as top priority for Monospace text (code fields)
-    fonts
-        .families
-        .entry(egui::FontFamily::Monospace)
-        .or_default()
-        .insert(0, "japanese_font".to_owned());
-
-    ctx.set_fonts(fonts);
-}
