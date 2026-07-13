@@ -212,7 +212,7 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
         .create(true)
         .truncate(true)
         .open(&eml_path)
-        .context(format!("Failed to create file at {:?}", eml_path))?;
+        .context(format!("Failed to create file at {eml_path:?}"))?;
 
     let mut eml_content = String::new();
     let _ = write!(eml_content, "Subject: {raw_subject}\r\n");
