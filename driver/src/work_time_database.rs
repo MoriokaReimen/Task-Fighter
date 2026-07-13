@@ -20,7 +20,7 @@ pub fn next_work_time_id(conn: &Connection) -> Result<i32> {
 pub fn find_work_time(conn: &Connection, task_id: i32, date: &Date) -> Result<Option<WorkTime>> {
     const FIND_WORK_TIME_SQL: &str = include_str!("../assets/work_time_sql/find_work_time.sql");
     info!("Find work_time for task_id: {}, date: {}", task_id, date);
-    let mut stmt = conn.prepare(FIND_WORK_TIME_SQL)?;
+    let mut stmt = conn.prepare_cached(FIND_WORK_TIME_SQL)?;
     let params = duckdb::named_params! {
         "task_id": task_id,
         "date": date.to_string(),
@@ -39,7 +39,7 @@ pub fn list_work_time_for_task(conn: &Connection, task_id: i32) -> Result<Vec<Wo
     const LIST_WORK_TIME_FOR_TASK_SQL: &str =
         include_str!("../assets/work_time_sql/list_work_time_by_task.sql");
     info!("List work_time for task_id: {}", task_id);
-    let mut stmt = conn.prepare(LIST_WORK_TIME_FOR_TASK_SQL)?;
+    let mut stmt = conn.prepare_cached(LIST_WORK_TIME_FOR_TASK_SQL)?;
     let params = duckdb::named_params! {
         "task_id": task_id,
     };
@@ -61,7 +61,7 @@ pub fn insert_work_time(conn: &Connection, work_time: &WorkTime) -> Result<()> {
     let duckdb_work_time: DuckdbWorkTime = work_time.clone().into();
     let mut params = duckdb_work_time.to_named_params();
     let _ = params.remove("id");
-    let mut stmt = conn.prepare(INSERT_WORK_TIME_SQL)?;
+    let mut stmt = conn.prepare_cached(INSERT_WORK_TIME_SQL)?;
     stmt.execute(&params)?;
 
     Ok(())
@@ -72,7 +72,7 @@ pub fn update_work_time(conn: &Connection, work_time: &WorkTime) -> Result<()> {
     info!("Update work time: {:?}", work_time);
     let duckdb_work_time: DuckdbWorkTime = work_time.clone().into();
     let params = duckdb_work_time.to_named_params();
-    let mut stmt = conn.prepare(UPDATE_WORK_TIME_SQL)?;
+    let mut stmt = conn.prepare_cached(UPDATE_WORK_TIME_SQL)?;
     stmt.execute(&params)?;
 
     Ok(())
@@ -152,7 +152,7 @@ pub fn get_total_work_time_history(
         "end_date": end_date_str
     };
 
-    let mut stmt = conn.prepare(GET_TOTAL_WORK_TIME_HISTORY_SQL)?;
+    let mut stmt = conn.prepare_cached(GET_TOTAL_WORK_TIME_HISTORY_SQL)?;
     let mut rows = stmt.query(params)?;
 
     let mut history = Vec::new();
@@ -186,7 +186,7 @@ pub fn get_total_work_time_ratio(
         "end_date": end_date_str
     };
 
-    let mut stmt = conn.prepare(GET_TOTAL_WORK_TIME_RATIO_SQL)?;
+    let mut stmt = conn.prepare_cached(GET_TOTAL_WORK_TIME_RATIO_SQL)?;
     let mut rows = stmt.query(params)?;
 
     let mut ratios = Vec::new();

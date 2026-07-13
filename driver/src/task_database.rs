@@ -12,7 +12,7 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     info!("Inserting task: {:?}", task);
     let db_task: DuckdbTask = task.clone().into();
     let mut params = db_task.to_named_params();
-    let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
+    let mut stmt = conn.prepare_cached(INSERT_TASK_SQL)?;
     params.remove("end_date");
     params.remove("id");
 
@@ -25,7 +25,7 @@ fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
     if id <= 0 {
         bail!(format!("Invalid id: {id}"));
     }
-    let mut stmt = conn.prepare("SELECT 1 FROM tasks WHERE id = ?;")?;
+    let mut stmt = conn.prepare_cached("SELECT 1 FROM tasks WHERE id = ?;")?;
     let exists = stmt
         .exists(duckdb::params![id])
         .context("Failed to check if task ID exists")?;
@@ -69,7 +69,7 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
     };
 
     let params = db_task.to_named_params();
-    let mut stmt = conn.prepare(UPDATE_TASK_SQL)?;
+    let mut stmt = conn.prepare_cached(UPDATE_TASK_SQL)?;
     stmt.execute(&params)?;
 
     info!("Task {} update success.", task.id);
@@ -82,7 +82,7 @@ pub fn get_plot_data(
     end_date: Date,
 ) -> Result<Vec<(i32, i32, i32, i32)>> {
     const COUNT_TASK_BY_DATE_SQL: &str = include_str!("../assets/task_sql/get_plot_data.sql");
-    let mut stmt = conn.prepare(COUNT_TASK_BY_DATE_SQL)?;
+    let mut stmt = conn.prepare_cached(COUNT_TASK_BY_DATE_SQL)?;
     let rows = stmt.query_map(
         duckdb::named_params!{"start_date": start_date.to_string(), "end_date": end_date.to_string()},
         |row| {
@@ -107,7 +107,7 @@ pub fn search_task(
 ) -> Result<Vec<Task>> {
     const SEARCH_SQL: &str = include_str!("../assets/task_sql/search_task.sql");
     info!("Searching tasks with pattern: '{}'", pattern);
-    let mut stmt = conn.prepare(SEARCH_SQL)?;
+    let mut stmt = conn.prepare_cached(SEARCH_SQL)?;
 
     let params = duckdb::named_params! {
         "pattern": pattern,
@@ -131,7 +131,7 @@ pub fn search_task(
 pub fn fetch_one_task(conn: &Connection, id: i32) -> Result<Task> {
     const FETCH_ONE_SQL: &str = include_str!("../assets/task_sql/fetch_one_task.sql");
     info!("Querying task with id: {}", id);
-    let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
+    let mut stmt = conn.prepare_cached(FETCH_ONE_SQL)?;
 
     let duckdb_task = stmt.query_row(duckdb::named_params! { "id": id }, |row| {
         DuckdbTask::try_from(row)
@@ -148,7 +148,7 @@ pub fn fetch_all_task(
 ) -> Result<Vec<Task>> {
     const FETCH_ALL_SQL: &str = include_str!("../assets/task_sql/fetch_all_task.sql");
     info!("Querying tasks");
-    let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
+    let mut stmt = conn.prepare_cached(FETCH_ALL_SQL)?;
 
     let params = duckdb::named_params! {
         "filter_flags": filter_flags.bits() as i32,

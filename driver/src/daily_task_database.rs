@@ -11,9 +11,9 @@ pub fn insert_daily_task(conn: &Connection, daily_task: &DailyTask) -> Result<()
     info!("Inserting daily_task: {:?}", daily_task);
     let duckdb_daily_task: DuckdbDailyTask = daily_task.clone().into();
     let mut params = duckdb_daily_task.to_named_params();
-    let _ = params.remove("id");
-    let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
-    stmt.execute(&params)?;
+    params.remove("id");
+    let mut stmt = conn.prepare_cached(INSERT_TASK_SQL)?;
+    let _ = stmt.query(&params)?;
 
     Ok(())
 }
@@ -22,7 +22,7 @@ fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
     if id <= 0 {
         bail!(format!("Invalid id: {id}"));
     }
-    let mut stmt = conn.prepare("SELECT 1 FROM daily_tasks WHERE id = ?;")?;
+    let mut stmt = conn.prepare_cached("SELECT 1 FROM daily_tasks WHERE id = ?;")?;
     let exists = stmt
         .exists(duckdb::params![id])
         .context("Failed to check if daily_task ID exists")?;
@@ -44,10 +44,11 @@ pub fn upsert_daily_task(conn: &Connection, daily_task: &DailyTask) -> Result<()
 }
 
 pub fn get_next_daily_task_id(conn: &Connection) -> Result<i32> {
-    let query =
+    const GET_NEXT_DAILY_TASK_ID_SQL: &str =
         "SELECT last_value FROM duckdb_sequences() WHERE sequence_name = 'daily_tasks_id_seq';";
-    let last_value: Option<i64> = conn
-        .query_row(query, [], |row| row.get(0))
+    let mut stmt = conn.prepare_cached(GET_NEXT_DAILY_TASK_ID_SQL)?;
+    let last_value: Option<i64> = stmt
+        .query_row([], |row| row.get(0))
         .context("Failed to query next sequence value from DuckDB catalogs")?;
     let next_id = last_value.map_or(1, |val| (val + 1) as i32);
     info!("Next daily_task id is {}.", next_id);
@@ -62,7 +63,7 @@ pub fn update_daily_task(conn: &Connection, daily_task: &DailyTask) -> Result<()
     let duckdb_daily_task: DuckdbDailyTask = daily_task.clone().into();
 
     let params = duckdb_daily_task.to_named_params();
-    let mut stmt = conn.prepare(UPDATE_TASK_SQL)?;
+    let mut stmt = conn.prepare_cached(UPDATE_TASK_SQL)?;
     stmt.execute(&params)?;
 
     info!("DailyTask {} update success.", daily_task.id);
@@ -79,7 +80,7 @@ pub fn search_daily_task(
     const SEARCH_SQL: &str = include_str!("../assets/daily_task_sql/search_daily_task.sql");
 
     info!("Searching daily_tasks with pattern: '{}'", pattern);
-    let mut stmt = conn.prepare(SEARCH_SQL)?;
+    let mut stmt = conn.prepare_cached(SEARCH_SQL)?;
 
     let params = duckdb::named_params! {
         "pattern": pattern,
@@ -104,7 +105,7 @@ pub fn fetch_one_daily_task(conn: &Connection, id: i32) -> Result<DailyTask> {
     const FETCH_ONE_SQL: &str = include_str!("../assets/daily_task_sql/fetch_one_daily_task.sql");
 
     info!("Querying daily_task with id: {}", id);
-    let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
+    let mut stmt = conn.prepare_cached(FETCH_ONE_SQL)?;
 
     let duckdb_daily_task = stmt.query_row(duckdb::named_params! { "id": id }, |row| {
         DuckdbDailyTask::try_from(row)
@@ -122,7 +123,7 @@ pub fn fetch_all_daily_task(
     const FETCH_ALL_SQL: &str = include_str!("../assets/daily_task_sql/fetch_all_daily_task.sql");
 
     info!("Querying daily_tasks");
-    let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
+    let mut stmt = conn.prepare_cached(FETCH_ALL_SQL)?;
     let params = duckdb::named_params! {
         "filter_flags": filter_flags.bits() as i32,
         "order_flags": order_flags.bits() as i32,
@@ -143,7 +144,7 @@ pub fn fetch_all_daily_task(
 pub fn delete_daily_task(conn: &Connection, id: i32) -> Result<()> {
     const DELETE_SQL: &str = include_str!("../assets/daily_task_sql/delete_daily_task.sql");
     info!("Delete daily task: {}", id);
-    let mut stmt = conn.prepare(DELETE_SQL)?;
+    let mut stmt = conn.prepare_cached(DELETE_SQL)?;
     stmt.execute(duckdb::named_params! { "id": id })?;
 
     Ok(())

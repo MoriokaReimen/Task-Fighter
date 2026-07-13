@@ -26,7 +26,7 @@ pub fn connect(duckdb_path: &DuckdbPath) -> Result<Connection> {
             Connection::open(path.join("task-fighter.db"))?
         }
     };
-    conn.execute(CREATE_TABLE_SQL, [])
+    conn.execute_batch(CREATE_TABLE_SQL)
         .context("Failed to connect database")?;
     info!("Database connection established.");
 

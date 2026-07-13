@@ -201,10 +201,9 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
 
     let unique_id = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis().to_string())
-        .unwrap_or_else(|_| "temp".to_string());
+        .map_or_else(|_| "temp".to_string(), |d| d.as_millis().to_string());
 
-    let eml_path = doc_dir.join(format!("task_report_{}.eml", unique_id));
+    let eml_path = doc_dir.join(format!("task_report_{unique_id}.eml"));
     info!("Mail file create at {}", eml_path.display());
 
     let mut temp_file = OpenOptions::new()
@@ -212,7 +211,7 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
         .create(true)
         .truncate(true)
         .open(&eml_path)
-        .context(format!("Failed to create file at {eml_path:?}"))?;
+        .context(format!("Failed to create file at {}", eml_path.display()))?;
 
     let mut eml_content = String::new();
     let _ = write!(eml_content, "Subject: {raw_subject}\r\n");
