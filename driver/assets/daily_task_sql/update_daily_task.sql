@@ -4,5 +4,5 @@ SET
   project    = $project,
   title      = $title,
   detail     = $detail,
-  priority   = $priority,
+  priority   = $priority
 WHERE id = $id;
