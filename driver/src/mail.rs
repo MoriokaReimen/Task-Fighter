@@ -8,10 +8,12 @@ use std::fmt::Write as _;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write as _;
+use std::time::Duration;
+use std::time::SystemTime;
 use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
 use syntect::parsing::SyntaxSet;
-use tracing::info;
+use tracing::{info, warn};
 
 // 1. テンプレートに渡すためのシリアライズ可能なデータ構造を定義
 #[derive(Serialize)]
@@ -186,6 +188,41 @@ pub fn create_mail_html(tasks: &[Task], image_data: &str) -> String {
     rendered.replace("\r\n", "\n").replace('\n', "\r\n")
 }
 
+fn cleanup_old_eml_files(dir: &std::path::Path, retention_days: u64) -> Result<()> {
+    if !dir.exists() {
+        return Ok(());
+    }
+
+    let now = SystemTime::now();
+    let max_age = Duration::from_secs(retention_days * 24 * 60 * 60);
+
+    fs::read_dir(dir)?
+        .flatten() // Ok(entry) のみを取り出す
+        .filter(|entry| {
+            // 1. 拡張子が .eml のファイルのみを残す
+            let path = entry.path();
+            path.is_file() && path.extension().is_some_and(|ext| ext == "eml")
+        })
+        .filter(|entry| {
+            // 2. 更新日時が指定期間を過ぎているものだけを残す
+            entry
+                .metadata()
+                .and_then(|meta| meta.modified())
+                .map(|modified| now.duration_since(modified).unwrap_or_default())
+                .is_ok_and(|duration| duration > max_age)
+        })
+        .for_each(|entry| {
+            // 3. フィルタリングされたファイルに対して削除を実行
+            let path = entry.path();
+            match fs::remove_file(&path) {
+                Ok(()) => info!("Deleted old eml file: {}", path.display()),
+                Err(e) => warn!("Failed to delete old eml file {}: {}", path.display(), e),
+            }
+        });
+
+    Ok(())
+}
+
 pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
     let html_text = create_mail_html(tasks, image_data);
     let raw_subject = Zoned::now()
@@ -202,6 +239,8 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
     let unique_id = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or_else(|_| "temp".to_string(), |d| d.as_millis().to_string());
+
+    cleanup_old_eml_files(&doc_dir, 5)?;
 
     let eml_path = doc_dir.join(format!("task_report_{unique_id}.eml"));
     info!("Mail file create at {}", eml_path.display());
