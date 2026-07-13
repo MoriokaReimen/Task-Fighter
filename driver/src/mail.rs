@@ -1,15 +1,17 @@
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 use domain::{Task, TaskPriority, TaskStatus};
 use jiff::Zoned;
 use minijinja::{Environment, context};
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
 use serde::Serialize;
 use std::fmt::Write as _;
+use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write as _;
 use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
 use syntect::parsing::SyntaxSet;
+use tracing::info;
 
 // 1. テンプレートに渡すためのシリアライズ可能なデータ構造を定義
 #[derive(Serialize)]
@@ -191,12 +193,26 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
         .strftime("%Y/%m/%d Task Status Report")
         .to_string();
 
+    let doc_dir = dirs::document_dir()
+        .ok_or_else(|| anyhow!("Failed to get user document directory"))?
+        .join("task-fighter-emails");
+    fs::create_dir_all(&doc_dir)
+        .context("Failed to create task-fighter-emails directory in Documents")?;
+
+    let unique_id = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis().to_string())
+        .unwrap_or_else(|_| "temp".to_string());
+
+    let eml_path = doc_dir.join(format!("task_report_{}.eml", unique_id));
+    info!("Mail file create at {}", eml_path.display());
+
     let mut temp_file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
-        .open("./task_report.eml")
-        .context("Failed to task_report.eml")?;
+        .open(&eml_path)
+        .context(format!("Failed to create file at {:?}", eml_path))?;
 
     let mut eml_content = String::new();
     let _ = write!(eml_content, "Subject: {raw_subject}\r\n");
@@ -217,8 +233,7 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
 
     drop(temp_file);
 
-    open::that("./task_report.eml")
-        .context("Failed invoking native desktop standard protocol handlers")?;
+    open::that(eml_path).context("Failed invoking native desktop standard protocol handlers")?;
 
     Ok(())
 }

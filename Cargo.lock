@@ -1514,7 +1514,7 @@ dependencies = [
 
 [[package]]
 name = "domain"
-version = "8.2.2"
+version = "8.2.3"
 dependencies = [
  "anyhow",
  "bitflags 2.13.0",
@@ -1538,10 +1538,11 @@ checksum = "d8b14ccef22fc6f5a8f4d7d768562a182c04ce9a3b3157b91390b52ddfdf1a76"
 
 [[package]]
 name = "driver"
-version = "8.2.2"
+version = "8.2.3"
 dependencies = [
  "anyhow",
  "base64",
+ "dirs",
  "domain",
  "duckdb",
  "image 0.25.10",
@@ -3372,7 +3373,7 @@ checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 
 [[package]]
 name = "main"
-version = "8.2.2"
+version = "8.2.3"
 dependencies = [
  "anyhow",
  "app",
@@ -6195,7 +6196,7 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 
 [[package]]
 name = "utility"
-version = "8.2.2"
+version = "8.2.3"
 dependencies = [
  "anyhow",
  "domain",
