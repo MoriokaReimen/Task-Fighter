@@ -17,7 +17,6 @@
     <description>Personal task management software with simple UI.</description>
   </metadata>
   <files>
-    <!-- this section controls what actually gets packaged into the Chocolatey package -->
     <file src="tools\**" target="tools" />
   </files>
 </package>
