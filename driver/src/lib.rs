@@ -1,60 +1,37 @@
-mod task_database;
-pub use task_database::fetch_all_task;
-pub use task_database::fetch_one_task;
-pub use task_database::get_next_task_id;
-pub use task_database::get_plot_data;
-pub use task_database::insert_task;
-pub use task_database::search_task;
-pub use task_database::update_task;
-pub use task_database::upsert_task;
-
-mod mail;
-pub use mail::launch_system_mailer;
-
-mod plot;
-pub use plot::export_to_base64;
-
+mod connect;
+pub use connect::*;
 pub use duckdb::Connection;
 
 mod duckdb_task;
+mod task_record;
+pub use task_record::*;
 
-mod daily_task_database;
+mod mail;
+pub use mail::*;
+
+mod plot;
+pub use plot::*;
+
+mod daily_task_record;
 mod duckdb_daily_task;
-pub use daily_task_database::delete_daily_task;
-pub use daily_task_database::fetch_all_daily_task;
-pub use daily_task_database::fetch_one_daily_task;
-pub use daily_task_database::get_next_daily_task_id;
-pub use daily_task_database::insert_daily_task;
-pub use daily_task_database::search_daily_task;
-pub use daily_task_database::update_daily_task;
-pub use daily_task_database::upsert_daily_task;
+pub use daily_task_record::*;
 
 mod duckdb_weekly_task;
-mod weekly_task_database;
-pub use weekly_task_database::delete_weekly_task;
-pub use weekly_task_database::fetch_all_weekly_task;
-pub use weekly_task_database::fetch_one_weekly_task;
-pub use weekly_task_database::get_next_weekly_task_id;
-pub use weekly_task_database::insert_weekly_task;
-pub use weekly_task_database::search_weekly_task;
-pub use weekly_task_database::update_weekly_task;
-pub use weekly_task_database::upsert_weekly_task;
+mod weekly_task_record;
+pub use weekly_task_record::*;
 
 mod duckdb_monthly_task;
-mod monthly_task_database;
-pub use monthly_task_database::*;
-
-mod connect;
-pub use connect::*;
+mod monthly_task_record;
+pub use monthly_task_record::*;
 
 mod duckdb_relation;
-mod relation_database;
-pub use relation_database::*;
+mod relation_record;
+pub use relation_record::*;
 
 mod duckdb_work_time;
-mod work_time_database;
-pub use work_time_database::*;
+mod work_time_record;
+pub use work_time_record::*;
 
-mod config_database;
+mod config_record;
 mod duckdb_config;
-pub use config_database::*;
+pub use config_record::*;
