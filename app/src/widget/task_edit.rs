@@ -1,5 +1,5 @@
 use core::{Task, TaskPriority, TaskStatus};
-use eframe::egui::{
+use egui::{
     Color32, ComboBox, DragValue, Grid, Response, RichText, ScrollArea, Slider, TextEdit, Ui,
 };
 

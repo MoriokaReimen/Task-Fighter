@@ -1,4 +1,4 @@
-use eframe::egui;
+use egui;
 use egui_plot::{Bar, BarChart, GridInput, Plot, PlotTransform};
 use jiff::{ToSpan, Zoned};
 use std::sync::Arc;

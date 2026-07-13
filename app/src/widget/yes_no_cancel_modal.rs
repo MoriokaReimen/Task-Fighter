@@ -1,4 +1,4 @@
-use eframe::egui;
+use egui;
 
 /// ポップアップの状態を管理する構造体
 pub struct YesNoCancelModal {

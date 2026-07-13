@@ -1,6 +1,5 @@
 use crate::work::Work;
 use core::ColorScheme;
-use eframe::egui;
 use egui::{Color32, CornerRadius, Stroke};
 
 /// Global setup for application style, including scale, fonts, and spacing.

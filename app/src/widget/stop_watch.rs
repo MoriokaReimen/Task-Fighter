@@ -1,4 +1,4 @@
-use eframe::egui::{Response, Ui};
+use egui::{Response, Ui};
 
 #[derive(Debug)]
 pub struct StopWatch<'a> {

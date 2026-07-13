@@ -5,7 +5,7 @@ use crate::work::Work;
 use core::ColorScheme;
 use core::prelude::*;
 use core::{DailyTaskFilterFlags, DailyTaskOrderFlags};
-use eframe::egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
+use egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
 use tracing::{error, info};
 
 pub struct DailyMainPage {

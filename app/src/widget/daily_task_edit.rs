@@ -1,6 +1,6 @@
 use core::DailyTask;
 use core::TaskPriority;
-use eframe::egui::{Color32, ComboBox, Grid, Response, RichText, ScrollArea, TextEdit, Ui};
+use egui::{Color32, ComboBox, Grid, Response, RichText, ScrollArea, TextEdit, Ui};
 
 #[derive(Debug)]
 pub struct DailyTaskEdit<'a> {

@@ -8,7 +8,7 @@ use crate::widget::yes_no_modal;
 use crate::work::Work;
 use core::DailyTask; // 【変更】DailyTask構造体を使用
 use core::prelude::*;
-use eframe::egui::{self, Align, Button, Layout, Ui, vec2};
+use egui::{self, Align, Button, Layout, Ui, vec2};
 use tracing::info;
 
 pub struct CreateDailyTaskPage {

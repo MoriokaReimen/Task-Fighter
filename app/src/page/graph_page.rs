@@ -2,7 +2,7 @@ use crate::page::{Page, Pages};
 use crate::widget::Graph;
 use crate::work::Work;
 use core::Task;
-use eframe::egui::{self, Align, Button, Layout, vec2};
+use egui::{self, Align, Button, Layout, vec2};
 use egui::Ui;
 use tracing::info;
 

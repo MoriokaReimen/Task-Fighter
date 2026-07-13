@@ -3,7 +3,7 @@ use crate::page::{self, Page, Pages};
 use crate::work::Work;
 use core::prelude::*;
 use core::{CoreOutput, Receiver, TryRecvError};
-use eframe::egui::Ui;
+use egui::Ui;
 use std::collections::HashMap;
 use tracing::{error, warn};
 

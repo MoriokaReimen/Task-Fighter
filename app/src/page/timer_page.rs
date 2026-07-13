@@ -1,7 +1,7 @@
 use crate::page::{Page, Pages};
 use crate::widget::StopWatch;
 use crate::work::Work;
-use eframe::egui::{RichText, ScrollArea, TextEdit, Ui};
+use egui::{RichText, ScrollArea, TextEdit, Ui};
 use std::time::Duration;
 
 pub struct TimerPage {}
