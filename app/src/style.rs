@@ -16,12 +16,8 @@ fn setup_system_font(ctx: &egui::Context) {
         .expect("Failed to find a system font");
 
     let font_data = match font_handle {
-        Handle::Path { path, .. } => {
-            std::fs::read(path).expect("Failed to read font file")
-        }
-        Handle::Memory { bytes, .. } => {
-            bytes.to_vec()
-        }
+        Handle::Path { path, .. } => std::fs::read(path).expect("Failed to read font file"),
+        Handle::Memory { bytes, .. } => bytes.to_vec(),
     };
 
     let mut fonts = egui::FontDefinitions::default();
@@ -582,4 +578,3 @@ fn set_light_blue(ctx: &egui::Context) {
 
     ctx.set_visuals(visuals);
 }
-

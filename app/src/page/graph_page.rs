@@ -2,8 +2,8 @@ use crate::page::{Page, Pages};
 use crate::widget::Graph;
 use crate::work::Work;
 use core::Task;
-use egui::{self, Align, Button, Layout, vec2};
 use egui::Ui;
+use egui::{self, Align, Button, Layout, vec2};
 use tracing::info;
 
 pub struct GraphPage {
