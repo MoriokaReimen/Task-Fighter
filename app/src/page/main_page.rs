@@ -144,6 +144,12 @@ impl MainPage {
                 {
                     clicked_graph = true;
                 }
+                if ui
+                    .add(Button::new(fl!("kanban")).min_size(vec2(110.0, 28.0)))
+                    .clicked()
+                {
+                    *next_page = Pages::Kanban;
+                }
             },
             |ui| {
                 if ui

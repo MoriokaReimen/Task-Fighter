@@ -76,9 +76,9 @@ pub fn delete_relation(conn: &Connection, relation: &Relation) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::{DuckdbPath, connect};
     use duckdb::Connection;
-    use super::*;
 
     fn setup_test_db() -> Result<Connection> {
         let path = DuckdbPath::InMemory;
@@ -86,7 +86,10 @@ mod tests {
     }
 
     fn create_mock_relation(parent_id: i32, child_id: i32) -> Relation {
-        Relation { parent_id, child_id }
+        Relation {
+            parent_id,
+            child_id,
+        }
     }
 
     #[test]
@@ -102,7 +105,7 @@ mod tests {
         // 2. 指定した子(10)に対する親タスク(1, 2)の取得検証
         let parents = get_parents(&conn, 10).unwrap();
         assert_eq!(parents.len(), 2);
-        
+
         // 取得したリレーションのIDが正しいか検証
         let parent_ids: Vec<i32> = parents.iter().map(|r| r.parent_id).collect();
         assert!(parent_ids.contains(&1));

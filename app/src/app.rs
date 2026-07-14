@@ -51,6 +51,7 @@ impl App {
             Pages::CreateMonthlyTask,
             Box::new(page::CreateMonthlyTaskPage::new()),
         );
+        pages.insert(Pages::Kanban, Box::new(page::KanbanPage::new()));
 
         let mut work = Work::new();
         work.config = work.core.load_config().expect("Failed to load config");

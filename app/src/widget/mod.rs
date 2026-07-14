@@ -28,3 +28,5 @@ mod monthly_task_edit;
 pub use monthly_task_edit::*;
 mod monthly_task_table;
 pub use monthly_task_table::*;
+mod kanban_area;
+pub use kanban_area::*;

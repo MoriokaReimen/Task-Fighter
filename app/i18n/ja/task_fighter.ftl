@@ -32,6 +32,7 @@ friday = 金曜日
 graph = 📈 グラフ
 high = 🔺 高
 inactive = 💤 無効
+kanban = 📋 カンバン
 low = 🔹 低
 medium = 🔸 中
 menu = ☰ メニュー

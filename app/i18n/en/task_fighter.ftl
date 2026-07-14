@@ -32,6 +32,7 @@ friday = Friday
 graph = 📈 Graph
 high = 🔺 High
 inactive = 💤 Inactive
+kanban = 📋 Kanban
 low = 🔹 Low
 medium = 🔸 Medium
 menu = ☰ Menu
