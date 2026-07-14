@@ -1,5 +1,4 @@
 SELECT 
-  id, 
   parent_id,
   child_id 
 FROM relation 
