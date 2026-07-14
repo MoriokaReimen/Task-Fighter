@@ -29,7 +29,9 @@ impl CreateMonthlyTaskPage {
 }
 
 impl Page for CreateMonthlyTaskPage {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         // 次のページ遷移のデフォルトを Monthly 用に変更
         let mut next_page = Pages::CreateMonthlyTask;
 
@@ -106,6 +108,8 @@ impl Page for CreateMonthlyTaskPage {
             monthly_task_edit.show(ui);
         });
 
-        next_page
+        work.next_page = next_page;
     }
+
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

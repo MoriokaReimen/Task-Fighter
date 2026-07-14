@@ -1,3 +1,4 @@
+use crate::page::Pages;
 use core::Config;
 use core::{DailyTask, MonthlyTask, Task, WeeklyTask};
 
@@ -15,6 +16,9 @@ pub struct Work {
     pub weekly_task: WeeklyTask,
     pub monthly_task: MonthlyTask,
     pub start_time: jiff::Zoned,
+
+    pub next_page: Pages,
+    pub last_page: Pages,
 }
 
 impl Work {
@@ -33,6 +37,8 @@ impl Work {
             weekly_task: WeeklyTask::default(),
             monthly_task: MonthlyTask::default(),
             start_time: jiff::Zoned::now(),
+            next_page: Pages::Main,
+            last_page: Pages::Init,
         }
     }
 }

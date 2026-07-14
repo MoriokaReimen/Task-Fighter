@@ -77,8 +77,10 @@ impl GraphPage {
 }
 
 impl Page for GraphPage {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+
     /// Renders the task editing page inside a dedicated panel setup.
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         let mut next_page = Pages::Graph;
 
         let bottom_res = self.bottom_panel(ui, work);
@@ -92,6 +94,7 @@ impl Page for GraphPage {
             next_page = central_res;
         }
 
-        next_page
+        work.next_page = next_page;
     }
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

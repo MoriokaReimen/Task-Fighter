@@ -36,12 +36,16 @@ mod kanban_page;
 pub use kanban_page::*;
 
 pub trait Page {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut crate::work::Work) -> Pages;
+    fn on_entry(&mut self, work: &mut crate::work::Work);
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut crate::work::Work);
+    fn on_exit(&mut self, work: &mut crate::work::Work);
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Pages {
     #[default]
+    Init,
+
     Main,
     EditTask,
     CreateTask,

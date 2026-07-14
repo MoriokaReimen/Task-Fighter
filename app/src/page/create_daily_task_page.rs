@@ -28,7 +28,9 @@ impl CreateDailyTaskPage {
 }
 
 impl Page for CreateDailyTaskPage {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         // 【変更】プロジェクトのルーティング定義に合わせて調整してください（例: Pages::CreateTask など）
         let mut next_page = Pages::CreateDailyTask;
 
@@ -106,6 +108,8 @@ impl Page for CreateDailyTaskPage {
             daily_task_edit.show(ui);
         });
 
-        next_page
+        work.next_page = next_page;
     }
+
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

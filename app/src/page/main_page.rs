@@ -233,7 +233,8 @@ impl MainPage {
 }
 
 impl Page for MainPage {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         // アプリ起動時など、アイドルかつタスク未取得なら自動フェッチを実行
         if work.outputs.is_empty() && work.tasks.is_none() {
             let (filter_flag, order_flag) = Self::default_fetch_flags();
@@ -270,6 +271,8 @@ impl Page for MainPage {
                 });
         });
 
-        next_page
+        work.next_page = next_page;
     }
+
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

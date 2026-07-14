@@ -185,7 +185,9 @@ impl DailyMainPage {
 }
 
 impl Page for DailyMainPage {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         if work.outputs.is_empty() && work.daily_tasks.is_none() {
             let filter_flag = if self.show_only_active {
                 DailyTaskFilterFlags::All ^ DailyTaskFilterFlags::Inactive
@@ -227,6 +229,8 @@ impl Page for DailyMainPage {
                 });
         });
 
-        next_page
+        work.next_page = next_page;
     }
+
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

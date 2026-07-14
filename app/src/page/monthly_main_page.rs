@@ -187,7 +187,8 @@ impl MonthlyMainPage {
 }
 
 impl Page for MonthlyMainPage {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         // アプリ起動時など、アイドルかつタスク未取得なら自動フェッチを実行
         if work.outputs.is_empty() && work.monthly_tasks.is_none() {
             let filter_flag = if self.show_only_active {
@@ -230,6 +231,8 @@ impl Page for MonthlyMainPage {
                 });
         });
 
-        next_page
+        work.next_page = next_page;
     }
+
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

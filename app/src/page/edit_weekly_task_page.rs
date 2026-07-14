@@ -29,7 +29,8 @@ impl EditWeeklyTaskPage {
 }
 
 impl Page for EditWeeklyTaskPage {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         let mut next_page = Pages::EditWeeklyTask; // 現在のページをデフォルト値にする
 
         // --- Bottom Action Bar ---
@@ -107,6 +108,8 @@ impl Page for EditWeeklyTaskPage {
             weekly_task_edit.show(ui);
         });
 
-        next_page
+        work.next_page = next_page;
     }
+
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

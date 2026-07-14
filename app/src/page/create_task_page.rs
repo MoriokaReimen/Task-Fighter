@@ -28,7 +28,9 @@ impl CreateTaskPage {
 }
 
 impl Page for CreateTaskPage {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         let mut next_page = Pages::CreateTask;
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
@@ -109,6 +111,8 @@ impl Page for CreateTaskPage {
             task_edit.show(ui);
         });
 
-        next_page
+        work.next_page = next_page;
     }
+
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

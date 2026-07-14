@@ -5,11 +5,10 @@ use core::prelude::*;
 use core::{CoreOutput, Receiver, TryRecvError};
 use egui::Ui;
 use std::collections::HashMap;
-use tracing::{error, warn};
+use tracing::{error, info, warn};
 
 /// Main application state holder.
 pub struct App {
-    next_page: Pages,
     work: Work,
     pages: HashMap<Pages, Box<dyn Page>>,
 }
@@ -59,11 +58,7 @@ impl App {
         work.core.sync_all_weekly_task();
         work.core.sync_all_monthly_task();
 
-        Self {
-            next_page: Pages::Main,
-            work,
-            pages,
-        }
+        Self { work, pages }
     }
 }
 
@@ -72,10 +67,33 @@ impl eframe::App for App {
     fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
         style::set_theme(ui.ctx(), &self.work);
         self.poll_background_tasks();
-        if let Some(page) = self.pages.get_mut(&self.next_page) {
-            self.next_page = page.show(ui, &mut self.work);
+
+        /* Invoke on entry handler */
+        if self.work.next_page != self.work.last_page {
+            if let Some(page) = self.pages.get_mut(&self.work.next_page) {
+                info!("{:?} entry handler called", &self.work.next_page);
+                page.on_entry(&mut self.work);
+            } else {
+                warn!("Page not found: {:?}", self.work.next_page);
+            }
+            self.work.last_page = self.work.next_page;
+        }
+
+        /* Show page */
+        if let Some(page) = self.pages.get_mut(&self.work.next_page) {
+            page.show(ui, &mut self.work);
         } else {
-            warn!("Page not found: {:?}", self.next_page);
+            warn!("Page not found: {:?}", self.work.next_page);
+        }
+
+        /* Invoke on exit handler */
+        if self.work.next_page != self.work.last_page {
+            if let Some(page) = self.pages.get_mut(&self.work.last_page) {
+                info!("{:?} exit handler called", &self.work.last_page);
+                page.on_exit(&mut self.work);
+            } else {
+                warn!("Page not found: {:?}", self.work.next_page);
+            }
         }
     }
 }

@@ -29,7 +29,9 @@ impl CreateWeeklyTaskPage {
 }
 
 impl Page for CreateWeeklyTaskPage {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         // 次のページ遷移のデフォルトを Weekly 用に変更
         let mut next_page = Pages::CreateWeeklyTask;
 
@@ -106,6 +108,8 @@ impl Page for CreateWeeklyTaskPage {
             weekly_task_edit.show(ui);
         });
 
-        next_page
+        work.next_page = next_page;
     }
+
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

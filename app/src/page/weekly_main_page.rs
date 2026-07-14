@@ -186,7 +186,9 @@ impl WeeklyMainPage {
 }
 
 impl Page for WeeklyMainPage {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         if work.outputs.is_empty() && work.weekly_tasks.is_none() {
             let filter_flag = if self.show_only_active {
                 WeeklyTaskFilterFlags::All ^ WeeklyTaskFilterFlags::Inactive
@@ -228,6 +230,8 @@ impl Page for WeeklyMainPage {
                 });
         });
 
-        next_page
+        work.next_page = next_page;
     }
+
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

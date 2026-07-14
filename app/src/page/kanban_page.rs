@@ -46,12 +46,16 @@ impl KanbanPage {
 }
 
 impl Page for KanbanPage {
-    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
+    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+
+    fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         let mut next_page = Pages::Kanban;
         self.render_top_panel(ui, work, &mut next_page);
         self.render_bottom_panel(ui, work, &mut next_page);
         self.render_centeral_panel(ui, work, &mut next_page);
 
-        next_page
+        work.next_page = next_page;
     }
+
+    fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }
