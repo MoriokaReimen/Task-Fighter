@@ -26,7 +26,7 @@ impl MonthlyMainPage {
         }
     }
 
-    fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) -> Pages {
+    fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) {
         const COLOR_SCHEMES: [ColorScheme; 7] = [
             ColorScheme::LightBlue,
             ColorScheme::DarkOrange,
@@ -36,7 +36,6 @@ impl MonthlyMainPage {
             ColorScheme::Violet,
             ColorScheme::Chrome,
         ];
-        let mut next_page = Pages::MonthlyMain;
         egui::Panel::top("top_menu_bar").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button(fl!("menu"), |ui| {
@@ -44,17 +43,17 @@ impl MonthlyMainPage {
                         info!("Switch to Main Page");
                         work.outputs.push(work.core.sync_all_monthly_task());
                         work.tasks = None;
-                        next_page = Pages::Main;
+                        work.next_page = Pages::Main;
                     }
                     if ui.button(fl!("edit-daily-task")).clicked() {
                         info!("Switch to Weekly Main Page");
                         work.daily_tasks = None;
-                        next_page = Pages::DailyMain;
+                        work.next_page = Pages::DailyMain;
                     }
                     if ui.button(fl!("edit-weekly-task")).clicked() {
                         info!("Switch to Weekly Main Page");
                         work.weekly_tasks = None;
-                        next_page = Pages::WeeklyMain;
+                        work.next_page = Pages::WeeklyMain;
                     }
                     if ui.button(fl!("change-color-scheme")).clicked() {
                         let color_scheme = COLOR_SCHEMES[self.color_scheme_index];
@@ -77,13 +76,10 @@ impl MonthlyMainPage {
 
         let ctx = ui.ctx();
         self.about_modal.show(ctx);
-        next_page
     }
 
     /// メインコンテンツ（MonthlyTask一覧リスト / ローディング / 空表示）のレンダリング
-    fn render_task_list_content(&mut self, work: &mut Work, ui: &mut Ui) -> Pages {
-        let mut next_page = Pages::MonthlyMain; // 遷移先を MonthlyMain に変更
-
+    fn render_task_list_content(&mut self, work: &mut Work, ui: &mut Ui) {
         // 1. ローディング状態のハンドリング
         if !work.outputs.is_empty() {
             ui.with_layout(
@@ -94,18 +90,18 @@ impl MonthlyMainPage {
                     });
                 },
             );
-            return next_page;
+            return;
         }
 
         // 2. MonthlyTaskデータの存在チェック
         let Some(ref tasks) = work.monthly_tasks else {
-            return next_page;
+            return;
         };
 
         // 3. データが空の場合のプレースホルダー表示
         if tasks.is_empty() {
             ui.colored_label(Color32::GRAY, fl!("no-active"));
-            return next_page;
+            return;
         }
 
         // 4. テーブルの描画とクリックイベントのハンドリング
@@ -116,16 +112,14 @@ impl MonthlyMainPage {
             if let Some(clicked_task) = self.monthly_task_table.clicked_task() {
                 // Work 内の編集ターゲットを monthly_task フィールドに同期
                 work.monthly_task = clicked_task;
-                next_page = Pages::EditMonthlyTask; // 遷移先を変更
+                work.next_page = Pages::EditMonthlyTask; // 遷移先を変更
                 info!("Edit Button Pressed: {:?}", work.monthly_task);
             }
         }
-
-        next_page
     }
 
     /// 下部アクションパネルの描画と遷移・副作用の処理
-    fn render_bottom_panel(&self, ui: &mut Ui, work: &mut Work, next_page: &mut Pages) {
+    fn render_bottom_panel(&self, ui: &mut Ui, work: &mut Work) {
         let mut clicked_create = false;
 
         egui::containers::Sides::new().show(
@@ -141,7 +135,7 @@ impl MonthlyMainPage {
                 {
                     work.outputs.push(work.core.sync_all_monthly_task());
                     work.tasks = None;
-                    *next_page = Pages::Main;
+                    work.next_page = Pages::Main;
                 }
                 if ui
                     .add(Button::new(fl!("create-new")).min_size(vec2(110.0, 28.0)))
@@ -154,7 +148,7 @@ impl MonthlyMainPage {
 
         // --- 副作用の処理 ---
         if clicked_create {
-            *next_page = Pages::CreateMonthlyTask; // 遷移先を変更
+            work.next_page = Pages::CreateMonthlyTask; // 遷移先を変更
             // MonthlyTask 用としてIDを取得
             if let Ok(id) = work.core.get_next_monthly_task_id() {
                 // monthly に変更
@@ -203,11 +197,11 @@ impl Page for MonthlyMainPage {
                 .push(work.core.fetch_all_monthly_task(filter_flag, order_flag));
         }
 
-        let mut next_page = self.render_top_tool_bar(work, ui);
+        self.render_top_tool_bar(work, ui);
 
         // --- Bottom Action Panel ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui| {
-            self.render_bottom_panel(ui, work, &mut next_page);
+            self.render_bottom_panel(ui, work);
         });
 
         // --- Central Dashboard Content ---
@@ -221,17 +215,10 @@ impl Page for MonthlyMainPage {
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
                     ui.with_layout(Layout::top_down(Align::LEFT), |ui| {
-                        let list_next_page = self.render_task_list_content(work, ui);
-
-                        // 他のページへの遷移が決まっていない場合のみ、リスト内の要素クリックによる遷移を適用
-                        if matches!(next_page, Pages::MonthlyMain) {
-                            next_page = list_next_page;
-                        }
+                        self.render_task_list_content(work, ui);
                     });
                 });
         });
-
-        work.next_page = next_page;
     }
 
     fn on_exit(&mut self, work: &mut crate::work::Work) {}

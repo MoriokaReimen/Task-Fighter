@@ -15,6 +15,7 @@ pub struct CreateTaskPage {
     yes_no_cancel: YesNoCancelModal,
     yes_no: YesNoModal,
     warning: WarningModal,
+    back_page: Pages,
 }
 
 impl CreateTaskPage {
@@ -23,15 +24,17 @@ impl CreateTaskPage {
             yes_no_cancel: YesNoCancelModal::new("create_task_yes_no_cancel"),
             yes_no: YesNoModal::new("create_task_yes_no"),
             warning: WarningModal::new("create_task_warning"),
+            back_page: Pages::Main,
         }
     }
 }
 
 impl Page for CreateTaskPage {
-    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+    fn on_entry(&mut self, work: &mut crate::work::Work) {
+        self.back_page = work.last_page;
+    }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
-        let mut next_page = Pages::CreateTask;
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout automatically places items horizontally without nested horizontal blocks
@@ -51,7 +54,7 @@ impl Page for CreateTaskPage {
                         if work.task.is_saveable() {
                             work.outputs.push(work.core.upsert_task(&work.task));
                             work.task = Task::default();
-                            next_page = Pages::Main;
+                            work.next_page = self.back_page;
                             work.tasks = None;
                         } else {
                             let message = if work.task.project.is_empty() {
@@ -64,7 +67,7 @@ impl Page for CreateTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.task = Task::default();
-                        next_page = Pages::Main;
+                        work.next_page = self.back_page;
                         work.tasks = None;
                     }
                     _ => {}
@@ -110,8 +113,6 @@ impl Page for CreateTaskPage {
             let mut task_edit = TaskEdit::new(&mut work.task);
             task_edit.show(ui);
         });
-
-        work.next_page = next_page;
     }
 
     fn on_exit(&mut self, work: &mut crate::work::Work) {}

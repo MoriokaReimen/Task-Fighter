@@ -36,7 +36,7 @@ impl MainPage {
         (filter_flag, order_flag)
     }
 
-    fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) -> Pages {
+    fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) {
         const COLOR_SCHEMES: [ColorScheme; 7] = [
             ColorScheme::LightBlue,
             ColorScheme::DarkOrange,
@@ -46,21 +46,20 @@ impl MainPage {
             ColorScheme::Violet,
             ColorScheme::Chrome,
         ];
-        let mut next_page = Pages::Main;
         egui::Panel::top("top_menu_bar").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button(fl!("menu"), |ui| {
                     if ui.button(fl!("edit-daily-task")).clicked() {
                         info!("Switch to Daily Main Page");
-                        next_page = Pages::DailyMain;
+                        work.next_page = Pages::DailyMain;
                     }
                     if ui.button(fl!("edit-weekly-task")).clicked() {
                         info!("Switch to Weekly Main Page");
-                        next_page = Pages::WeeklyMain;
+                        work.next_page = Pages::WeeklyMain;
                     }
                     if ui.button(fl!("edit-monthly-task")).clicked() {
                         info!("Switch to Monthly Main Page");
-                        next_page = Pages::MonthlyMain;
+                        work.next_page = Pages::MonthlyMain;
                     }
                     if ui.button(fl!("change-color-scheme")).clicked() {
                         let color_scheme = COLOR_SCHEMES[self.color_scheme_index];
@@ -83,14 +82,10 @@ impl MainPage {
 
         let ctx = ui.ctx();
         self.about_modal.show(ctx);
-
-        next_page
     }
 
     /// メインコンテンツ（タスク一覧リスト / ローディング / 空表示）のレンダリング
-    fn render_task_list_content(&mut self, work: &mut Work, ui: &mut Ui) -> Pages {
-        let mut next_page = Pages::Main;
-
+    fn render_task_list_content(&mut self, work: &mut Work, ui: &mut Ui) {
         if !work.outputs.is_empty() {
             ui.with_layout(
                 egui::Layout::centered_and_justified(egui::Direction::TopDown),
@@ -100,18 +95,18 @@ impl MainPage {
                     });
                 },
             );
-            return next_page;
+            return;
         }
 
         // 2. タスクデータの存在チェック（不要な .clone() を参照に変更）
         let Some(ref tasks) = work.tasks else {
-            return next_page;
+            return;
         };
 
         // 3. データが空の場合のプレースホルダー表示
         if tasks.is_empty() {
             ui.colored_label(Color32::GRAY, fl!("no-active"));
-            return next_page;
+            return;
         }
 
         // 4. テーブルの描画とクリックイベントのハンドリング
@@ -121,15 +116,14 @@ impl MainPage {
         if self.task_table.clicked() {
             if let Some(clicked_task) = self.task_table.clicked_task() {
                 work.task = clicked_task;
-                next_page = Pages::EditTask;
+                work.next_page = Pages::EditTask;
                 info!("Edit Button Pressed: {:?}", work.task);
             }
         }
-
-        next_page
     }
+
     /// 下部アクションパネルの描画と遷移・副作用の処理
-    fn render_bottom_panel(&self, ui: &mut Ui, work: &mut Work, next_page: &mut Pages) {
+    fn render_bottom_panel(&self, ui: &mut Ui, work: &mut Work) {
         // クロージャの外側でクリックフラグを用意する（これらは単なる bool なので安全に共有・コピー可能）
         let mut clicked_graph = false;
         let mut clicked_create = false;
@@ -148,7 +142,7 @@ impl MainPage {
                     .add(Button::new(fl!("kanban")).min_size(vec2(110.0, 28.0)))
                     .clicked()
                 {
-                    *next_page = Pages::Kanban;
+                    work.next_page = Pages::Kanban;
                 }
             },
             |ui| {
@@ -170,12 +164,12 @@ impl MainPage {
 
         // --- クロージャの実行がすべて終わった後（Sides::show の外）で副作用を処理する ---
         if clicked_graph {
-            *next_page = Pages::Graph;
+            work.next_page = Pages::Graph;
             work.outputs.push(work.core.get_plot_data());
         }
 
         if clicked_create {
-            *next_page = Pages::CreateTask;
+            work.next_page = Pages::CreateTask;
             if let Ok(id) = work.core.get_next_task_id() {
                 work.task.id = id;
                 info!("The next id is {}", id);
@@ -242,11 +236,11 @@ impl Page for MainPage {
                 .push(work.core.fetch_all_task(filter_flag, order_flag));
         }
 
-        let mut next_page = self.render_top_tool_bar(work, ui);
+        self.render_top_tool_bar(work, ui);
 
         // --- Bottom Action Panel ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui| {
-            self.render_bottom_panel(ui, work, &mut next_page);
+            self.render_bottom_panel(ui, work);
         });
 
         // --- Central Dashboard Content ---
@@ -260,18 +254,10 @@ impl Page for MainPage {
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
                     ui.with_layout(Layout::top_down(Align::LEFT), |ui| {
-                        let list_next_page = self.render_task_list_content(work, ui);
-
-                        // 下部パネル等で別のページ（GraphやCreateTask）への遷移が決まっていない場合のみ、
-                        // リスト内の要素クリック（EditTask）による遷移を適用する
-                        if matches!(next_page, Pages::Main) {
-                            next_page = list_next_page;
-                        }
+                        self.render_task_list_content(work, ui);
                     });
                 });
         });
-
-        work.next_page = next_page;
     }
 
     fn on_exit(&mut self, work: &mut crate::work::Work) {}

@@ -32,8 +32,6 @@ impl Page for EditMonthlyTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {}
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
-        let mut next_page = Pages::EditMonthlyTask; // 現在のページをデフォルト値にする
-
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -53,7 +51,7 @@ impl Page for EditMonthlyTaskPage {
                             work.outputs
                                 .push(work.core.upsert_monthly_task(&work.monthly_task));
                             work.monthly_task = MonthlyTask::default();
-                            next_page = Pages::MonthlyMain;
+                            work.next_page = Pages::MonthlyMain;
                             work.monthly_tasks = None; // キャッシュクリア
                         } else {
                             self.warning.open(fl!("save-error"), fl!("title-empty"));
@@ -61,7 +59,7 @@ impl Page for EditMonthlyTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.monthly_task = MonthlyTask::default();
-                        next_page = Pages::MonthlyMain;
+                        work.next_page = Pages::MonthlyMain;
                         work.monthly_tasks = None;
                     }
                     _ => {}
@@ -80,7 +78,7 @@ impl Page for EditMonthlyTaskPage {
                     if work.monthly_task.is_saveable() {
                         work.outputs
                             .push(work.core.upsert_monthly_task(&work.monthly_task));
-                        next_page = Pages::MonthlyMain;
+                        work.next_page = Pages::MonthlyMain;
                         work.monthly_tasks = None;
                     } else {
                         self.warning.open(fl!("save-error"), fl!("title-empty"));
@@ -108,8 +106,6 @@ impl Page for EditMonthlyTaskPage {
             let mut monthly_task_edit = MonthlyTaskEdit::new(&mut work.monthly_task);
             monthly_task_edit.show(ui);
         });
-
-        work.next_page = next_page;
     }
 
     fn on_exit(&mut self, work: &mut crate::work::Work) {}

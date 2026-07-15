@@ -31,9 +31,6 @@ impl Page for CreateDailyTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {}
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
-        // 【変更】プロジェクトのルーティング定義に合わせて調整してください（例: Pages::CreateTask など）
-        let mut next_page = Pages::CreateDailyTask;
-
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -53,7 +50,7 @@ impl Page for CreateDailyTaskPage {
                             work.outputs
                                 .push(work.core.upsert_daily_task(&work.daily_task));
                             work.daily_task = DailyTask::default();
-                            next_page = Pages::DailyMain;
+                            work.next_page = Pages::DailyMain;
                             work.daily_tasks = None;
                         } else {
                             // DailyTaskはプロジェクトを持たないため、タイトル空エラーのみに簡素化
@@ -62,7 +59,7 @@ impl Page for CreateDailyTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.daily_task = DailyTask::default();
-                        next_page = Pages::DailyMain;
+                        work.next_page = Pages::DailyMain;
                         work.daily_tasks = None;
                     }
                     _ => {}
@@ -107,8 +104,6 @@ impl Page for CreateDailyTaskPage {
             let mut daily_task_edit = DailyTaskEdit::new(&mut work.daily_task);
             daily_task_edit.show(ui);
         });
-
-        work.next_page = next_page;
     }
 
     fn on_exit(&mut self, work: &mut crate::work::Work) {}

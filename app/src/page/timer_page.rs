@@ -17,8 +17,6 @@ impl Page for TimerPage {
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         // 毎フレーム再描画を要求（アニメーションを滑らかにするため）
         ui.ctx().request_repaint_after(Duration::from_millis(20));
-        let mut next_page = Pages::Timer;
-
         egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             let working_on = fl!("working-on");
             ui.heading(format!("{} {}", working_on, work.task.title));
@@ -60,13 +58,11 @@ impl Page for TimerPage {
                         .add_sized(button_size, egui::Button::new(button_text))
                         .clicked()
                     {
-                        next_page = Pages::EditTask;
+                        work.next_page = Pages::EditTask;
                         work.task.accumulate_time(stop_watch.get_total_seconds());
                     }
                 });
         });
-
-        work.next_page = next_page;
     }
 
     fn on_exit(&mut self, work: &mut crate::work::Work) {}

@@ -1,31 +1,17 @@
+use crate::page::Pages;
+use crate::work::Work;
+use core::{Task, TaskPriority, TaskStatus};
 use egui::{Color32, Frame, Id, Response, Stroke, Ui, vec2};
+use tracing::{info, warn};
 
-#[derive(Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct KanbanArea {
-    // 1列目(3マス) + 2列目(3マス) + 3列目(2マス) = 計8マスのデータ構造
-    columns: Vec<Vec<String>>,
+    columns: Vec<Vec<Task>>,
 }
 
 impl Default for KanbanArea {
     fn default() -> Self {
         Self {
-            columns: vec![
-                vec![
-                    "Item A",
-                    "Item BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
-                ],
-                vec!["Item C"],
-                vec!["Item D"],
-                vec!["Item E"],
-                vec!["Item F", "Item G"],
-                vec![],
-                vec!["Item H", "Item I"], // 完了
-                vec!["Item J", "Item K"], // キャンセル
-            ]
-            .into_iter()
-            .map(|v| v.into_iter().map(str::to_owned).collect())
-            .collect(),
+            columns: vec![vec![]; 8],
         }
     }
 }
@@ -37,20 +23,49 @@ struct Location {
 }
 
 impl KanbanArea {
+    pub(crate) fn set_tasks(&mut self, tasks: &Vec<Task>) {
+        let _ = tasks
+            .iter()
+            .map(|task| match (task.priority, task.status) {
+                (TaskPriority::High, TaskStatus::Pending) => self.columns[0].push(task.clone()),
+                (TaskPriority::Medium, TaskStatus::Pending) => self.columns[1].push(task.clone()),
+                (TaskPriority::Low, TaskStatus::Pending) => self.columns[2].push(task.clone()),
+                (TaskPriority::High, TaskStatus::WorkInProgress) => {
+                    self.columns[3].push(task.clone())
+                }
+                (TaskPriority::Medium, TaskStatus::WorkInProgress) => {
+                    self.columns[4].push(task.clone())
+                }
+                (TaskPriority::Low, TaskStatus::WorkInProgress) => {
+                    self.columns[5].push(task.clone())
+                }
+                (_, TaskStatus::Complete) => self.columns[6].push(task.clone()),
+                (_, TaskStatus::Canceled) => self.columns[7].push(task.clone()),
+                _ => warn!("Undefined priority and status"),
+            })
+            .collect::<Vec<_>>();
+    }
+
+    pub(crate) fn pop_columns(&mut self) -> Vec<Vec<Task>> {
+        let empty_columns = vec![vec![]; 8];
+        std::mem::replace(&mut self.columns, empty_columns)
+    }
+
     /// 【新規】カードがダブルクリックされたときに呼ばれるハンドラ関数
-    fn on_card_double_click(&mut self, loc: Location) {
-        if let Some(text) = self.columns[loc.col].get(loc.row) {
-            // ここに編集ダイアログを開くフラグの切り替えや、具体的な処理を記述します
-            println!(
-                "ハンドラが呼ばれました！ ダブルクリックされたカード: '{}' (列: {}, 行: {})",
-                text, loc.col, loc.row
+    fn on_card_double_click(&mut self, loc: Location, work: &mut Work) {
+        if let Some(task) = self.columns[loc.col].get(loc.row) {
+            info!(
+                "Task card double clicked: '{}' (Column: {}, Row: {})",
+                task.title, loc.col, loc.row
             );
+            work.task = task.clone();
+            work.next_page = Pages::EditTask;
         }
     }
 
     /// マスの中にある各カード（ドラッグソース）の描画
     /// 戻り値: (Response, double_clicked: bool)
-    fn render_card(&self, ui: &mut Ui, text: &str, loc: Location) -> (Response, bool) {
+    fn render_card(&self, ui: &mut Ui, task: &Task, loc: Location) -> (Response, bool) {
         let item_id = Id::new(("kanban_item", loc.col, loc.row));
         let available_width = ui.available_width();
         let mut is_double_clicked = false;
@@ -64,7 +79,7 @@ impl KanbanArea {
 
                 ui.allocate_ui_with_layout(desired_size, layout, |ui| {
                     ui.set_max_width(available_width);
-                    ui.add(egui::Label::new(text).truncate());
+                    ui.add(egui::Label::new(task.title.clone()).truncate());
                 });
             });
         });
@@ -102,7 +117,7 @@ impl KanbanArea {
     }
 
     /// メインのエントリポイント
-    pub fn show(&mut self, ui: &mut Ui) {
+    pub(crate) fn show(&mut self, ui: &mut Ui, work: &mut Work) {
         let mut from = None;
         let mut to = None;
         let mut double_clicked_loc = None; // ダブルクリックされた位置を記録する変数
@@ -177,7 +192,7 @@ impl KanbanArea {
 
         // 2. 【新規】ダブルクリックイベントが検知されていたら、安全にハンドラ関数を実行
         if let Some(loc) = double_clicked_loc {
-            self.on_card_double_click(loc);
+            self.on_card_double_click(loc, work);
         }
     }
 
@@ -228,8 +243,14 @@ impl KanbanArea {
 
             ui.vertical(|ui| {
                 let label_text = match col_idx {
-                    6 => "Area 7 (Done)".to_string(),
-                    7 => "Area 8 (Cancelled)".to_string(),
+                    0 => format!("{} {}", fl!("pending"), fl!("high")).to_string(),
+                    1 => format!("{} {}", fl!("pending"), fl!("medium")).to_string(),
+                    2 => format!("{} {}", fl!("pending"), fl!("low")).to_string(),
+                    3 => format!("{} {}", fl!("work-in-progress"), fl!("high")).to_string(),
+                    4 => format!("{} {}", fl!("work-in-progress"), fl!("medium")).to_string(),
+                    5 => format!("{} {}", fl!("work-in-progress"), fl!("low")).to_string(),
+                    6 => fl!("complete").to_string(),
+                    7 => fl!("cancel").to_string(),
                     _ => format!("Area {}", col_idx + 1),
                 };
                 ui.label(label_text);

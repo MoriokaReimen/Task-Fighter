@@ -17,8 +17,7 @@ impl GraphPage {
         }
     }
 
-    fn bottom_panel(&self, ui: &mut egui::Ui, work: &mut Work) -> Pages {
-        let mut next_page = Pages::Graph;
+    fn bottom_panel(&self, ui: &mut egui::Ui, work: &mut Work) {
         let mut should_close = false;
 
         // --- Bottom Action Bar ---
@@ -46,16 +45,12 @@ impl GraphPage {
 
         if should_close {
             work.task = Task::default();
-            next_page = Pages::Main;
+            work.next_page = Pages::Main;
             work.tasks = None;
         }
-
-        next_page
     }
 
-    fn central_panel(&mut self, ui: &mut egui::Ui, work: &Work) -> Pages {
-        let next_page = Pages::Graph;
-
+    fn central_panel(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             ui.heading(fl!("task-plot"));
             if !work.outputs.is_empty() || work.plot_data.is_none() {
@@ -71,8 +66,6 @@ impl GraphPage {
                 self.graph.show(ui, data);
             }
         });
-
-        next_page
     }
 }
 
@@ -81,20 +74,8 @@ impl Page for GraphPage {
 
     /// Renders the task editing page inside a dedicated panel setup.
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
-        let mut next_page = Pages::Graph;
-
-        let bottom_res = self.bottom_panel(ui, work);
-        if bottom_res != Pages::Graph {
-            next_page = bottom_res;
-        }
-
-        // central_panel の結果が Graph 以外なら更新
-        let central_res = self.central_panel(ui, work);
-        if central_res != Pages::Graph {
-            next_page = central_res;
-        }
-
-        work.next_page = next_page;
+        self.bottom_panel(ui, work);
+        self.central_panel(ui, work);
     }
     fn on_exit(&mut self, work: &mut crate::work::Work) {}
 }

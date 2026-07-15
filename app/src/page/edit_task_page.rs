@@ -15,6 +15,7 @@ pub struct EditTaskPage {
     yes_no_cancel: YesNoCancelModal,
     yes_no: YesNoModal,
     warning: WarningModal,
+    back_page: Pages,
 }
 
 impl EditTaskPage {
@@ -23,15 +24,17 @@ impl EditTaskPage {
             yes_no_cancel: YesNoCancelModal::new("create_task_yes_no_cancel"),
             yes_no: YesNoModal::new("create_task_yes_no"),
             warning: WarningModal::new("create_task_warning"),
+            back_page: Pages::Main,
         }
     }
 }
 
 impl Page for EditTaskPage {
-    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+    fn on_entry(&mut self, work: &mut crate::work::Work) {
+        self.back_page = work.last_page;
+    }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
-        let mut next_page = Pages::EditTask;
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout places buttons from rightmost to leftmost
@@ -51,7 +54,7 @@ impl Page for EditTaskPage {
                         if work.task.is_saveable() {
                             work.outputs.push(work.core.update_task(&work.task));
                             work.task = Task::default();
-                            next_page = Pages::Main;
+                            work.next_page = self.back_page;
                             work.tasks = None;
                         } else {
                             let message = if work.task.project.is_empty() {
@@ -65,7 +68,7 @@ impl Page for EditTaskPage {
                     yes_no_cancel_modal::ModalResult::No => {
                         work.task = Task::default();
                         work.tasks = None;
-                        next_page = Pages::Main;
+                        work.next_page = self.back_page;
                     }
                     _ => {}
                 }
@@ -94,7 +97,7 @@ impl Page for EditTaskPage {
                     .clicked()
                 {
                     info!("Start Work Button Pressed");
-                    next_page = Pages::Timer;
+                    work.next_page = Pages::Timer;
                     work.start_time = jiff::Zoned::now();
                 }
                 self.warning.show(ui);
@@ -117,8 +120,6 @@ impl Page for EditTaskPage {
             let mut task_edit = TaskEdit::new(&mut work.task);
             task_edit.show(ui);
         });
-
-        work.next_page = next_page;
     }
 
     fn on_exit(&mut self, work: &mut crate::work::Work) {}

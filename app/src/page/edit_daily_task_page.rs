@@ -31,8 +31,6 @@ impl Page for EditDailyTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {}
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
-        let mut next_page = Pages::EditDailyTask; // 現在のページをデフォルト値にする
-
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -52,7 +50,7 @@ impl Page for EditDailyTaskPage {
                             work.outputs
                                 .push(work.core.upsert_daily_task(&work.daily_task));
                             work.daily_task = DailyTask::default();
-                            next_page = Pages::DailyMain;
+                            work.next_page = Pages::DailyMain;
                             work.daily_tasks = None; // キャッシュをクリアして再フェッチを促す
                         } else {
                             self.warning.open(fl!("save-error"), fl!("title-empty"));
@@ -60,7 +58,7 @@ impl Page for EditDailyTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.daily_task = DailyTask::default();
-                        next_page = Pages::DailyMain;
+                        work.next_page = Pages::DailyMain;
                         work.daily_tasks = None;
                     }
                     _ => {}
@@ -80,7 +78,7 @@ impl Page for EditDailyTaskPage {
                         work.outputs
                             .push(work.core.upsert_daily_task(&work.daily_task));
                         // 保存が走った後は、メインページへ戻るように制御
-                        next_page = Pages::DailyMain;
+                        work.next_page = Pages::DailyMain;
                         work.daily_tasks = None;
                     } else {
                         self.warning.open(fl!("save-error"), fl!("title-empty"));
@@ -108,8 +106,6 @@ impl Page for EditDailyTaskPage {
             let mut daily_task_edit = DailyTaskEdit::new(&mut work.daily_task);
             daily_task_edit.show(ui);
         });
-
-        work.next_page = next_page;
     }
 
     fn on_exit(&mut self, work: &mut crate::work::Work) {}

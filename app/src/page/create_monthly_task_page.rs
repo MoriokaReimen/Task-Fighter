@@ -32,9 +32,6 @@ impl Page for CreateMonthlyTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {}
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
-        // 次のページ遷移のデフォルトを Monthly 用に変更
-        let mut next_page = Pages::CreateMonthlyTask;
-
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -54,7 +51,7 @@ impl Page for CreateMonthlyTaskPage {
                             work.outputs
                                 .push(work.core.upsert_monthly_task(&work.monthly_task));
                             work.monthly_task = MonthlyTask::default();
-                            next_page = Pages::MonthlyMain;
+                            work.next_page = Pages::MonthlyMain;
                             work.monthly_tasks = None;
                         } else {
                             self.warning.open(fl!("save-error"), fl!("title-empty"));
@@ -62,7 +59,7 @@ impl Page for CreateMonthlyTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.monthly_task = MonthlyTask::default();
-                        next_page = Pages::MonthlyMain;
+                        work.next_page = Pages::MonthlyMain;
                         work.monthly_tasks = None;
                     }
                     _ => {}
@@ -107,8 +104,6 @@ impl Page for CreateMonthlyTaskPage {
             let mut monthly_task_edit = MonthlyTaskEdit::new(&mut work.monthly_task);
             monthly_task_edit.show(ui);
         });
-
-        work.next_page = next_page;
     }
 
     fn on_exit(&mut self, work: &mut crate::work::Work) {}
