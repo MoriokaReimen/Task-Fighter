@@ -29,7 +29,7 @@ impl EditMonthlyTaskPage {
 }
 
 impl Page for EditMonthlyTaskPage {
-    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+    fn on_entry(&mut self, _: &mut crate::work::Work) {}
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         // --- Bottom Action Bar ---
@@ -108,5 +108,5 @@ impl Page for EditMonthlyTaskPage {
         });
     }
 
-    fn on_exit(&mut self, work: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {}
 }

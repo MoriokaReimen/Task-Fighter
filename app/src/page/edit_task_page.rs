@@ -122,5 +122,5 @@ impl Page for EditTaskPage {
         });
     }
 
-    fn on_exit(&mut self, work: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {}
 }

@@ -2,8 +2,8 @@ use crate::page::{Page, Pages};
 use crate::widget::KanbanArea;
 use crate::work::Work;
 use core::prelude::*;
-use core::{Task, TaskPriority, TaskStatus};
 use core::{TaskFilterFlags, TaskOrderFlags};
+use core::{TaskPriority, TaskStatus};
 use egui::{Button, Ui, vec2};
 
 // レイアウト用の定数

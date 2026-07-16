@@ -180,7 +180,7 @@ impl WeeklyMainPage {
 }
 
 impl Page for WeeklyMainPage {
-    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+    fn on_entry(&mut self, _: &mut crate::work::Work) {}
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         if work.outputs.is_empty() && work.weekly_tasks.is_none() {
@@ -220,5 +220,5 @@ impl Page for WeeklyMainPage {
         });
     }
 
-    fn on_exit(&mut self, work: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {}
 }

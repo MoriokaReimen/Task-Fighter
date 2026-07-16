@@ -227,7 +227,7 @@ impl MainPage {
 }
 
 impl Page for MainPage {
-    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+    fn on_entry(&mut self, _: &mut crate::work::Work) {}
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         // アプリ起動時など、アイドルかつタスク未取得なら自動フェッチを実行
         if work.outputs.is_empty() && work.tasks.is_none() {
@@ -260,5 +260,5 @@ impl Page for MainPage {
         });
     }
 
-    fn on_exit(&mut self, work: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {}
 }

@@ -29,7 +29,7 @@ impl EditWeeklyTaskPage {
 }
 
 impl Page for EditWeeklyTaskPage {
-    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+    fn on_entry(&mut self, _: &mut crate::work::Work) {}
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
@@ -107,5 +107,5 @@ impl Page for EditWeeklyTaskPage {
         });
     }
 
-    fn on_exit(&mut self, work: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {}
 }

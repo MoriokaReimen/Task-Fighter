@@ -6,7 +6,7 @@ use crate::page::Pages;
 use crate::work::Work;
 use core::{Task, TaskPriority, TaskStatus};
 use egui::{Color32, Frame, Id, Rect, Response, Stroke, Ui, vec2};
-use tracing::{info, warn};
+use tracing::info;
 
 /// Number of columns on the board: `Pending` and `WorkInProgress` each get
 /// three (High / Medium / Low), plus one each for `Complete` and
@@ -63,10 +63,6 @@ impl KanbanArea {
                 (TaskPriority::Low, TaskStatus::WorkInProgress) => COL_WIP_LOW,
                 (_, TaskStatus::Complete) => COL_COMPLETE,
                 (_, TaskStatus::Canceled) => COL_CANCELED,
-                _ => {
-                    warn!("Undefined priority and status");
-                    continue;
-                }
             };
             self.columns[column].push(task.clone());
         }
@@ -252,8 +248,10 @@ fn draw_card_content(ui: &mut Ui, task: &Task, available_width: f32) {
 /// than the response's own click state, since drag-and-drop consumes that
 /// before a double-click can register on it.
 fn is_double_click_inside(ui: &Ui, rect: Rect) -> bool {
-    let double_clicked =
-        ui.input(|i| i.pointer.button_double_clicked(egui::PointerButton::Primary));
+    let double_clicked = ui.input(|i| {
+        i.pointer
+            .button_double_clicked(egui::PointerButton::Primary)
+    });
 
     double_clicked
         && ui
@@ -263,11 +261,7 @@ fn is_double_click_inside(ui: &Ui, rect: Rect) -> bool {
 
 /// If a dragged card was released on top of `loc` this frame, returns the
 /// card's origin location and the row it should be inserted at.
-fn resolve_card_drop(
-    ui: &mut Ui,
-    response: &Response,
-    loc: Location,
-) -> Option<(Location, usize)> {
+fn resolve_card_drop(ui: &mut Ui, response: &Response, loc: Location) -> Option<(Location, usize)> {
     let insert_row = handle_card_hover(ui, response, loc)?;
     let dragged = response.dnd_release_payload::<Location>()?;
     Some((*dragged, insert_row))

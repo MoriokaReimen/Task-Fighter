@@ -13,7 +13,7 @@ impl TimerPage {
 }
 
 impl Page for TimerPage {
-    fn on_entry(&mut self, work: &mut crate::work::Work) {}
+    fn on_entry(&mut self, _: &mut crate::work::Work) {}
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         // 毎フレーム再描画を要求（アニメーションを滑らかにするため）
         ui.ctx().request_repaint_after(Duration::from_millis(20));
@@ -65,5 +65,5 @@ impl Page for TimerPage {
         });
     }
 
-    fn on_exit(&mut self, work: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {}
 }
