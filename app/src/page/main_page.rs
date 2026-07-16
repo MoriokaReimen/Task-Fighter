@@ -8,7 +8,7 @@ use core::ColorScheme;
 use core::prelude::*;
 use core::{TaskFilterFlags, TaskOrderFlags};
 use egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
-use tracing::{error, info};
+use tracing::info;
 
 pub struct MainPage {
     search_condition_modal: SearchConditionModal,
@@ -170,12 +170,6 @@ impl MainPage {
 
         if clicked_create {
             work.next_page = Pages::CreateTask;
-            if let Ok(id) = work.core.get_next_task_id() {
-                work.task.id = id;
-                info!("The next id is {}", id);
-            } else {
-                error!("Failed to get id");
-            }
         }
 
         if clicked_email {

@@ -9,7 +9,7 @@ use crate::work::Work;
 use core::Task;
 use core::prelude::*;
 use egui::{self, Align, Button, Layout, Ui, vec2};
-use tracing::info;
+use tracing::{error, info};
 
 pub struct CreateTaskPage {
     yes_no_cancel: YesNoCancelModal,
@@ -31,6 +31,12 @@ impl CreateTaskPage {
 
 impl Page for CreateTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {
+        if let Ok(id) = work.core.get_next_task_id() {
+            work.task.id = id;
+            info!("The next id is {}", id);
+        } else {
+            error!("Failed to get id");
+        }
         self.back_page = work.last_page;
     }
 

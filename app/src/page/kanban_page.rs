@@ -67,7 +67,12 @@ impl KanbanPage {
                 |ui| {
                     let back_btn = Button::new(fl!("back")).min_size(BACK_BUTTON_SIZE);
                     if ui.add(back_btn).clicked() {
-                        work.next_page = self.back_page; // ハードコードせず保持しているページに遷移
+                        work.next_page = self.back_page;
+                    }
+                    let create_task_btn =
+                        Button::new(fl!("create-task")).min_size(BACK_BUTTON_SIZE);
+                    if ui.add(create_task_btn).clicked() {
+                        work.next_page = Pages::CreateTask;
                     }
                 },
             );
