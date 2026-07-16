@@ -5,6 +5,84 @@ use std::fmt;
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Default)]
+pub enum Locale {
+    #[default]
+    System,
+    English,
+    Japanese,
+}
+
+impl From<Locale> for i32 {
+    fn from(scheme: Locale) -> Self {
+        match scheme {
+            Locale::System => 0,
+            Locale::English => 1,
+            Locale::Japanese => 2,
+        }
+    }
+}
+
+impl TryFrom<i32> for Locale {
+    type Error = String;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Locale::System),
+            1 => Ok(Locale::English),
+            2 => Ok(Locale::Japanese),
+            _ => Err(format!("{value} Invalid value for Locale")),
+        }
+    }
+}
+
+impl Locale {
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::System => "System",
+            Self::English => "English",
+            Self::Japanese => "Japanese",
+        }
+    }
+}
+
+// 2. 標準の AsRef<str> トレイトを実装
+impl AsRef<str> for Locale {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+// 3. (オプション) 標準の Display トレイトを実装しておくと、format!("{}", scheme) などが可能に
+impl fmt::Display for Locale {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+// 1. anyhow::Error を返す TryFrom<&str> の実装
+impl<'a> TryFrom<&'a str> for Locale {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+        match value {
+            "System" => Ok(Self::System),
+            "English" => Ok(Self::English),
+            "Japanese" => Ok(Self::Japanese),
+            _ => Err(anyhow!("Undefined Locale: '{value}'")),
+        }
+    }
+}
+
+impl FromStr for Locale {
+    type Err = anyhow::Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        Self::try_from(value).with_context(|| format!("Failed convert string to Locale: {value}"))
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub enum ColorScheme {
     #[default]
     LightBlue,
@@ -106,4 +184,5 @@ impl FromStr for ColorScheme {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub struct Config {
     pub color_scheme: ColorScheme,
+    pub locale: Locale,
 }

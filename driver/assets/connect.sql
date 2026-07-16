@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS work_time (
 -- Config
 CREATE TABLE IF NOT EXISTS config (
     id INTEGER PRIMARY KEY,
-    color_scheme INTEGER NOT NULL
+    color_scheme INTEGER NOT NULL,
+    locale INTEGER NOT NULL
 );
 
