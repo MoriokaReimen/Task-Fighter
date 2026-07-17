@@ -8,19 +8,8 @@ use duckdb::{
 };
 use std::str::FromStr;
 
-// =========================================================================
-// 1. Newtype definitions for External Types
-// =========================================================================
-
-/// ColorScheme のラッパー
 pub struct DuckdbColorScheme(pub ColorScheme);
-
-/// Locale のラッパー
 pub struct DuckdbLocale(pub Locale);
-
-// =========================================================================
-// 2. DuckdbConfig structure and type conversion implementations
-// =========================================================================
 
 pub struct DuckdbConfig {
     pub color_scheme: DuckdbColorScheme,
@@ -47,11 +36,6 @@ impl TryFrom<DuckdbConfig> for Config {
     }
 }
 
-// =========================================================================
-// 3. ToSql & FromSql Implementations via Newtype Pattern
-// =========================================================================
-
-// --- ColorScheme ---
 impl ToSql for DuckdbColorScheme {
     fn to_sql(&self) -> DuckdbResult<ToSqlOutput<'_>> {
         let val_i32 = i32::from(self.0);
@@ -76,18 +60,18 @@ impl FromSql for DuckdbColorScheme {
 // --- Locale ---
 impl ToSql for DuckdbLocale {
     fn to_sql(&self) -> DuckdbResult<ToSqlOutput<'_>> {
-        // Locale が ToString を実装している前提
-        Ok(ToSqlOutput::from(self.0.to_string()))
+        let val_i32 = i32::from(self.0);
+        Ok(ToSqlOutput::from(val_i32))
     }
 }
 
 impl FromSql for DuckdbLocale {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        let s = String::column_result(value)?;
+        let val_i32 = i32::column_result(value)?;
         
-        let locale = Locale::from_str(&s).map_err(|err| {
+        let locale = Locale::try_from(val_i32).map_err(|err| {
             FromSqlError::Other(
-                format!("Failed to parse Locale from string '{s}': {err}").into(),
+                format!("Retrieved undefined Locale id from DuckDB: {val_i32} (Detail: {err})").into(),
             )
         })?;
         
