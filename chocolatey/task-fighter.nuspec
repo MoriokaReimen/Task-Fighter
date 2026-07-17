@@ -16,7 +16,7 @@
     <bugTrackerUrl>https://github.com/MoriokaReimen/Task-Fighter/issues</bugTrackerUrl>
     <projectSourceUrl>https://github.com/MoriokaReimen/Task-Fighter</projectSourceUrl>
     <packageSourceUrl>https://github.com/MoriokaReimen/Task-Fighter/tree/main/chocolatey</packageSourceUrl>
-    <releaseNotes>https://github.com/MoriokaReimen/Task-Fighter/releases/tag/v8.2.4</releaseNotes>
+    <releaseNotes>https://github.com/MoriokaReimen/Task-Fighter/releases/tag/v8.3.0</releaseNotes>
     <summary>Personal task management software with simple UI.</summary>
     <description>
     Task Fighter is a personal task management software featuring a simple and intuitive graphical user interface (GUI). 
