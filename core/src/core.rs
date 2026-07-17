@@ -18,6 +18,7 @@ pub struct Core {
 
 pub type PlotResult = Result<Vec<(i32, i32, i32, i32)>>;
 
+#[derive(Debug)]
 pub enum CoreOutput {
     InsertTask(Receiver<Result<()>>),
     UpsertTask(Receiver<Result<()>>),

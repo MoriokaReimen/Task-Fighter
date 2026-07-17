@@ -169,7 +169,11 @@ impl App {
                         Self::check_rx(rx, "Failed to sync monthly tasks", |()| {})
                             .then_some(output)
                     }
-                    _ => None, // Remove from output for other cases.
+                    other => {
+                        warn!("{:?}", other);
+                        None
+                    }
+
                 }
             })
             .collect();
