@@ -7,22 +7,18 @@ use jiff::Zoned;
 use std::sync::Arc;
 use tokio::sync::oneshot::{self};
 
-/// `tokio::sync::Mutex` をブロッキングタスク内で安全に取得・処理するマクロ
 macro_rules! spawn_async_db {
     ($self:expr, $output_variant:ident, |$conn:ident| $action:expr) => {{
         let conn = Arc::clone(&$self.conn);
         let (tx, rx) = oneshot::channel();
 
-        // spawn_blocking 内から非同期Mutexにアクセスするためのハンドルを取得
         let handle = $self.runtime.handle().clone();
 
         $self.runtime.spawn_blocking(move || {
-            // ブロッキングスレッド内で非同期Mutexをロックする
             let conn_guard = handle.block_on(async { conn.lock().await });
             let $conn = &*conn_guard;
             let result = $action;
 
-            // スレッドを抜ける前に確実にガードをドロップ（解放）
             drop(conn_guard);
 
             let _ = tx.send(result);
@@ -73,7 +69,7 @@ impl WeeklyTaskRecord for Core {
 
     fn insert_weekly_task(&self, weekly_task: &WeeklyTask) -> Self::AsyncOutput {
         let weekly_task = weekly_task.clone();
-        spawn_async_db!(self, InsertTask, |conn| driver::insert_weekly_task(
+        spawn_async_db!(self, InsertWeeklyTask, |conn| driver::insert_weekly_task(
             conn,
             &weekly_task
         ))
@@ -81,7 +77,7 @@ impl WeeklyTaskRecord for Core {
 
     fn update_weekly_task(&self, weekly_task: &WeeklyTask) -> Self::AsyncOutput {
         let weekly_task = weekly_task.clone();
-        spawn_async_db!(self, UpdateTask, |c| driver::update_weekly_task(
+        spawn_async_db!(self, UpdateWeeklyTask, |c| driver::update_weekly_task(
             c,
             &weekly_task
         ))
@@ -89,7 +85,7 @@ impl WeeklyTaskRecord for Core {
 
     fn upsert_weekly_task(&self, weekly_task: &WeeklyTask) -> Self::AsyncOutput {
         let weekly_task = weekly_task.clone();
-        spawn_async_db!(self, UpsertTask, |c| driver::upsert_weekly_task(
+        spawn_async_db!(self, UpsertWeeklyTask, |c| driver::upsert_weekly_task(
             c,
             &weekly_task
         ))
@@ -103,7 +99,6 @@ impl WeeklyTaskRecord for Core {
 
     fn sync_all_weekly_task(&self) -> Self::AsyncOutput {
         spawn_async_db!(self, SyncAllWeeklyTask, |c| {
-            // 即時実行クロージャを使い、内部で `?` によるクリーンな早期リターンを可能にします
             let result: Result<()> = (|| {
                 let filter_flags = WeeklyTaskFilterFlags::All;
                 let order_flags = WeeklyTaskOrderFlags::default();
@@ -128,7 +123,6 @@ impl WeeklyTaskRecord for Core {
                     )?;
 
                     if existing_tasks.is_empty() {
-                        // 3. 未登録ならインサートを実行
                         driver::insert_task(c, &task)?;
                     }
                 }
@@ -136,8 +130,6 @@ impl WeeklyTaskRecord for Core {
                 Ok(())
             })();
 
-            // マクロの $action の最終評価値として Result<()> を渡す
-            // これにより、マクロ内部の `tx.send(result)` を経由して `CoreOutput::SyncAllWeeklyTask(rx)` へ正しく送信されます
             result
         })
     }

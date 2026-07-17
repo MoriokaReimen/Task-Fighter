@@ -73,7 +73,7 @@ impl DailyTaskRecord for Core {
 
     fn insert_daily_task(&self, daily_task: &DailyTask) -> Self::AsyncOutput {
         let daily_task = daily_task.clone();
-        spawn_async_db!(self, InsertTask, |conn| driver::insert_daily_task(
+        spawn_async_db!(self, InsertDailyTask, |conn| driver::insert_daily_task(
             conn,
             &daily_task
         ))
@@ -81,7 +81,7 @@ impl DailyTaskRecord for Core {
 
     fn update_daily_task(&self, daily_task: &DailyTask) -> Self::AsyncOutput {
         let daily_task = daily_task.clone();
-        spawn_async_db!(self, UpdateTask, |c| driver::update_daily_task(
+        spawn_async_db!(self, UpdateDailyTask, |c| driver::update_daily_task(
             c,
             &daily_task
         ))
@@ -89,7 +89,7 @@ impl DailyTaskRecord for Core {
 
     fn upsert_daily_task(&self, daily_task: &DailyTask) -> Self::AsyncOutput {
         let daily_task = daily_task.clone();
-        spawn_async_db!(self, UpsertTask, |c| driver::upsert_daily_task(
+        spawn_async_db!(self, UpsertDailyTask, |c| driver::upsert_daily_task(
             c,
             &daily_task
         ))
