@@ -21,7 +21,7 @@ impl<'a> TaskEdit<'a> {
         })
         .response
     }
-    /// ステータス、優先度、日付、進捗などのメタデータグリッドを表示
+
     fn show_metadata_grid(&mut self, ui: &mut Ui) {
         // 💡 グリッド全体の幅をWindow幅いっぱいに広げるため、最大の利用可能幅を設定
         let total_width = ui.available_width();
@@ -90,13 +90,16 @@ impl<'a> TaskEdit<'a> {
                 // 💡 -30.0 などのハードコードを辞め、現在利用可能な幅いっぱいに広げる
                 ui.add(
                     TextEdit::singleline(&mut self.task.project)
+                        .hint_text(fl!("required"))
                         .desired_width(ui.available_width()),
                 );
                 ui.end_row();
 
                 ui.label(fl!("title"));
                 ui.add(
-                    TextEdit::singleline(&mut self.task.title).desired_width(ui.available_width()),
+                    TextEdit::singleline(&mut self.task.title)
+                        .hint_text(fl!("required"))
+                        .desired_width(ui.available_width()),
                 );
                 ui.end_row();
             });
@@ -112,12 +115,13 @@ impl<'a> TaskEdit<'a> {
 
         ScrollArea::vertical()
             .max_height(available_height)
-            .auto_shrink([false; 2]) // 💡 中身が空でもエリアを縮ませない
+            .auto_shrink([false; 2])
             .show(ui, |ui| {
-                // 💡 2. ScrollArea の内部で、TextEdit を残りの画面サイズいっぱいに広げる
                 ui.add_sized(
                     available_size,
-                    TextEdit::multiline(&mut self.task.detail).desired_width(ui.available_width()),
+                    TextEdit::multiline(&mut self.task.detail)
+                        .hint_text(fl!("optional-details"))
+                        .desired_width(ui.available_width()),
                 );
             });
     }

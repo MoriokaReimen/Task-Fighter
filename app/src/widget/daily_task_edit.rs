@@ -52,7 +52,7 @@ impl<'a> DailyTaskEdit<'a> {
                 ui.add(
                     TextEdit::singleline(&mut self.task.project)
                         .desired_width(ui.available_width())
-                        .hint_text("Required"),
+                        .hint_text(fl!("required")),
                 );
                 ui.end_row();
 
@@ -61,7 +61,7 @@ impl<'a> DailyTaskEdit<'a> {
                 ui.add(
                     TextEdit::singleline(&mut self.task.title)
                         .desired_width(ui.available_width())
-                        .hint_text("Required"),
+                        .hint_text(fl!("required")),
                 );
                 ui.end_row();
             });
@@ -83,7 +83,7 @@ impl<'a> DailyTaskEdit<'a> {
                     available_size,
                     TextEdit::multiline(&mut self.task.detail)
                         .desired_width(ui.available_width())
-                        .hint_text("Optional details..."),
+                        .hint_text(fl!("optional-details")),
                 );
             });
     }

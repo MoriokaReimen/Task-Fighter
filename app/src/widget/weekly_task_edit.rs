@@ -65,7 +65,7 @@ impl<'a> WeeklyTaskEdit<'a> {
                 ui.add(
                     TextEdit::singleline(&mut self.weekly_task.project)
                         .desired_width(ui.available_width())
-                        .hint_text("Required"),
+                        .hint_text(fl!("required")),
                 );
                 ui.end_row();
 
@@ -73,7 +73,7 @@ impl<'a> WeeklyTaskEdit<'a> {
                 ui.add(
                     TextEdit::singleline(&mut self.weekly_task.title)
                         .desired_width(ui.available_width())
-                        .hint_text("Required"),
+                        .hint_text(fl!("required")),
                 );
                 ui.end_row();
             });
@@ -94,7 +94,7 @@ impl<'a> WeeklyTaskEdit<'a> {
                     available_size,
                     TextEdit::multiline(&mut self.weekly_task.detail)
                         .desired_width(ui.available_width())
-                        .hint_text("Optional details..."),
+                        .hint_text(fl!("optional-details")),
                 );
             });
     }
