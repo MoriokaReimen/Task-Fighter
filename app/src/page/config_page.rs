@@ -14,16 +14,26 @@ trait ColorSchemeExt {
 impl ColorSchemeExt for ColorScheme {
     fn label(&self) -> String {
         match self {
-            ColorScheme::LightBlue => fl!("light-blue"),
-            ColorScheme::DarkOrange => fl!("dark-orange"),
-            ColorScheme::WindowsLight => fl!("windows-light"),
-            ColorScheme::WindowsDark => fl!("windows-dark"),
-            ColorScheme::Sakura => fl!("sakura"),
-            ColorScheme::Violet => fl!("violet"),
-            ColorScheme::Chrome => fl!("chrome"),
+            Self::LightBlue => fl!("light-blue"),
+            Self::DarkOrange => fl!("dark-orange"),
+            Self::WindowsLight => fl!("windows-light"),
+            Self::WindowsDark => fl!("windows-dark"),
+            Self::Sakura => fl!("sakura"),
+            Self::Violet => fl!("violet"),
+            Self::Chrome => fl!("chrome"),
         }
     }
 }
+
+const COLOR_SCHEMES: [ColorScheme; 7] = [
+    ColorScheme::LightBlue,
+    ColorScheme::DarkOrange,
+    ColorScheme::WindowsLight,
+    ColorScheme::WindowsDark,
+    ColorScheme::Sakura,
+    ColorScheme::Violet,
+    ColorScheme::Chrome,
+];
 
 trait LocaleExt {
     fn label(&self) -> String;
@@ -32,16 +42,26 @@ trait LocaleExt {
 impl LocaleExt for Locale {
     fn label(&self) -> String {
         match self {
-            Locale::System => fl!("system"),
-            Locale::English => fl!("english"),
-            Locale::Japanese => fl!("japanese"),
-            Locale::German => fl!("german"),
-            Locale::Chinese => fl!("chinese"),
-            Locale::Vietnamese => fl!("vietnamese"),
-            Locale::Spanish => fl!("spanish"),
+            Self::System => fl!("system"),
+            Self::English => fl!("english"),
+            Self::Japanese => fl!("japanese"),
+            Self::German => fl!("german"),
+            Self::Chinese => fl!("chinese"),
+            Self::Vietnamese => fl!("vietnamese"),
+            Self::Spanish => fl!("spanish"),
         }
     }
 }
+
+const LOCALE_OPTIONS: [Locale; 7] = [
+    Locale::System,
+    Locale::Japanese,
+    Locale::English,
+    Locale::Chinese,
+    Locale::German,
+    Locale::Vietnamese,
+    Locale::Spanish,
+];
 
 pub struct ConfigPage {
     back_page: Pages,
@@ -92,55 +112,15 @@ impl Page for ConfigPage {
                     egui::ComboBox::from_id_salt("color_scheme_picker")
                         .selected_text(self.config.color_scheme.label())
                         .show_ui(ui, |ui| {
-                            theme_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.color_scheme,
-                                    ColorScheme::LightBlue,
-                                    &ColorScheme::LightBlue.label(),
-                                )
-                                .changed();
-                            theme_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.color_scheme,
-                                    ColorScheme::DarkOrange,
-                                    &ColorScheme::DarkOrange.label(),
-                                )
-                                .changed();
-                            theme_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.color_scheme,
-                                    ColorScheme::WindowsLight,
-                                    &ColorScheme::WindowsLight.label(),
-                                )
-                                .changed();
-                            theme_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.color_scheme,
-                                    ColorScheme::WindowsDark,
-                                    &ColorScheme::WindowsDark.label(),
-                                )
-                                .changed();
-                            theme_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.color_scheme,
-                                    ColorScheme::Sakura,
-                                    &ColorScheme::Sakura.label(),
-                                )
-                                .changed();
-                            theme_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.color_scheme,
-                                    ColorScheme::Violet,
-                                    &ColorScheme::Violet.label(),
-                                )
-                                .changed();
-                            theme_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.color_scheme,
-                                    ColorScheme::Chrome,
-                                    &ColorScheme::Chrome.label(),
-                                )
-                                .changed();
+                            for scheme in COLOR_SCHEMES {
+                                theme_changed |= ui
+                                    .selectable_value(
+                                        &mut self.config.color_scheme,
+                                        scheme,
+                                        scheme.label(),
+                                    )
+                                    .changed();
+                            }
                         });
                     if theme_changed {
                         work.config.color_scheme = self.config.color_scheme;
@@ -152,55 +132,15 @@ impl Page for ConfigPage {
                     egui::ComboBox::from_id_salt("locale_picker")
                         .selected_text(self.config.locale.label())
                         .show_ui(ui, |ui| {
-                            locale_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.locale,
-                                    Locale::System,
-                                    &Locale::System.label(),
-                                )
-                                .changed();
-                            locale_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.locale,
-                                    Locale::Japanese,
-                                    &Locale::Japanese.label(),
-                                )
-                                .changed();
-                            locale_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.locale,
-                                    Locale::English,
-                                    &Locale::English.label(),
-                                )
-                                .changed();
-                            locale_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.locale,
-                                    Locale::Chinese,
-                                    &Locale::Chinese.label(),
-                                )
-                                .changed();
-                            locale_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.locale,
-                                    Locale::German,
-                                    &Locale::German.label(),
-                                )
-                                .changed();
-                            locale_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.locale,
-                                    Locale::Vietnamese,
-                                    &Locale::Vietnamese.label(),
-                                )
-                                .changed();
-                            locale_changed |= ui
-                                .selectable_value(
-                                    &mut self.config.locale,
-                                    Locale::Spanish,
-                                    &Locale::Spanish.label(),
-                                )
-                                .changed();
+                            for locale in LOCALE_OPTIONS {
+                                locale_changed |= ui
+                                    .selectable_value(
+                                        &mut self.config.locale,
+                                        locale,
+                                        locale.label(),
+                                    )
+                                    .changed();
+                            }
                         });
                     if locale_changed {
                         work.config.locale = self.config.locale;

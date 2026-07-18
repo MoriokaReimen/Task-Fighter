@@ -103,7 +103,7 @@ fn md_to_html(markdown_input: &str) -> String {
     html_output
 }
 
-pub fn create_mail_html(tasks: &[Task], image_data: &str) -> String {
+pub fn create_mail_html(tasks: &[Task], image_data: &str) -> Result<String> {
     // サマリーの集計
     let summary = TemplateSummary {
         total: tasks.len(),
@@ -169,23 +169,20 @@ pub fn create_mail_html(tasks: &[Task], image_data: &str) -> String {
 
     // minijinja の環境セットアップ（文字列インクルードでテンプレートを登録）
     let mut env = Environment::new();
-    env.add_template("mail", include_str!("../assets/mail.html"))
-        .expect("Failed to compile template");
+    env.add_template("mail", include_str!("../assets/mail.html"))?;
 
-    let tmpl = env.get_template("mail").expect("Failed to get template");
+    let tmpl = env.get_template("mail")?;
 
     // レンダリングを実行
-    let rendered = tmpl
-        .render(context! {
-            image_data => image_data,
-            date_headline => date_headline,
-            summary => summary,
-            tasks => template_tasks,
-        })
-        .expect("Failed to render template");
+    let rendered = tmpl.render(context! {
+        image_data => image_data,
+        date_headline => date_headline,
+        summary => summary,
+        tasks => template_tasks,
+    })?;
 
     // テスト要件を満たすため、すべての改行を確実に CRLF 形式に統一
-    rendered.replace("\r\n", "\n").replace('\n', "\r\n")
+    Ok(rendered.replace("\r\n", "\n").replace('\n', "\r\n"))
 }
 
 fn cleanup_old_eml_files(dir: &std::path::Path, retention_days: u64) -> Result<()> {
@@ -224,7 +221,7 @@ fn cleanup_old_eml_files(dir: &std::path::Path, retention_days: u64) -> Result<(
 }
 
 pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
-    let html_text = create_mail_html(tasks, image_data);
+    let html_text = create_mail_html(tasks, image_data)?;
     let raw_subject = Zoned::now()
         .date()
         .strftime("%Y/%m/%d Task Status Report")

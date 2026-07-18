@@ -261,7 +261,7 @@ fn is_double_click_inside(ui: &Ui, rect: Rect) -> bool {
 
 /// If a dragged card was released on top of `loc` this frame, returns the
 /// card's origin location and the row it should be inserted at.
-fn resolve_card_drop(ui: &mut Ui, response: &Response, loc: Location) -> Option<(Location, usize)> {
+fn resolve_card_drop(ui: &Ui, response: &Response, loc: Location) -> Option<(Location, usize)> {
     let insert_row = handle_card_hover(ui, response, loc)?;
     let dragged = response.dnd_release_payload::<Location>()?;
     Some((*dragged, insert_row))
@@ -269,7 +269,7 @@ fn resolve_card_drop(ui: &mut Ui, response: &Response, loc: Location) -> Option<
 
 /// Draws a highlight line marking where a dragged card would land if
 /// dropped on `current_loc`, and returns the row index it would land at.
-fn handle_card_hover(ui: &mut Ui, response: &Response, current_loc: Location) -> Option<usize> {
+fn handle_card_hover(ui: &Ui, response: &Response, current_loc: Location) -> Option<usize> {
     let pointer = ui.input(|i| i.pointer.interact_pos())?;
     let hovered = response.dnd_hover_payload::<Location>()?;
 
@@ -289,7 +289,7 @@ fn handle_card_hover(ui: &mut Ui, response: &Response, current_loc: Location) ->
 }
 
 /// Background color for a column, grouped by priority/status.
-fn column_fill_color(col_idx: usize) -> Color32 {
+const fn column_fill_color(col_idx: usize) -> Color32 {
     match col_idx {
         COL_PENDING_HIGH | COL_WIP_HIGH => Color32::from_rgb(80, 0, 0),
         COL_PENDING_MEDIUM | COL_WIP_MEDIUM => Color32::from_rgb(80, 80, 0),
@@ -308,8 +308,8 @@ fn column_label(col_idx: usize) -> String {
         COL_WIP_HIGH => format!("{} {}", fl!("work-in-progress"), fl!("high")),
         COL_WIP_MEDIUM => format!("{} {}", fl!("work-in-progress"), fl!("medium")),
         COL_WIP_LOW => format!("{} {}", fl!("work-in-progress"), fl!("low")),
-        COL_COMPLETE => fl!("complete").to_string(),
-        COL_CANCELED => fl!("cancel").to_string(),
+        COL_COMPLETE => fl!("complete"),
+        COL_CANCELED => fl!("cancel"),
         _ => format!("Area {}", col_idx + 1),
     }
 }

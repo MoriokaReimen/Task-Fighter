@@ -28,19 +28,15 @@ impl I18n {
     }
 
     pub fn init(&self) -> LanguageIdentifier {
-        if let Ok(guard) = self.current_locale.read() {
-            if let Some(ref lang) = *guard {
-                return lang.clone();
-            }
+        if let Some(lang) = self.current_locale.read().ok().and_then(|g| g.clone()) {
+            return lang;
         }
 
-        let mut guard = self.current_locale.write().unwrap();
-        if guard.is_none() {
-            let detected = Self::detect_system_locale();
-            *guard = Some(detected);
-        }
-
-        guard.as_ref().unwrap().clone()
+        let mut guard = self
+            .current_locale
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        guard.get_or_insert_with(Self::detect_system_locale).clone()
     }
 
     pub fn get_locale(&self) -> Result<LanguageIdentifier> {
@@ -48,10 +44,7 @@ impl I18n {
             .current_locale
             .read()
             .map_err(|_| anyhow::anyhow!("I18n lock is poisoned"))?;
-
-        let lang = guard.as_ref().context("Locale is not initialized yet")?;
-
-        Ok(lang.clone())
+        guard.clone().context("Locale is not initialized yet")
     }
 
     pub fn set_locale(&self, lang: LanguageIdentifier) {
@@ -61,7 +54,7 @@ impl I18n {
     }
 
     pub fn set_locale_from_config(&self, locale: Locale) {
-        let target_lang = match locale {
+        let lang = match locale {
             Locale::System => Self::detect_system_locale(),
             Locale::English => langid!("en"),
             Locale::Japanese => langid!("ja"),
@@ -70,13 +63,12 @@ impl I18n {
             Locale::Vietnamese => langid!("vi"),
             Locale::Spanish => langid!("es"),
         };
-
-        self.set_locale(target_lang);
+        self.set_locale(lang);
     }
 
     fn detect_system_locale() -> LanguageIdentifier {
         sys_locale::get_locale()
-            .and_then(|s| s.parse::<LanguageIdentifier>().ok())
+            .and_then(|s| s.parse().ok())
             .unwrap_or_else(|| langid!("en"))
     }
 }
@@ -87,19 +79,12 @@ macro_rules! fl {
         use fluent_templates::Loader;
         $crate::i18n::LOCALES.lookup(&$crate::i18n::I18n::global().init(), $message_id)
     }};
-
-    ($message_id:literal, $($key:ident = $value:expr),* $(,)?) => {{
+    ($message_id:literal, $($key:ident = $value:expr),+ $(,)?) => {{
         use fluent_templates::Loader;
-
-        let count = [$( { let _ = stringify!($key); 1 } ),*].len();
-        let mut args = std::collections::HashMap::with_capacity(count);
-
-        $(
-            let k = stringify!($key);
-            let v = fluent_templates::fluent_bundle::FluentValue::from($value);
-            args.insert(k, v);
-        )*
-
+        let args: std::collections::HashMap<&str, fluent_templates::fluent_bundle::FluentValue> =
+            [$((stringify!($key), fluent_templates::fluent_bundle::FluentValue::from($value))),+]
+                .into_iter()
+                .collect();
         $crate::i18n::LOCALES.lookup_with_args(&$crate::i18n::I18n::global().init(), $message_id, &args)
     }};
 }

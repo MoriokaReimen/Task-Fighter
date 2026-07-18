@@ -28,7 +28,7 @@ impl KanbanPage {
         }
     }
 
-    fn render_top_panel(&mut self, ui: &mut Ui) {
+    fn render_top_panel(&self, ui: &mut Ui) {
         egui::Panel::top("kanban_top_panel").show(ui, |ui| {
             ui.heading(fl!("kanban"));
         });
@@ -62,7 +62,7 @@ impl KanbanPage {
         });
     }
 
-    fn render_bottom_panel(&mut self, ui: &mut Ui, work: &mut Work) {
+    fn render_bottom_panel(&self, ui: &mut Ui, work: &mut Work) {
         egui::Panel::bottom("kanban_bottom_panel").show(ui, |ui| {
             egui::containers::Sides::new().show(
                 ui,
@@ -121,7 +121,7 @@ impl Page for KanbanPage {
             .map(|task| {
                 task.priority = TaskPriority::High;
                 task.status = TaskStatus::Pending;
-                work.outputs.push(work.core.upsert_task(&task));
+                work.outputs.push(work.core.upsert_task(task));
             })
             .collect::<Vec<_>>();
         let _ = columns[1]
@@ -129,7 +129,7 @@ impl Page for KanbanPage {
             .map(|task| {
                 task.priority = TaskPriority::Medium;
                 task.status = TaskStatus::Pending;
-                work.outputs.push(work.core.upsert_task(&task));
+                work.outputs.push(work.core.upsert_task(task));
             })
             .collect::<Vec<_>>();
         let _ = columns[2]
@@ -137,7 +137,7 @@ impl Page for KanbanPage {
             .map(|task| {
                 task.priority = TaskPriority::Low;
                 task.status = TaskStatus::Pending;
-                work.outputs.push(work.core.upsert_task(&task));
+                work.outputs.push(work.core.upsert_task(task));
             })
             .collect::<Vec<_>>();
 
@@ -146,7 +146,7 @@ impl Page for KanbanPage {
             .map(|task| {
                 task.priority = TaskPriority::High;
                 task.status = TaskStatus::WorkInProgress;
-                work.outputs.push(work.core.upsert_task(&task));
+                work.outputs.push(work.core.upsert_task(task));
             })
             .collect::<Vec<_>>();
         let _ = columns[4]
@@ -154,7 +154,7 @@ impl Page for KanbanPage {
             .map(|task| {
                 task.priority = TaskPriority::Medium;
                 task.status = TaskStatus::WorkInProgress;
-                work.outputs.push(work.core.upsert_task(&task));
+                work.outputs.push(work.core.upsert_task(task));
             })
             .collect::<Vec<_>>();
         let _ = columns[5]
@@ -162,21 +162,21 @@ impl Page for KanbanPage {
             .map(|task| {
                 task.priority = TaskPriority::Low;
                 task.status = TaskStatus::WorkInProgress;
-                work.outputs.push(work.core.upsert_task(&task));
+                work.outputs.push(work.core.upsert_task(task));
             })
             .collect::<Vec<_>>();
         let _ = columns[6]
             .iter_mut()
             .map(|task| {
                 task.status = TaskStatus::Complete;
-                work.outputs.push(work.core.upsert_task(&task));
+                work.outputs.push(work.core.upsert_task(task));
             })
             .collect::<Vec<_>>();
         let _ = columns[7]
             .iter_mut()
             .map(|task| {
                 task.status = TaskStatus::Canceled;
-                work.outputs.push(work.core.upsert_task(&task));
+                work.outputs.push(work.core.upsert_task(task));
             })
             .collect::<Vec<_>>();
 

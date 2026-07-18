@@ -36,7 +36,7 @@ fn setup_system_font(ctx: &egui::Context) {
             };
 
             if let Some(data) = font_data {
-                let font_key = format!("system_font_{}", index);
+                let font_key = format!("system_font_{index}");
                 fonts
                     .font_data
                     .insert(font_key.clone(), Arc::new(egui::FontData::from_owned(data)));

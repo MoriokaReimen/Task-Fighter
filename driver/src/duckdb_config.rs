@@ -55,7 +55,7 @@ impl FromSql for DuckdbColorScheme {
             )
         })?;
 
-        Ok(DuckdbColorScheme(color_scheme))
+        Ok(Self(color_scheme))
     }
 }
 
@@ -78,7 +78,7 @@ impl FromSql for DuckdbLocale {
             )
         })?;
 
-        Ok(DuckdbLocale(locale))
+        Ok(Self(locale))
     }
 }
 

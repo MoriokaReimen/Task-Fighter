@@ -117,7 +117,7 @@ impl eframe::App for App {
                 .push(self.work.core.sync_all_monthly_task());
             self.work.tasks = None;
             self.last_synched = Timestamp::now();
-            info!("Data Synched.")
+            info!("Data Synched.");
         }
     }
 }

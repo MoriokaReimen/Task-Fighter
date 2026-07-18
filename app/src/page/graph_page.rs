@@ -53,7 +53,7 @@ impl GraphPage {
         }
     }
 
-    fn central_panel(&mut self, ui: &mut egui::Ui, work: &mut Work) {
+    fn central_panel(&mut self, ui: &mut egui::Ui, work: &Work) {
         egui::CentralPanel::default().show(ui, |ui: &mut Ui| {
             ui.heading(fl!("task-plot"));
             if !work.outputs.is_empty() || work.plot_data.is_none() {
