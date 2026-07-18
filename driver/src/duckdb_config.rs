@@ -1,12 +1,11 @@
 use anyhow::Result as AnyhowResult;
 use domain::{ColorScheme, Config, Locale};
 use duckdb::Row;
-use std::collections::HashMap;
 use duckdb::{
     Result as DuckdbResult,
     types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
 };
-use std::str::FromStr;
+use std::collections::HashMap;
 
 pub struct DuckdbColorScheme(pub ColorScheme);
 pub struct DuckdbLocale(pub Locale);
@@ -46,13 +45,16 @@ impl ToSql for DuckdbColorScheme {
 impl FromSql for DuckdbColorScheme {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         let val_i32 = i32::column_result(value)?;
-        
+
         let color_scheme = ColorScheme::try_from(val_i32).map_err(|err| {
             FromSqlError::Other(
-                format!("Retrieved undefined ColorScheme id from DuckDB: {val_i32} (Detail: {err})").into(),
+                format!(
+                    "Retrieved undefined ColorScheme id from DuckDB: {val_i32} (Detail: {err})"
+                )
+                .into(),
             )
         })?;
-        
+
         Ok(DuckdbColorScheme(color_scheme))
     }
 }
@@ -68,13 +70,14 @@ impl ToSql for DuckdbLocale {
 impl FromSql for DuckdbLocale {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         let val_i32 = i32::column_result(value)?;
-        
+
         let locale = Locale::try_from(val_i32).map_err(|err| {
             FromSqlError::Other(
-                format!("Retrieved undefined Locale id from DuckDB: {val_i32} (Detail: {err})").into(),
+                format!("Retrieved undefined Locale id from DuckDB: {val_i32} (Detail: {err})")
+                    .into(),
             )
         })?;
-        
+
         Ok(DuckdbLocale(locale))
     }
 }

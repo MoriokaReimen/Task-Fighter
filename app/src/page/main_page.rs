@@ -4,7 +4,6 @@ use crate::widget::SearchConditionModal;
 use crate::widget::TaskTable;
 use crate::widget::search_condition_modal::ModalResult;
 use crate::work::Work;
-use core::ColorScheme;
 use core::prelude::*;
 use core::{TaskFilterFlags, TaskOrderFlags};
 use egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
@@ -14,7 +13,6 @@ pub struct MainPage {
     search_condition_modal: SearchConditionModal,
     about_modal: AboutModal,
     task_table: TaskTable,
-    color_scheme_index: usize,
 }
 
 impl MainPage {
@@ -23,7 +21,6 @@ impl MainPage {
             search_condition_modal: SearchConditionModal::new("main_page_search_condition"),
             about_modal: AboutModal::new(),
             task_table: TaskTable::new(),
-            color_scheme_index: 0usize,
         }
     }
 
@@ -37,15 +34,6 @@ impl MainPage {
     }
 
     fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) {
-        const COLOR_SCHEMES: [ColorScheme; 7] = [
-            ColorScheme::LightBlue,
-            ColorScheme::DarkOrange,
-            ColorScheme::WindowsLight,
-            ColorScheme::WindowsDark,
-            ColorScheme::Sakura,
-            ColorScheme::Violet,
-            ColorScheme::Chrome,
-        ];
         egui::Panel::top("top_menu_bar").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button(fl!("menu"), |ui| {
@@ -61,14 +49,8 @@ impl MainPage {
                         info!("Switch to Monthly Main Page");
                         work.next_page = Pages::MonthlyMain;
                     }
-                    if ui.button(fl!("change-color-scheme")).clicked() {
-                        let color_scheme = COLOR_SCHEMES[self.color_scheme_index];
-                        work.config.color_scheme = color_scheme;
-                        work.core
-                            .save_config(&work.config)
-                            .expect("Failed to save config");
-                        self.color_scheme_index += 1;
-                        self.color_scheme_index %= 7;
+                    if ui.button(fl!("setting")).clicked() {
+                        work.next_page = Pages::Config;
                     }
                     if ui.button(fl!("about")).clicked() {
                         self.about_modal.open();

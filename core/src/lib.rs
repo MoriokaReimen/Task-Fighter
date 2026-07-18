@@ -3,7 +3,7 @@ mod core;
 pub use core::Core;
 pub use core::CoreOutput;
 pub use domain::TaskRecord;
-pub use domain::{ColorScheme, Config};
+pub use domain::{ColorScheme, Config, Locale};
 pub use domain::{DailyTask, MonthlyTask, WeeklyTask};
 pub use domain::{DailyTaskFilterFlags, DailyTaskOrderFlags, DailyTaskSearchFlags};
 pub use domain::{MonthlyTaskFilterFlags, MonthlyTaskOrderFlags, MonthlyTaskSearchFlags};

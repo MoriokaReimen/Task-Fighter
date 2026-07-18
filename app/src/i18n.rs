@@ -1,36 +1,32 @@
 use anyhow::{Context, Result};
+use core::Locale;
 use fluent_templates::static_loader;
 use std::sync::{OnceLock, RwLock};
 use unic_langid::{LanguageIdentifier, langid};
 
 static_loader! {
-    // マクロから直接呼べるように pub にしておきます
     pub static LOCALES = {
         locales: "./i18n/",
         fallback_language: "en",
     };
 }
 
-/// ロケール管理をカプセル化する構造体
 pub struct I18n {
     current_locale: RwLock<Option<LanguageIdentifier>>,
 }
 
 impl I18n {
-    /// 構造体の新しいインスタンスを作成（内部用）
     const fn new() -> Self {
         Self {
             current_locale: RwLock::new(None),
         }
     }
 
-    /// グローバルで共有される唯一の I18n インスタンスへの参照を取得します
     pub fn global() -> &'static Self {
         static INSTANCE: OnceLock<I18n> = OnceLock::new();
         INSTANCE.get_or_init(Self::new)
     }
 
-    /// 必要に応じてシステムロケールで初期化し、現在のロケールを返します
     pub fn init(&self) -> LanguageIdentifier {
         if let Ok(guard) = self.current_locale.read() {
             if let Some(ref lang) = *guard {
@@ -40,16 +36,13 @@ impl I18n {
 
         let mut guard = self.current_locale.write().unwrap();
         if guard.is_none() {
-            let detected = sys_locale::get_locale()
-                .and_then(|s| s.parse::<LanguageIdentifier>().ok())
-                .unwrap_or_else(|| langid!("en"));
+            let detected = Self::detect_system_locale();
             *guard = Some(detected);
         }
 
         guard.as_ref().unwrap().clone()
     }
 
-    /// 現在のロケールを取得します。未初期化やロックエラー時は Err を返します
     pub fn get_locale(&self) -> Result<LanguageIdentifier> {
         let guard = self
             .current_locale
@@ -61,15 +54,29 @@ impl I18n {
         Ok(lang.clone())
     }
 
-    /// 任意のロケールに動的に切り替えます
     pub fn set_locale(&self, lang: LanguageIdentifier) {
         if let Ok(mut guard) = self.current_locale.write() {
             *guard = Some(lang);
         }
     }
+
+    pub fn set_locale_from_config(&self, locale: Locale) {
+        let target_lang = match locale {
+            Locale::System => Self::detect_system_locale(),
+            Locale::English => langid!("en"),
+            Locale::Japanese => langid!("ja"),
+        };
+
+        self.set_locale(target_lang);
+    }
+
+    fn detect_system_locale() -> LanguageIdentifier {
+        sys_locale::get_locale()
+            .and_then(|s| s.parse::<LanguageIdentifier>().ok())
+            .unwrap_or_else(|| langid!("en"))
+    }
 }
 
-/// アプリケーションのどこからでも呼び出せる簡易マクロ
 #[macro_export]
 macro_rules! fl {
     ($message_id:literal) => {{

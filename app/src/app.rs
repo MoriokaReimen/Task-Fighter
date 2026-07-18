@@ -1,4 +1,5 @@
 use super::style;
+use crate::i18n::I18n;
 use crate::page::{self, Page, Pages};
 use crate::work::Work;
 use core::prelude::*;
@@ -51,12 +52,14 @@ impl App {
             Box::new(page::CreateMonthlyTaskPage::new()),
         );
         pages.insert(Pages::Kanban, Box::new(page::KanbanPage::new()));
+        pages.insert(Pages::Config, Box::new(page::ConfigPage::new()));
 
         let mut work = Work::new();
         work.config = work.core.load_config().expect("Failed to load config");
+        I18n::global().set_locale_from_config(work.config.locale);
         work.core.sync_all_daily_task();
         work.core.sync_all_weekly_task();
-        work.core.sync_all_monthly_task();
+        work.core.sync_all_monthly_task(); // TODO sync in main loop
 
         Self { work, pages }
     }
@@ -173,7 +176,6 @@ impl App {
                         warn!("{:?}", other);
                         None
                     }
-
                 }
             })
             .collect();

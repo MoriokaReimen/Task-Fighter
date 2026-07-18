@@ -35,6 +35,9 @@ pub use create_monthly_task_page::*;
 mod kanban_page;
 pub use kanban_page::*;
 
+mod config_page;
+pub use config_page::*;
+
 pub trait Page {
     fn on_entry(&mut self, work: &mut crate::work::Work);
     fn show(&mut self, ui: &mut egui::Ui, work: &mut crate::work::Work);
@@ -65,4 +68,5 @@ pub enum Pages {
     Kanban,
     Graph,
     Timer,
+    Config,
 }
