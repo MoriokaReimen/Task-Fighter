@@ -13,7 +13,7 @@ fn get_frame_option() -> Result<eframe::NativeOptions> {
         width,
         height,
     };
-    let initial_size = egui::vec2(1024.0, 768.0);
+    let initial_size = egui::vec2(1280.0, 832.0);
     Ok(eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("Task Fighter")
