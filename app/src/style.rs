@@ -1,6 +1,7 @@
 use crate::work::Work;
 use core::ColorScheme;
 use egui::{Color32, CornerRadius, Stroke};
+use font_kit::family_name::FamilyName;
 use font_kit::handle::Handle;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
@@ -8,27 +9,52 @@ use std::sync::Arc;
 
 fn setup_system_font(ctx: &egui::Context) {
     let source = SystemSource::new();
-    let font_handle = source
-        .select_best_match(
-            &[font_kit::family_name::FamilyName::SansSerif],
-            &Properties::new(),
-        )
-        .expect("Failed to find a system font");
-
-    let font_data = match font_handle {
-        Handle::Path { path, .. } => std::fs::read(path).expect("Failed to read font file"),
-        Handle::Memory { bytes, .. } => bytes.to_vec(),
-    };
-
     let mut fonts = egui::FontDefinitions::default();
+    let mut loaded_font_names = Vec::new();
 
-    fonts.font_data.insert(
-        "system_sans".to_owned(),
-        Arc::new(egui::FontData::from_owned(font_data)),
-    );
+    let families = vec![
+        FamilyName::Title(".AppleSystemUIFont".to_string()),
+        FamilyName::Title("Helvetica Neue".to_string()),
+        FamilyName::Title("Segoe UI".to_string()),
+        FamilyName::Title("Arial".to_string()),
+        FamilyName::Title("PingFang SC".to_string()),
+        FamilyName::Title("Microsoft YaHei".to_string()),
+        FamilyName::Title("Hiragino Kaku Gothic ProN".to_string()),
+        FamilyName::Title("MS Gothic".to_string()),
+        FamilyName::Title("PingFang TC".to_string()),
+        FamilyName::Title("Microsoft JhengHei".to_string()),
+        FamilyName::Title("Apple SD Gothic Neo".to_string()),
+        FamilyName::Title("Malgun Gothic".to_string()),
+        FamilyName::SansSerif,
+    ];
+
+    for (index, family) in families.into_iter().enumerate() {
+        if let Ok(font_handle) = source.select_best_match(&[family], &Properties::new()) {
+            let font_data = match font_handle {
+                Handle::Path { path, .. } => std::fs::read(path).ok(),
+                Handle::Memory { bytes, .. } => Some(bytes.to_vec()),
+            };
+
+            if let Some(data) = font_data {
+                let font_key = format!("system_font_{}", index);
+                fonts
+                    .font_data
+                    .insert(font_key.clone(), Arc::new(egui::FontData::from_owned(data)));
+                loaded_font_names.push(font_key);
+            }
+        }
+    }
 
     if let Some(vec) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
-        vec.insert(0, "system_sans".to_owned());
+        for (i, name) in loaded_font_names.iter().enumerate() {
+            vec.insert(i, name.clone());
+        }
+    }
+
+    if let Some(vec) = fonts.families.get_mut(&egui::FontFamily::Monospace) {
+        for (i, name) in loaded_font_names.iter().enumerate() {
+            vec.insert(i, name.clone());
+        }
     }
 
     ctx.set_fonts(fonts);
