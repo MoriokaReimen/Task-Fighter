@@ -237,7 +237,7 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
 name = "app"
-version = "8.3.0"
+version = "8.3.1"
 dependencies = [
  "anyhow",
  "bitflags 2.13.0",
@@ -1183,7 +1183,7 @@ dependencies = [
 
 [[package]]
 name = "core"
-version = "8.3.0"
+version = "8.3.1"
 dependencies = [
  "anyhow",
  "dirs",
@@ -1515,7 +1515,7 @@ dependencies = [
 
 [[package]]
 name = "domain"
-version = "8.3.0"
+version = "8.3.1"
 dependencies = [
  "anyhow",
  "bitflags 2.13.0",
@@ -1539,7 +1539,7 @@ checksum = "d8b14ccef22fc6f5a8f4d7d768562a182c04ce9a3b3157b91390b52ddfdf1a76"
 
 [[package]]
 name = "driver"
-version = "8.3.0"
+version = "8.3.1"
 dependencies = [
  "anyhow",
  "base64",
@@ -3374,7 +3374,7 @@ checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 
 [[package]]
 name = "main"
-version = "8.3.0"
+version = "8.3.1"
 dependencies = [
  "anyhow",
  "app",
@@ -6197,7 +6197,7 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 
 [[package]]
 name = "utility"
-version = "8.3.0"
+version = "8.3.1"
 dependencies = [
  "anyhow",
  "domain",
