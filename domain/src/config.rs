@@ -33,13 +33,13 @@ impl TryFrom<i32> for Locale {
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Locale::System),
-            1 => Ok(Locale::English),
-            2 => Ok(Locale::Japanese),
-            3 => Ok(Locale::German),
-            4 => Ok(Locale::Chinese),
-            5 => Ok(Locale::Vietnamese),
-            6 => Ok(Locale::Spanish),
+            0 => Ok(Self::System),
+            1 => Ok(Self::English),
+            2 => Ok(Self::Japanese),
+            3 => Ok(Self::German),
+            4 => Ok(Self::Chinese),
+            5 => Ok(Self::Vietnamese),
+            6 => Ok(Self::Spanish),
             _ => Err(format!("{value} Invalid value for Locale")),
         }
     }
