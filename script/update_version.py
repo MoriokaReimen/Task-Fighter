@@ -13,6 +13,11 @@ NUSPEC_VERSION_REGEX = re.compile(
     re.IGNORECASE
 )
 
+PS1_VERSION_REGEX = re.compile(
+    r'(?P<prefix>download/|task-fighter-|tag/)(?P<version>[\d\.]+)(?P<suffix>/|-i686|-x86_64|["\'])',
+    re.IGNORECASE
+)
+
 def update_file_content(file_path, regex, new_version):
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -64,9 +69,11 @@ def main():
             if file == 'Cargo.toml':
                 if update_file_content(file_path, CARGO_VERSION_REGEX, new_version):
                     is_updated = True
-
             elif file.endswith('.nuspec'):
                 if update_file_content(file_path, NUSPEC_VERSION_REGEX, new_version):
+                    is_updated = True
+            elif file.endswith('.ps1'):
+                if update_file_content(file_path, PS1_VERSION_REGEX, new_version):
                     is_updated = True
 
             if is_updated:

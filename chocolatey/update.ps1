@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 
 $packageName = "task-fighter"
 # HTMLではなく、確実な情報を返すGitHubの公式APIを使用
@@ -118,5 +118,4 @@ if (Test-Path $nuspecPath) {
     
     Set-Content -Path $nuspecPath -Value $content.TrimEnd() -Encoding UTF8
 }
-
 

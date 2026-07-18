@@ -2,8 +2,8 @@
 
 $packageName = 'task-fighter'
 $toolsDir    = $PSScriptRoot
-$url32       = 'https://github.com/MoriokaReimen/Task-Fighter/releases/download/8.2.4/task-fighter-8.2.4-i686-pc-windows-msvc.zip'
-$url64       = 'https://github.com/MoriokaReimen/Task-Fighter/releases/download/8.2.4/task-fighter-8.2.4-x86_64-pc-windows-msvc.zip'
+$url32       = 'https://github.com/MoriokaReimen/Task-Fighter/releases/download/8.3.0/task-fighter-8.3.0-i686-pc-windows-msvc.zip'
+$url64       = 'https://github.com/MoriokaReimen/Task-Fighter/releases/download/8.3.0/task-fighter-8.3.0-x86_64-pc-windows-msvc.zip'
 $checksum32  = 'F620F6269E40146F3C2F9BADEC7985C4C88D9AA8E0AE903DCEADD822BB8F3FA2'
 $checksum64  = '9EAE318C30974864F80ED8F4CA65CC0689597E0A3430623A27B7C8E64848BD5A'
 
