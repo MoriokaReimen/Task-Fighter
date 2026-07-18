@@ -1,3 +1,4 @@
+use crate::migrations;
 use anyhow::{Context, Result, bail};
 use duckdb::Connection;
 use std::fs;
@@ -11,7 +12,6 @@ pub enum DuckdbPath {
 }
 
 pub fn connect(duckdb_path: &DuckdbPath) -> Result<Connection> {
-    const CREATE_TABLE_SQL: &str = include_str!("../assets/connect.sql");
     let conn = match duckdb_path {
         DuckdbPath::InMemory => {
             info!("Initializing DuckDB in-memory database.");
@@ -26,8 +26,8 @@ pub fn connect(duckdb_path: &DuckdbPath) -> Result<Connection> {
             Connection::open(path.join("task-fighter.db"))?
         }
     };
-    conn.execute_batch(CREATE_TABLE_SQL)
-        .context("Failed to connect database")?;
+
+    migrations::migrate(&conn).context("Failed to migrate database schema")?;
     info!("Database connection established.");
 
     Ok(conn)
@@ -184,6 +184,19 @@ mod tests {
         Ok(exists)
     }
 
+    fn exists_schema_migrations_table(conn: &Connection) -> Result<bool> {
+        info!("Checking if 'schema_migrations' table exists in the database.");
+        let sql = "
+            SELECT EXISTS (
+                SELECT 1 
+                FROM information_schema.tables 
+                WHERE table_name = 'schema_migrations'
+            );
+        ";
+        let exists: bool = conn.query_row(sql, [], |row| row.get(0))?;
+        Ok(exists)
+    }
+
     #[test]
     fn test_connect_in_memory() -> Result<()> {
         let path = DuckdbPath::InMemory;
@@ -216,6 +229,10 @@ mod tests {
             exists_work_time_table(&conn)?,
             "'work_time' table should exist in database"
         );
+        assert!(
+            exists_schema_migrations_table(&conn)?,
+            "'schema_migrations' table should exist in database"
+        );
 
         // Sequences Assertion
         assert!(
@@ -240,5 +257,41 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    #[test]
+    fn test_connect_twice_is_idempotent() -> Result<()> {
+        // Simulates an existing user re-opening an already-migrated database:
+        // reconnecting must not fail or re-apply migrations.
+        let dir = tempfile_dir()?;
+        let path = DuckdbPath::InDirectory(dir.clone());
+
+        connect(&path)?;
+        let conn = connect(&path)?;
+
+        let applied_count: u32 =
+            conn.query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
+                row.get(0)
+            })?;
+        assert_eq!(applied_count as usize, migrations::MIGRATIONS.len());
+
+        fs::remove_dir_all(dir)?;
+        Ok(())
+    }
+
+    fn tempfile_dir() -> Result<PathBuf> {
+        let mut dir = std::env::temp_dir();
+        dir.push(format!("task-fighter-test-{}", uuid_like()));
+        Ok(dir)
+    }
+
+    // Small dependency-free unique suffix so parallel test runs don't collide
+    // on the same directory.
+    fn uuid_like() -> u128 {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
     }
 }

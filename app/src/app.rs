@@ -109,8 +109,13 @@ impl eframe::App for App {
         let synch_interval = jiff::SignedDuration::from_mins(10);
         if Timestamp::now().duration_since(self.last_synched) > synch_interval {
             self.work.outputs.push(self.work.core.sync_all_daily_task());
-            self.work.outputs.push(self.work.core.sync_all_weekly_task());
-            self.work.outputs.push(self.work.core.sync_all_monthly_task());
+            self.work
+                .outputs
+                .push(self.work.core.sync_all_weekly_task());
+            self.work
+                .outputs
+                .push(self.work.core.sync_all_monthly_task());
+            self.work.tasks = None;
             self.last_synched = Timestamp::now();
             info!("Data Synched.")
         }

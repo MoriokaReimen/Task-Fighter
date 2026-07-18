@@ -69,4 +69,3 @@ CREATE TABLE IF NOT EXISTS config (
     color_scheme INTEGER NOT NULL,
     locale INTEGER NOT NULL
 );
-

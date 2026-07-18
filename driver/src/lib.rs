@@ -2,6 +2,8 @@ mod connect;
 pub use connect::*;
 pub use duckdb::Connection;
 
+mod migrations;
+
 mod duckdb_task;
 mod task_record;
 pub use task_record::*;
