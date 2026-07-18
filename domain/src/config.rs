@@ -1,8 +1,5 @@
-use anyhow::{Context, anyhow};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
-use std::fmt;
-use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub enum Locale {
@@ -10,6 +7,11 @@ pub enum Locale {
     System,
     English,
     Japanese,
+
+    German,
+    Chinese,
+    Vietnamese,
+    Spanish,
 }
 
 impl From<Locale> for i32 {
@@ -18,6 +20,10 @@ impl From<Locale> for i32 {
             Locale::System => 0,
             Locale::English => 1,
             Locale::Japanese => 2,
+            Locale::German => 3,
+            Locale::Chinese => 4,
+            Locale::Vietnamese => 5,
+            Locale::Spanish => 6,
         }
     }
 }
@@ -30,55 +36,12 @@ impl TryFrom<i32> for Locale {
             0 => Ok(Locale::System),
             1 => Ok(Locale::English),
             2 => Ok(Locale::Japanese),
+            3 => Ok(Locale::German),
+            4 => Ok(Locale::Chinese),
+            5 => Ok(Locale::Vietnamese),
+            6 => Ok(Locale::Spanish),
             _ => Err(format!("{value} Invalid value for Locale")),
         }
-    }
-}
-
-impl Locale {
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::System => "System",
-            Self::English => "English",
-            Self::Japanese => "Japanese",
-        }
-    }
-}
-
-// 2. 標準の AsRef<str> トレイトを実装
-impl AsRef<str> for Locale {
-    fn as_ref(&self) -> &str {
-        self.as_str()
-    }
-}
-
-// 3. (オプション) 標準の Display トレイトを実装しておくと、format!("{}", scheme) などが可能に
-impl fmt::Display for Locale {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
-
-// 1. anyhow::Error を返す TryFrom<&str> の実装
-impl<'a> TryFrom<&'a str> for Locale {
-    type Error = anyhow::Error;
-
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        match value {
-            "System" => Ok(Self::System),
-            "English" => Ok(Self::English),
-            "Japanese" => Ok(Self::Japanese),
-            _ => Err(anyhow!("Undefined Locale: '{value}'")),
-        }
-    }
-}
-
-impl FromStr for Locale {
-    type Err = anyhow::Error;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        Self::try_from(value).with_context(|| format!("Failed convert string to Locale: {value}"))
     }
 }
 
@@ -122,62 +85,6 @@ impl TryFrom<i32> for ColorScheme {
             6 => Ok(Self::Chrome),
             _ => Err(format!("{value} Invalid value for ColorScheme")),
         }
-    }
-}
-
-impl ColorScheme {
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::LightBlue => "LightBlue",
-            Self::DarkOrange => "DarkOrange",
-            Self::WindowsLight => "WindowsLight",
-            Self::WindowsDark => "WindowsDark",
-            Self::Sakura => "Sakura",
-            Self::Violet => "Violet",
-            Self::Chrome => "Chrome",
-        }
-    }
-}
-
-// 2. 標準の AsRef<str> トレイトを実装
-impl AsRef<str> for ColorScheme {
-    fn as_ref(&self) -> &str {
-        self.as_str()
-    }
-}
-
-// 3. (オプション) 標準の Display トレイトを実装しておくと、format!("{}", scheme) などが可能に
-impl fmt::Display for ColorScheme {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
-
-// 1. anyhow::Error を返す TryFrom<&str> の実装
-impl<'a> TryFrom<&'a str> for ColorScheme {
-    type Error = anyhow::Error;
-
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        match value {
-            "Light Blue" | "LightBlue" => Ok(Self::LightBlue),
-            "Dark Orange" | "DarkOrange" => Ok(Self::DarkOrange),
-            "Windows Light" | "WindowsLight" => Ok(Self::WindowsLight),
-            "Windows Dark" | "WindowsDark" => Ok(Self::WindowsDark),
-            "Sakura" => Ok(Self::Sakura),
-            "Violet" => Ok(Self::Violet),
-            "Chrome" => Ok(Self::Chrome),
-            _ => Err(anyhow!("Undefined ColorScheme: '{value}'")),
-        }
-    }
-}
-
-impl FromStr for ColorScheme {
-    type Err = anyhow::Error;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        Self::try_from(value)
-            .with_context(|| format!("Failed convert string to ColorScheme: {value}"))
     }
 }
 

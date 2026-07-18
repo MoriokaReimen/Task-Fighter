@@ -104,3 +104,8 @@ windows-light = Windows Light
 work-in-progress = 🏃 In Progress
 working-on = 🗣 Working on:
 yes = 👍 Yes
+
+german = German
+chinese = Chinese
+vietnamese = Vietnamese
+spanish = Spanish

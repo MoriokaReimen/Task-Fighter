@@ -34,6 +34,10 @@ impl LocaleExt for Locale {
             Locale::System => fl!("system"),
             Locale::English => fl!("english"),
             Locale::Japanese => fl!("japanese"),
+            Locale::German => fl!("german"),
+            Locale::Chinese => fl!("chinese"),
+            Locale::Vietnamese => fl!("vietnamese"),
+            Locale::Spanish => fl!("spanish"),
         }
     }
 }
@@ -162,6 +166,34 @@ impl Page for ConfigPage {
                                     &mut self.config.locale,
                                     Locale::English,
                                     &Locale::English.label(),
+                                )
+                                .changed();
+                            locale_changed |= ui
+                                .selectable_value(
+                                    &mut self.config.locale,
+                                    Locale::Chinese,
+                                    &Locale::Chinese.label(),
+                                )
+                                .changed();
+                            locale_changed |= ui
+                                .selectable_value(
+                                    &mut self.config.locale,
+                                    Locale::German,
+                                    &Locale::German.label(),
+                                )
+                                .changed();
+                            locale_changed |= ui
+                                .selectable_value(
+                                    &mut self.config.locale,
+                                    Locale::Vietnamese,
+                                    &Locale::Vietnamese.label(),
+                                )
+                                .changed();
+                            locale_changed |= ui
+                                .selectable_value(
+                                    &mut self.config.locale,
+                                    Locale::Spanish,
+                                    &Locale::Spanish.label(),
                                 )
                                 .changed();
                         });

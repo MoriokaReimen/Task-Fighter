@@ -65,6 +65,10 @@ impl I18n {
             Locale::System => Self::detect_system_locale(),
             Locale::English => langid!("en"),
             Locale::Japanese => langid!("ja"),
+            Locale::German => langid!("de"),
+            Locale::Chinese => langid!("zh"),
+            Locale::Vietnamese => langid!("vi"),
+            Locale::Spanish => langid!("es"),
         };
 
         self.set_locale(target_lang);
