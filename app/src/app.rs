@@ -5,6 +5,7 @@ use crate::work::Work;
 use core::prelude::*;
 use core::{CoreOutput, Receiver, TryRecvError};
 use egui::Ui;
+use jiff::Timestamp;
 use std::collections::HashMap;
 use tracing::{error, info, warn};
 
@@ -12,6 +13,7 @@ use tracing::{error, info, warn};
 pub struct App {
     work: Work,
     pages: HashMap<Pages, Box<dyn Page>>,
+    last_synched: Timestamp,
 }
 
 impl App {
@@ -59,9 +61,14 @@ impl App {
         I18n::global().set_locale_from_config(work.config.locale);
         work.core.sync_all_daily_task();
         work.core.sync_all_weekly_task();
-        work.core.sync_all_monthly_task(); // TODO sync in main loop
+        work.core.sync_all_monthly_task();
+        let last_synched = Timestamp::now();
 
-        Self { work, pages }
+        Self {
+            work,
+            pages,
+            last_synched,
+        }
     }
 }
 
@@ -97,6 +104,15 @@ impl eframe::App for App {
             } else {
                 warn!("Page not found: {:?}", self.work.next_page);
             }
+        }
+
+        let synch_interval = jiff::SignedDuration::from_mins(10);
+        if Timestamp::now().duration_since(self.last_synched) > synch_interval {
+            self.work.core.sync_all_daily_task();
+            self.work.core.sync_all_weekly_task();
+            self.work.core.sync_all_monthly_task();
+            self.last_synched = Timestamp::now();
+            info!("Data Synched.")
         }
     }
 }
