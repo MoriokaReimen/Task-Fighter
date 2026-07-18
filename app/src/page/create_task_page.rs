@@ -1,4 +1,5 @@
 use crate::page::{Page, Pages};
+use crate::widget::MenuBar;
 use crate::widget::TaskEdit;
 use crate::widget::WarningModal;
 use crate::widget::YesNoCancelModal;
@@ -15,6 +16,7 @@ pub struct CreateTaskPage {
     yes_no_cancel: YesNoCancelModal,
     yes_no: YesNoModal,
     warning: WarningModal,
+    menu_bar: MenuBar,
     back_page: Pages,
 }
 
@@ -24,6 +26,7 @@ impl CreateTaskPage {
             yes_no_cancel: YesNoCancelModal::new("create_task_yes_no_cancel"),
             yes_no: YesNoModal::new("create_task_yes_no"),
             warning: WarningModal::new("create_task_warning"),
+            menu_bar: MenuBar::new(),
             back_page: Pages::Main,
         }
     }
@@ -41,6 +44,8 @@ impl Page for CreateTaskPage {
     }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
+        self.menu_bar.show(ui, work);
+
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout automatically places items horizontally without nested horizontal blocks

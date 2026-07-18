@@ -59,9 +59,9 @@ impl App {
         let mut work = Work::new();
         work.config = work.core.load_config().expect("Failed to load config");
         I18n::global().set_locale_from_config(work.config.locale);
-        work.core.sync_all_daily_task();
-        work.core.sync_all_weekly_task();
-        work.core.sync_all_monthly_task();
+        work.outputs.push(work.core.sync_all_daily_task());
+        work.outputs.push(work.core.sync_all_weekly_task());
+        work.outputs.push(work.core.sync_all_monthly_task());
         let last_synched = Timestamp::now();
 
         Self {
@@ -108,9 +108,9 @@ impl eframe::App for App {
 
         let synch_interval = jiff::SignedDuration::from_mins(10);
         if Timestamp::now().duration_since(self.last_synched) > synch_interval {
-            self.work.core.sync_all_daily_task();
-            self.work.core.sync_all_weekly_task();
-            self.work.core.sync_all_monthly_task();
+            self.work.outputs.push(self.work.core.sync_all_daily_task());
+            self.work.outputs.push(self.work.core.sync_all_weekly_task());
+            self.work.outputs.push(self.work.core.sync_all_monthly_task());
             self.last_synched = Timestamp::now();
             info!("Data Synched.")
         }

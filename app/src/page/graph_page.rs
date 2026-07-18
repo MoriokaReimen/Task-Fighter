@@ -1,5 +1,6 @@
 use crate::page::{Page, Pages};
 use crate::widget::Graph;
+use crate::widget::MenuBar;
 use crate::work::Work;
 use core::Task;
 use egui::Ui;
@@ -8,12 +9,14 @@ use tracing::info;
 
 pub struct GraphPage {
     graph: Graph,
+    menu_bar: MenuBar,
 }
 
 impl GraphPage {
     pub fn new() -> Self {
         Self {
             graph: Graph::new(),
+            menu_bar: MenuBar::new(),
         }
     }
 
@@ -74,6 +77,7 @@ impl Page for GraphPage {
 
     /// Renders the task editing page inside a dedicated panel setup.
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
+        self.menu_bar.show(ui, work);
         self.bottom_panel(ui, work);
         self.central_panel(ui, work);
     }

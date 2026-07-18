@@ -1,20 +1,26 @@
 use crate::page::{Page, Pages};
+use crate::widget::MenuBar;
 use crate::widget::StopWatch;
 use crate::work::Work;
 use egui::{RichText, ScrollArea, TextEdit, Ui};
 use std::time::Duration;
 
-pub struct TimerPage {}
+pub struct TimerPage {
+    menu_bar: MenuBar,
+}
 
 impl TimerPage {
-    pub const fn new() -> Self {
-        Self {}
+    pub fn new() -> Self {
+        Self {
+            menu_bar: MenuBar::new(),
+        }
     }
 }
 
 impl Page for TimerPage {
     fn on_entry(&mut self, _: &mut crate::work::Work) {}
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
+        self.menu_bar.show(ui, work);
         // 毎フレーム再描画を要求（アニメーションを滑らかにするため）
         ui.ctx().request_repaint_after(Duration::from_millis(20));
         egui::CentralPanel::default().show(ui, |ui: &mut Ui| {

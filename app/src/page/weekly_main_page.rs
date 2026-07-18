@@ -1,8 +1,7 @@
 use crate::page::{Page, Pages};
-use crate::widget::AboutModal;
+use crate::widget::MenuBar;
 use crate::widget::WeeklyTaskTable; // WeeklyTaskTable をインポート
 use crate::work::Work;
-use core::ColorScheme;
 use core::prelude::*;
 use core::{WeeklyTaskFilterFlags, WeeklyTaskOrderFlags}; // Weekly用のフラグを使用
 use egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
@@ -10,72 +9,18 @@ use tracing::{error, info};
 
 pub struct WeeklyMainPage {
     // 構造体名を Weekly に変更
-    about_modal: AboutModal,
     weekly_task_table: WeeklyTaskTable, // Weekly 向けに変更
-    color_scheme_index: usize,
     show_only_active: bool,
+    menu_bar: MenuBar,
 }
 
 impl WeeklyMainPage {
     pub fn new() -> Self {
         Self {
-            about_modal: AboutModal::new(),
             weekly_task_table: WeeklyTaskTable::new(), // Weekly 向けに変更
-            color_scheme_index: 0usize,
             show_only_active: true,
+            menu_bar: MenuBar::new(),
         }
-    }
-
-    fn render_top_tool_bar(&mut self, work: &mut Work, ui: &mut Ui) {
-        const COLOR_SCHEMES: [ColorScheme; 7] = [
-            ColorScheme::LightBlue,
-            ColorScheme::DarkOrange,
-            ColorScheme::WindowsLight,
-            ColorScheme::WindowsDark,
-            ColorScheme::Sakura,
-            ColorScheme::Violet,
-            ColorScheme::Chrome,
-        ];
-        egui::Panel::top("top_menu_bar").show(ui, |ui| {
-            egui::MenuBar::new().ui(ui, |ui| {
-                ui.menu_button(fl!("menu"), |ui| {
-                    if ui.button(fl!("edit-task")).clicked() {
-                        info!("Switch to Main Page");
-                        work.outputs.push(work.core.sync_all_monthly_task());
-                        work.tasks = None;
-                        work.next_page = Pages::Main;
-                    }
-                    if ui.button(fl!("edit-daily-task")).clicked() {
-                        info!("Switch to Daily Main Page");
-                        work.daily_tasks = None;
-                        work.next_page = Pages::DailyMain;
-                    }
-                    if ui.button(fl!("edit-monthly-task")).clicked() {
-                        info!("Switch to Monthly Main Page");
-                        work.monthly_tasks = None;
-                        work.next_page = Pages::MonthlyMain;
-                    }
-                    if ui.button(fl!("change-color-scheme")).clicked() {
-                        let color_scheme = COLOR_SCHEMES[self.color_scheme_index];
-                        work.config.color_scheme = color_scheme;
-                        work.core
-                            .save_config(&work.config)
-                            .expect("Failed to save config");
-                        self.color_scheme_index += 1;
-                        self.color_scheme_index %= 7;
-                    }
-                    if ui.button(fl!("about")).clicked() {
-                        self.about_modal.open();
-                    }
-                    if ui.button(fl!("quit")).clicked() {
-                        ui.send_viewport_cmd(egui::ViewportCommand::Close);
-                    }
-                });
-            });
-        });
-
-        let ctx = ui.ctx();
-        self.about_modal.show(ctx);
     }
 
     /// メインコンテンツ（WeeklyTask一覧リスト / ローディング / 空表示）のレンダリング
@@ -196,7 +141,7 @@ impl Page for WeeklyMainPage {
                 .push(work.core.fetch_all_weekly_task(filter_flag, order_flag));
         }
 
-        self.render_top_tool_bar(work, ui);
+        self.menu_bar.show(ui, work);
 
         // --- Bottom Action Panel ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui| {

@@ -1,5 +1,6 @@
 use crate::i18n::I18n;
 use crate::page::{Page, Pages};
+use crate::widget::MenuBar;
 use crate::work::Work;
 use core::prelude::*;
 use core::{ColorScheme, Config, Locale};
@@ -45,12 +46,14 @@ impl LocaleExt for Locale {
 pub struct ConfigPage {
     back_page: Pages,
     config: Config,
+    menu_bar: MenuBar,
 }
 
 impl ConfigPage {
     pub fn new() -> Self {
         Self {
             back_page: Pages::Main,
+            menu_bar: MenuBar::new(),
             config: Config::default(),
         }
     }
@@ -63,6 +66,8 @@ impl Page for ConfigPage {
     }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
+        self.menu_bar.show(ui, work);
+
         egui::Panel::bottom("config_bottom_panel").show(ui, |ui: &mut Ui| {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 if ui

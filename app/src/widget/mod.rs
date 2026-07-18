@@ -30,3 +30,5 @@ mod monthly_task_table;
 pub use monthly_task_table::*;
 mod kanban_area;
 pub use kanban_area::*;
+mod menu_bar;
+pub use menu_bar::*;

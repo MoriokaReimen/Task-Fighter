@@ -1,4 +1,5 @@
 use crate::page::{Page, Pages};
+use crate::widget::MenuBar;
 use crate::widget::TaskEdit;
 use crate::widget::WarningModal;
 use crate::widget::YesNoCancelModal;
@@ -16,6 +17,7 @@ pub struct EditTaskPage {
     yes_no: YesNoModal,
     warning: WarningModal,
     back_page: Pages,
+    menu_bar: MenuBar,
 }
 
 impl EditTaskPage {
@@ -25,6 +27,7 @@ impl EditTaskPage {
             yes_no: YesNoModal::new("create_task_yes_no"),
             warning: WarningModal::new("create_task_warning"),
             back_page: Pages::Main,
+            menu_bar: MenuBar::new(),
         }
     }
 }
@@ -35,6 +38,7 @@ impl Page for EditTaskPage {
     }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
+        self.menu_bar.show(ui, work);
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             // Right-to-left layout places buttons from rightmost to leftmost

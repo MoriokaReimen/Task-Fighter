@@ -1,5 +1,6 @@
 use crate::page::{Page, Pages};
 use crate::widget::KanbanArea;
+use crate::widget::MenuBar;
 use crate::work::Work;
 use core::prelude::*;
 use core::{TaskFilterFlags, TaskOrderFlags};
@@ -14,6 +15,7 @@ pub struct KanbanPage {
     kanban_area: KanbanArea,
     back_page: Pages,
     kanban_ready: bool,
+    menu_bar: MenuBar,
 }
 
 impl KanbanPage {
@@ -22,6 +24,7 @@ impl KanbanPage {
             kanban_area: KanbanArea::default(),
             back_page: Pages::Main,
             kanban_ready: false,
+            menu_bar: MenuBar::new(),
         }
     }
 
@@ -103,6 +106,7 @@ impl Page for KanbanPage {
             work.outputs
                 .push(work.core.fetch_all_task(filter_flag, order_flag));
         }
+        self.menu_bar.show(ui, work);
 
         // eguiの原則通り Top -> Bottom -> Central の順でパネルを配置
         self.render_top_panel(ui);

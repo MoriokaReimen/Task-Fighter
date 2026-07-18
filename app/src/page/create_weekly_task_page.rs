@@ -1,4 +1,5 @@
 use crate::page::{Page, Pages};
+use crate::widget::MenuBar;
 use crate::widget::WarningModal;
 use crate::widget::WeeklyTaskEdit; // WeeklyTaskEdit をインポート
 use crate::widget::YesNoCancelModal;
@@ -16,6 +17,7 @@ pub struct CreateWeeklyTaskPage {
     yes_no_cancel: YesNoCancelModal,
     yes_no: YesNoModal,
     warning: WarningModal,
+    menu_bar: MenuBar,
 }
 
 impl CreateWeeklyTaskPage {
@@ -24,6 +26,7 @@ impl CreateWeeklyTaskPage {
             yes_no_cancel: YesNoCancelModal::new("create_weekly_task_yes_no_cancel"),
             yes_no: YesNoModal::new("create_weekly_task_yes_no"),
             warning: WarningModal::new("create_weekly_task_warning"),
+            menu_bar: MenuBar::new(),
         }
     }
 }
@@ -32,6 +35,7 @@ impl Page for CreateWeeklyTaskPage {
     fn on_entry(&mut self, _: &mut crate::work::Work) {}
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
+        self.menu_bar.show(ui, work);
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {

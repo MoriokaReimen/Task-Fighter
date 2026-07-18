@@ -1,5 +1,6 @@
 use crate::page::{Page, Pages};
 use crate::widget::DailyTaskEdit; // 【変更】DailyTaskEditをインポート
+use crate::widget::MenuBar;
 use crate::widget::WarningModal;
 use crate::widget::YesNoCancelModal;
 use crate::widget::YesNoModal;
@@ -15,6 +16,7 @@ pub struct EditDailyTaskPage {
     yes_no_cancel: YesNoCancelModal,
     yes_no: YesNoModal,
     warning: WarningModal,
+    menu_bar: MenuBar,
 }
 
 impl EditDailyTaskPage {
@@ -23,6 +25,7 @@ impl EditDailyTaskPage {
             yes_no_cancel: YesNoCancelModal::new("edit_daily_task_yes_no_cancel"),
             yes_no: YesNoModal::new("edit_daily_task_yes_no"),
             warning: WarningModal::new("edit_daily_task_warning"),
+            menu_bar: MenuBar::new(),
         }
     }
 }
@@ -31,6 +34,7 @@ impl Page for EditDailyTaskPage {
     fn on_entry(&mut self, _: &mut crate::work::Work) {}
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
+        self.menu_bar.show(ui, work);
         // --- Bottom Action Bar ---
         egui::Panel::bottom("bottom_panel").show(ui, |ui: &mut Ui| {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
