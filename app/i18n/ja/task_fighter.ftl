@@ -104,8 +104,9 @@ windows-light = Windows ライト
 work-in-progress = 🏃 進行中
 working-on = 🗣 作業中:
 yes = 👍 はい
-
 german = ドイツ語
 chinese = 中国語
 vietnamese = ベトナム語
 spanish = スペイン語
+export-markdown = 📝 マークダウンに出力
+

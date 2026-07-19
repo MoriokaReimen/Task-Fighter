@@ -108,3 +108,4 @@ german = Tiếng Đức
 chinese = Tiếng Trung
 vietnamese = Tiếng Việt
 spanish = Tiếng Tây Ban Nha
+export-markdown = 📝 Xuất ra Markdown

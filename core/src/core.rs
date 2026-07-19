@@ -27,6 +27,7 @@ pub enum CoreOutput {
     UpdateTask(Receiver<Result<()>>),
     SearchTask(Receiver<Result<Vec<Task>>>),
     MailDaily(Receiver<Result<()>>),
+    ExportMarkdown(Receiver<Result<()>>),
     PlotData(Receiver<PlotResult>),
     /* Elements for DailyTask  */
     DeleteDailyTask(Receiver<Result<()>>),

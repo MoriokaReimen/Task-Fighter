@@ -108,4 +108,4 @@ german = Deutsch
 chinese = Chinesisch
 vietnamese = Vietnamesisch
 spanish = Spanisch
-
+export-markdown = 📝 In Markdown exportieren

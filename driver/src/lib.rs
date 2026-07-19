@@ -37,3 +37,6 @@ pub use work_time_record::*;
 mod config_record;
 mod duckdb_config;
 pub use config_record::*;
+
+mod markdown;
+pub use markdown::*;

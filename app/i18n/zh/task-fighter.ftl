@@ -109,3 +109,4 @@ german = 德语
 chinese = 中文
 vietnamese = 越南语
 spanish = 西班牙语
+export-markdown = 📝 导出为 Markdown
