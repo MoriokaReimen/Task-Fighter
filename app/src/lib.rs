@@ -7,3 +7,4 @@ mod style;
 mod widget;
 mod work;
 pub use main_app::start_app;
+mod panic_handler;

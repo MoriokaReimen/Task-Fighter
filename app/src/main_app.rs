@@ -1,4 +1,5 @@
 use crate::app::App;
+use crate::panic_handler;
 use anyhow::Result;
 
 /// Generates window configuration and initializes the application icon.
@@ -26,6 +27,15 @@ fn get_frame_option() -> Result<eframe::NativeOptions> {
 
 /// Main entry point for launching the native GUI application.
 pub fn start_app() -> Result<()> {
+    panic_handler::register(panic_handler::AppInfo {
+        name: "Task Fighter",
+        additional_text: "We are sorry, the application has crashed. To help us fix the crash, please report it using the button below.",
+        links: vec![panic_handler::Link {
+            label: "Task Fighter Github Page",
+            url: "https://github.com/MoriokaReimen/TaskRaider/issues",
+        }],
+    });
+
     let native_options = get_frame_option()?;
 
     eframe::run_native(
