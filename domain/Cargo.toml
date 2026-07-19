@@ -1,6 +1,6 @@
 [package]
 name = "domain"
-version = "8.3.1"
+version = "8.4.0"
 edition = "2024"
 
 [dependencies]
