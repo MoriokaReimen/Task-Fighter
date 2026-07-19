@@ -183,6 +183,10 @@ impl App {
                         Self::check_rx(rx, "Failed to send daily report mail", |()| {})
                             .then_some(output)
                     }
+                    CoreOutput::ExportMarkdown(rx) => {
+                        Self::check_rx(rx, "Failed to export to markdown", |()| {})
+                            .then_some(output)
+                    }
                     CoreOutput::SyncAllDailyTask(rx) => {
                         Self::check_rx(rx, "Failed to sync daily tasks", |()| {}).then_some(output)
                     }

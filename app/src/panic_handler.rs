@@ -19,8 +19,7 @@ pub fn details(
     panic_formatted: &str,
     app_info: &AppInfo,
 ) -> String {
-    let payload_display = panic_payload_display
-        .map_or("[PAYLOAD IS NOT A STRING]", String::as_str);
+    let payload_display = panic_payload_display.map_or("[PAYLOAD IS NOT A STRING]", String::as_str);
     let name = app_info.name;
     let pkg_name = env!("CARGO_PKG_NAME");
     let pkg_version = env!("CARGO_PKG_VERSION");
