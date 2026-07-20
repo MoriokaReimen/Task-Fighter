@@ -18,6 +18,7 @@ pub struct CreateMonthlyTaskPage {
     yes_no: YesNoModal,
     warning: WarningModal,
     menu_bar: MenuBar,
+    last_page: Pages,
 }
 
 impl CreateMonthlyTaskPage {
@@ -27,12 +28,17 @@ impl CreateMonthlyTaskPage {
             yes_no: YesNoModal::new("create_monthly_task_yes_no"),
             warning: WarningModal::new("create_monthly_task_warning"),
             menu_bar: MenuBar::new(),
+            last_page: Pages::MonthlyMain,
         }
     }
 }
 
 impl Page for CreateMonthlyTaskPage {
-    fn on_entry(&mut self, _: &mut crate::work::Work) {}
+    fn on_entry(&mut self, work: &mut crate::work::Work) {
+        if work.last_page != Pages::Config {
+            self.last_page = work.last_page;
+        }
+    }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         self.menu_bar.show(ui, work);
@@ -55,7 +61,7 @@ impl Page for CreateMonthlyTaskPage {
                             work.outputs
                                 .push(work.core.upsert_monthly_task(&work.monthly_task));
                             work.monthly_task = MonthlyTask::default();
-                            work.next_page = Pages::MonthlyMain;
+                            work.next_page = self.last_page;
                             work.monthly_tasks = None;
                         } else {
                             self.warning.open(fl!("save-error"), fl!("title-empty"));
@@ -63,7 +69,7 @@ impl Page for CreateMonthlyTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.monthly_task = MonthlyTask::default();
-                        work.next_page = Pages::MonthlyMain;
+                        work.next_page = self.last_page;
                         work.monthly_tasks = None;
                     }
                     _ => {}

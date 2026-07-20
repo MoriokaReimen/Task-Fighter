@@ -17,6 +17,7 @@ pub struct EditDailyTaskPage {
     yes_no: YesNoModal,
     warning: WarningModal,
     menu_bar: MenuBar,
+    last_page: Pages,
 }
 
 impl EditDailyTaskPage {
@@ -26,12 +27,17 @@ impl EditDailyTaskPage {
             yes_no: YesNoModal::new("edit_daily_task_yes_no"),
             warning: WarningModal::new("edit_daily_task_warning"),
             menu_bar: MenuBar::new(),
+            last_page: Pages::DailyMain,
         }
     }
 }
 
 impl Page for EditDailyTaskPage {
-    fn on_entry(&mut self, _: &mut crate::work::Work) {}
+    fn on_entry(&mut self, work: &mut crate::work::Work) {
+        if work.last_page != Pages::Config {
+            self.last_page = work.last_page;
+        }
+    }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         self.menu_bar.show(ui, work);
@@ -54,7 +60,7 @@ impl Page for EditDailyTaskPage {
                             work.outputs
                                 .push(work.core.upsert_daily_task(&work.daily_task));
                             work.daily_task = DailyTask::default();
-                            work.next_page = Pages::DailyMain;
+                            work.next_page = self.last_page;
                             work.daily_tasks = None; // キャッシュをクリアして再フェッチを促す
                         } else {
                             self.warning.open(fl!("save-error"), fl!("title-empty"));
@@ -62,7 +68,7 @@ impl Page for EditDailyTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.daily_task = DailyTask::default();
-                        work.next_page = Pages::DailyMain;
+                        work.next_page = self.last_page;
                         work.daily_tasks = None;
                     }
                     _ => {}
@@ -81,8 +87,7 @@ impl Page for EditDailyTaskPage {
                     if work.daily_task.is_saveable() {
                         work.outputs
                             .push(work.core.upsert_daily_task(&work.daily_task));
-                        // 保存が走った後は、メインページへ戻るように制御
-                        work.next_page = Pages::DailyMain;
+                        work.next_page = self.last_page;
                         work.daily_tasks = None;
                     } else {
                         self.warning.open(fl!("save-error"), fl!("title-empty"));

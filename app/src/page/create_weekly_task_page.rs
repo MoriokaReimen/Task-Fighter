@@ -18,6 +18,7 @@ pub struct CreateWeeklyTaskPage {
     yes_no: YesNoModal,
     warning: WarningModal,
     menu_bar: MenuBar,
+    last_page: Pages,
 }
 
 impl CreateWeeklyTaskPage {
@@ -27,12 +28,17 @@ impl CreateWeeklyTaskPage {
             yes_no: YesNoModal::new("create_weekly_task_yes_no"),
             warning: WarningModal::new("create_weekly_task_warning"),
             menu_bar: MenuBar::new(),
+            last_page: Pages::WeeklyMain,
         }
     }
 }
 
 impl Page for CreateWeeklyTaskPage {
-    fn on_entry(&mut self, _: &mut crate::work::Work) {}
+    fn on_entry(&mut self, work: &mut crate::work::Work) {
+        if work.last_page != Pages::Config {
+            self.last_page = work.last_page;
+        }
+    }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         self.menu_bar.show(ui, work);
@@ -55,7 +61,7 @@ impl Page for CreateWeeklyTaskPage {
                             work.outputs
                                 .push(work.core.upsert_weekly_task(&work.weekly_task));
                             work.weekly_task = WeeklyTask::default();
-                            work.next_page = Pages::WeeklyMain;
+                            work.next_page = self.last_page;
                             work.weekly_tasks = None;
                         } else {
                             self.warning.open(fl!("save-error"), fl!("title-empty"));
@@ -63,7 +69,7 @@ impl Page for CreateWeeklyTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.weekly_task = WeeklyTask::default();
-                        work.next_page = Pages::WeeklyMain;
+                        work.next_page = self.last_page;
                         work.weekly_tasks = None;
                     }
                     _ => {}

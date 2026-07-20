@@ -18,6 +18,7 @@ pub struct EditWeeklyTaskPage {
     yes_no: YesNoModal,
     warning: WarningModal,
     menu_bar: MenuBar,
+    last_page: Pages,
 }
 
 impl EditWeeklyTaskPage {
@@ -27,12 +28,18 @@ impl EditWeeklyTaskPage {
             yes_no: YesNoModal::new("edit_weekly_task_yes_no"),
             warning: WarningModal::new("edit_weekly_task_warning"),
             menu_bar: MenuBar::new(),
+            last_page: Pages::WeeklyMain,
         }
     }
 }
 
 impl Page for EditWeeklyTaskPage {
-    fn on_entry(&mut self, _: &mut crate::work::Work) {}
+    fn on_entry(&mut self, work: &mut crate::work::Work) {
+        if work.last_page != Pages::Config {
+            self.last_page = work.last_page;
+        }
+    }
+
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         self.menu_bar.show(ui, work);
         // --- Bottom Action Bar ---
@@ -54,7 +61,7 @@ impl Page for EditWeeklyTaskPage {
                             work.outputs
                                 .push(work.core.upsert_weekly_task(&work.weekly_task));
                             work.weekly_task = WeeklyTask::default();
-                            work.next_page = Pages::WeeklyMain;
+                            work.next_page = self.last_page;
                             work.weekly_tasks = None; // キャッシュクリア
                         } else {
                             self.warning.open(fl!("save-error"), fl!("title-empty"));
@@ -62,7 +69,7 @@ impl Page for EditWeeklyTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.weekly_task = WeeklyTask::default();
-                        work.next_page = Pages::WeeklyMain;
+                        work.next_page = self.last_page;
                         work.weekly_tasks = None;
                     }
                     _ => {}
@@ -81,7 +88,7 @@ impl Page for EditWeeklyTaskPage {
                     if work.weekly_task.is_saveable() {
                         work.outputs
                             .push(work.core.upsert_weekly_task(&work.weekly_task));
-                        work.next_page = Pages::WeeklyMain;
+                        work.next_page = self.last_page;
                         work.weekly_tasks = None;
                     } else {
                         self.warning.open(fl!("save-error"), fl!("title-empty"));

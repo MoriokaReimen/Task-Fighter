@@ -17,6 +17,7 @@ pub struct CreateDailyTaskPage {
     yes_no: YesNoModal,
     warning: WarningModal,
     menu_bar: MenuBar,
+    last_page: Pages,
 }
 
 impl CreateDailyTaskPage {
@@ -26,12 +27,17 @@ impl CreateDailyTaskPage {
             yes_no: YesNoModal::new("create_daily_task_yes_no"),
             warning: WarningModal::new("create_daily_task_warning"),
             menu_bar: MenuBar::new(),
+            last_page: Pages::DailyMain,
         }
     }
 }
 
 impl Page for CreateDailyTaskPage {
-    fn on_entry(&mut self, _: &mut crate::work::Work) {}
+    fn on_entry(&mut self, work: &mut crate::work::Work) {
+        if work.last_page != Pages::Config {
+            self.last_page = work.last_page;
+        }
+    }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         self.menu_bar.show(ui, work);
@@ -54,7 +60,7 @@ impl Page for CreateDailyTaskPage {
                             work.outputs
                                 .push(work.core.upsert_daily_task(&work.daily_task));
                             work.daily_task = DailyTask::default();
-                            work.next_page = Pages::DailyMain;
+                            work.next_page = self.last_page;
                             work.daily_tasks = None;
                         } else {
                             // DailyTaskはプロジェクトを持たないため、タイトル空エラーのみに簡素化
@@ -63,7 +69,7 @@ impl Page for CreateDailyTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.daily_task = DailyTask::default();
-                        work.next_page = Pages::DailyMain;
+                        work.next_page = self.last_page;
                         work.daily_tasks = None;
                     }
                     _ => {}

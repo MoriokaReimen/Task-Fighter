@@ -16,8 +16,8 @@ pub struct EditTaskPage {
     yes_no_cancel: YesNoCancelModal,
     yes_no: YesNoModal,
     warning: WarningModal,
-    back_page: Pages,
     menu_bar: MenuBar,
+    last_page: Pages,
 }
 
 impl EditTaskPage {
@@ -26,15 +26,17 @@ impl EditTaskPage {
             yes_no_cancel: YesNoCancelModal::new("create_task_yes_no_cancel"),
             yes_no: YesNoModal::new("create_task_yes_no"),
             warning: WarningModal::new("create_task_warning"),
-            back_page: Pages::Main,
             menu_bar: MenuBar::new(),
+            last_page: Pages::Main,
         }
     }
 }
 
 impl Page for EditTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {
-        self.back_page = work.last_page;
+        if work.last_page != Pages::Config {
+            self.last_page = work.last_page;
+        }
     }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
@@ -58,7 +60,7 @@ impl Page for EditTaskPage {
                         if work.task.is_saveable() {
                             work.outputs.push(work.core.update_task(&work.task));
                             work.task = Task::default();
-                            work.next_page = self.back_page;
+                            work.next_page = self.last_page;
                             work.tasks = None;
                         } else {
                             let message = if work.task.project.is_empty() {
@@ -72,7 +74,7 @@ impl Page for EditTaskPage {
                     yes_no_cancel_modal::ModalResult::No => {
                         work.task = Task::default();
                         work.tasks = None;
-                        work.next_page = self.back_page;
+                        work.next_page = self.last_page;
                     }
                     _ => {}
                 }
