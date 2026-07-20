@@ -114,17 +114,17 @@ impl MainPage {
                 if button_clicked(ui, fl!("kanban"), ACTION_BUTTON_SIZE) {
                     return BottomAction::Kanban;
                 }
-                BottomAction::None
-            },
-            |ui| {
-                if button_clicked(ui, fl!("create-new"), ACTION_BUTTON_SIZE) {
-                    return BottomAction::CreateTask;
-                }
                 if button_clicked(ui, fl!("email-report"), EMAIL_BUTTON_SIZE) {
                     return BottomAction::EmailReport;
                 }
                 if button_clicked(ui, fl!("export-markdown"), EMAIL_BUTTON_SIZE) {
                     return BottomAction::ExportMarkdown;
+                }
+                BottomAction::None
+            },
+            |ui| {
+                if button_clicked(ui, fl!("create-new"), ACTION_BUTTON_SIZE) {
+                    return BottomAction::CreateTask;
                 }
                 BottomAction::None
             },
@@ -209,6 +209,9 @@ impl Page for MainPage {
         work.outputs.push(work.core.sync_all_weekly_task());
         work.outputs.push(work.core.sync_all_monthly_task());
         work.tasks = None;
+        let (filter_flag, order_flag) = Self::default_fetch_flags();
+        work.outputs
+            .push(work.core.fetch_all_task(filter_flag, order_flag));
     }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
