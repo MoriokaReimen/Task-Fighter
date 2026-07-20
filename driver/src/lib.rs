@@ -2,6 +2,9 @@ mod connect;
 pub use connect::*;
 pub use duckdb::Connection;
 
+#[macro_use]
+pub mod i18n;
+
 mod migrations;
 
 mod duckdb_task;
@@ -40,3 +43,4 @@ pub use config_record::*;
 
 mod markdown;
 pub use markdown::*;
+

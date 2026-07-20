@@ -1,0 +1,9 @@
+priority-high = 🔴 Alta
+priority-medium = 🟡 Media
+priority-low = 🔵 Baja
+status-pending = Pendiente ⏳
+status-work-in-progress = En progreso 🏃
+status-complete = Completado ✅
+status-work-in-canceled = Cancelado 🚫
+no-additional-details = No se proporcionaron detalles adicionales.
+task-status-report = Informe de estado de tareas

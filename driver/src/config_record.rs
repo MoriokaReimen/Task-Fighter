@@ -7,7 +7,7 @@ pub fn save_config(conn: &Connection, config: Config) -> Result<()> {
     // Convert your clean domain config into the DB wrapper data layout
     let db_config = DuckdbConfig::from(config);
     let mut stmt = conn.prepare_cached(
-        "INSERT OR REPLACE INTO config (id, color_scheme, locale) VALUES (1, $color_scheme, $locale);",
+        "INSERT OR REPLACE INTO config (id, color_scheme, locale, email_locale) VALUES (1, $color_scheme, $locale, $email_locale);",
     )?;
     let _ = stmt.query(&db_config.to_named_params())?;
 
@@ -15,7 +15,7 @@ pub fn save_config(conn: &Connection, config: Config) -> Result<()> {
 }
 
 pub fn load_config(conn: &Connection) -> Result<Config> {
-    let mut stmt = conn.prepare_cached("SELECT color_scheme, locale FROM config WHERE id = 1;")?;
+    let mut stmt = conn.prepare_cached("SELECT color_scheme, locale, email_locale FROM config WHERE id = 1;")?;
     let mut rows = stmt.query([])?;
 
     if let Some(row) = rows.next()? {

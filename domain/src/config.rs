@@ -92,4 +92,5 @@ impl TryFrom<i32> for ColorScheme {
 pub struct Config {
     pub color_scheme: ColorScheme,
     pub locale: Locale,
+    pub email_locale: Locale,
 }

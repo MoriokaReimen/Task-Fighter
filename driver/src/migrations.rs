@@ -8,11 +8,18 @@ pub struct Migration {
     pub sql: &'static str,
 }
 
-pub const MIGRATIONS: &[Migration] = &[Migration {
+pub const MIGRATIONS: &[Migration] = &[
+Migration {
     version: 1,
     name: "initial_schema",
     sql: include_str!("../assets/migrations/initial_schema.sql"),
-}];
+},
+Migration {
+    version: 2,
+    name: "second_schema",
+    sql: include_str!("../assets/migrations/second_schema.sql"),
+},
+];
 
 const CREATE_MIGRATIONS_TABLE_SQL: &str = "
     CREATE TABLE IF NOT EXISTS schema_migrations (

@@ -109,3 +109,4 @@ chinese = Chinese
 vietnamese = Vietnamese
 spanish = Spanish
 export-markdown = 📝 Export to Markdown
+email-locale-label = E-mail Language

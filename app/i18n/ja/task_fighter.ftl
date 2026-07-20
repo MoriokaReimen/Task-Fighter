@@ -109,4 +109,4 @@ chinese = 中国語
 vietnamese = ベトナム語
 spanish = スペイン語
 export-markdown = 📝 マークダウンに出力
-
+email-locale-label = メール言語

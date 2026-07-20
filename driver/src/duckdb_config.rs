@@ -13,6 +13,7 @@ pub struct DuckdbLocale(pub Locale);
 pub struct DuckdbConfig {
     pub color_scheme: DuckdbColorScheme,
     pub locale: DuckdbLocale,
+    pub email_locale: DuckdbLocale,
 }
 
 impl From<Config> for DuckdbConfig {
@@ -20,6 +21,7 @@ impl From<Config> for DuckdbConfig {
         Self {
             color_scheme: DuckdbColorScheme(config.color_scheme),
             locale: DuckdbLocale(config.locale),
+            email_locale: DuckdbLocale(config.email_locale),
         }
     }
 }
@@ -31,6 +33,7 @@ impl TryFrom<DuckdbConfig> for Config {
         Ok(Self {
             color_scheme: duckdb_config.color_scheme.0,
             locale: duckdb_config.locale.0,
+            email_locale:  duckdb_config.email_locale.0,
         })
     }
 }
@@ -89,6 +92,7 @@ impl TryFrom<&Row<'_>> for DuckdbConfig {
         Ok(Self {
             color_scheme: row.get("color_scheme")?,
             locale: row.get("locale")?,
+            email_locale: row.get("email_locale")?,
         })
     }
 }
@@ -98,6 +102,7 @@ impl DuckdbConfig {
         HashMap::from_iter([
             ("color_scheme", &self.color_scheme as &dyn ToSql),
             ("locale", &self.locale as &dyn ToSql),
+            ("email_locale", &self.email_locale as &dyn ToSql),
         ])
     }
 }

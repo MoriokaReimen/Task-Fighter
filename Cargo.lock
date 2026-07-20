@@ -1546,6 +1546,7 @@ dependencies = [
  "dirs",
  "domain",
  "duckdb",
+ "fluent-templates",
  "image 0.25.10",
  "jiff",
  "minijinja",
@@ -1554,9 +1555,11 @@ dependencies = [
  "pulldown-cmark",
  "serde",
  "syntect",
+ "sys-locale",
  "tempfile",
  "toml 1.1.2+spec-1.1.0",
  "tracing",
+ "unic-langid",
 ]
 
 [[package]]

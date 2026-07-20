@@ -1,0 +1,9 @@
+priority-high = 🔴 高
+priority-medium = 🟡 中
+priority-low = 🔵 低
+status-pending = 待处理 ⏳
+status-work-in-progress = 进行中 🏃
+status-complete = 已完成 ✅
+status-work-in-canceled = 已取消 🚫
+no-additional-details = 未提供其他详细信息。
+task-status-report = 任务状态报告

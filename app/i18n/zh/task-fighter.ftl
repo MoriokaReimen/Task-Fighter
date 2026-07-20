@@ -104,9 +104,9 @@ windows-light = Windows 亮色
 work-in-progress = 🏃 进行中
 working-on = 🗣 正在处理：
 yes = 👍 是
-
 german = 德语
 chinese = 中文
 vietnamese = 越南语
 spanish = 西班牙语
 export-markdown = 📝 导出为 Markdown
+email-locale-label = 邮件语言

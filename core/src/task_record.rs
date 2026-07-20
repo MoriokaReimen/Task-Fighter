@@ -102,10 +102,11 @@ impl TaskRecord for Core {
 
                 let conn_guard = handle.block_on(async { conn.lock().await });
                 let data = driver::get_plot_data(&conn_guard, start_date, today)?;
+                let config = driver::load_config(&conn_guard)?;
                 drop(conn_guard);
 
                 let image_data = driver::export_to_base64(&data)?;
-                driver::launch_system_mailer(&tasks, &image_data)?;
+                driver::launch_system_mailer(&tasks, &image_data, &config)?;
                 Ok(())
             })();
             let _ = tx.send(result);

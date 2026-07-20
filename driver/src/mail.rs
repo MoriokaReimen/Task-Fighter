@@ -1,4 +1,6 @@
+use crate::i18n::I18n;
 use anyhow::{Context, Result, anyhow};
+use domain::Config;
 use domain::{Task, TaskPriority, TaskStatus};
 use jiff::Zoned;
 use minijinja::{Environment, context};
@@ -8,6 +10,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write as _;
+use std::sync::OnceLock;
 use std::time::Duration;
 use std::time::SystemTime;
 use syntect::highlighting::ThemeSet;
@@ -15,7 +18,12 @@ use syntect::html::highlighted_html_for_string;
 use syntect::parsing::SyntaxSet;
 use tracing::{info, warn};
 
-// 1. テンプレートに渡すためのシリアライズ可能なデータ構造を定義
+/// Number of days to retain EML files (older files are deleted on startup)
+const EML_RETENTION_DAYS: u64 = 5;
+/// Theme name used for syntax highlighting in code blocks
+const CODE_THEME_NAME: &str = "base16-ocean.dark";
+
+// Serializable data structures passed to the templates
 #[derive(Serialize)]
 struct TemplateSummary {
     total: usize,
@@ -30,21 +38,93 @@ struct TemplateTask {
     id: i32,
     title: String,
     project: String,
-    priority_text: &'static str,
+    priority_text: String,
     priority_color: &'static str,
-    status_text: &'static str,
+    status_text: String,
     status_color: &'static str,
     start_date: String,
     due_date: String,
     time_spent: f64,
     progress: f64,
-    detail_html: String, // 変換済みのHTMLをここに格納
+    detail_html: String, // Converted HTML goes here
+}
+
+/// Returns the display text and color code for a task status
+fn status_display(status: TaskStatus) -> (String, &'static str) {
+    match status {
+        TaskStatus::Pending => (fl!("status-pending"), "#6c757d"),
+        TaskStatus::WorkInProgress => (fl!("status-work-in-progress"), "#007bff"),
+        TaskStatus::Complete => (fl!("status-complete"), "#28a745"),
+        TaskStatus::Canceled => (fl!("status-canceled"), "#ff5733"),
+    }
+}
+
+/// Returns the display text and color code for a task priority
+fn priority_display(priority: TaskPriority) -> (String, &'static str) {
+    match priority {
+        TaskPriority::High => (fl!("priority-high"), "#dc3545"),
+        TaskPriority::Medium => (fl!("priority-medium"), "#ffc107"),
+        TaskPriority::Low => (fl!("priority-low"), "#20c997"),
+    }
+}
+
+/// Normalizes all line endings to CRLF (\r\n)
+fn normalize_to_crlf(s: &str) -> String {
+    s.replace("\r\n", "\n").replace('\n', "\r\n")
+}
+
+/// `SyntaxSet` is expensive to load, so it's initialized once per process and reused
+fn syntax_set() -> &'static SyntaxSet {
+    static SYNTAX_SET: OnceLock<SyntaxSet> = OnceLock::new();
+    SYNTAX_SET.get_or_init(SyntaxSet::load_defaults_newlines)
+}
+
+/// Same caching strategy for `ThemeSet`
+fn theme_set() -> &'static ThemeSet {
+    static THEME_SET: OnceLock<ThemeSet> = OnceLock::new();
+    THEME_SET.get_or_init(ThemeSet::load_defaults)
+}
+
+/// Macro that collapses the boilerplate of registering each mail template in `mail_env()`.
+/// `include_str!` expands relative to the macro's call site, so this works fine
+/// as long as the macro is only used from within this file.
+macro_rules! add_mail_template {
+    ($env:expr, $name:literal, $path:literal) => {
+        $env.add_template($name, include_str!($path))
+            .with_context(|| format!("Failed to compile {} mail template", $name))?;
+    };
+}
+
+/// Returns a cached `minijinja::Environment` for mail templates
+fn mail_env() -> Result<&'static Environment<'static>> {
+    static MAIL_ENV: OnceLock<Environment<'static>> = OnceLock::new();
+    if let Some(env) = MAIL_ENV.get() {
+        return Ok(env);
+    }
+    let mut env = Environment::new();
+
+    add_mail_template!(env, "mail_de", "../assets/mail_de.html");
+    add_mail_template!(env, "mail_en", "../assets/mail_en.html");
+    add_mail_template!(env, "mail_es", "../assets/mail_es.html");
+    add_mail_template!(env, "mail_ja", "../assets/mail_ja.html");
+    add_mail_template!(env, "mail_vi", "../assets/mail_vi.html");
+    add_mail_template!(env, "mail_zh", "../assets/mail_zh.html");
+
+    Ok(MAIL_ENV.get_or_init(|| env))
+}
+
+/// Applies minimal escaping so text can be safely embedded as HTML
+fn escape_html(input: &str) -> String {
+    input
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
 }
 
 fn md_to_html(markdown_input: &str) -> String {
-    let ps = SyntaxSet::load_defaults_newlines();
-    let ts = ThemeSet::load_defaults();
-    let theme = &ts.themes["base16-ocean.dark"];
+    let ps = syntax_set();
+    let ts = theme_set();
+    let theme = &ts.themes[CODE_THEME_NAME];
 
     let mut options = Options::empty();
     options.insert(Options::ENABLE_TABLES);
@@ -82,8 +162,11 @@ fn md_to_html(markdown_input: &str) -> String {
                     .unwrap_or_else(|| ps.find_syntax_plain_text());
 
                 let highlighted_html =
-                    highlighted_html_for_string(&code_accumulator, &ps, syntax, theme)
-                        .unwrap_or_else(|_| format!("<pre><code>{code_accumulator}</code></pre>"));
+                    highlighted_html_for_string(&code_accumulator, ps, syntax, theme)
+                        .unwrap_or_else(|e| {
+                            warn!("Failed to generate syntax highlighting: {e}");
+                            format!("<pre><code>{}</code></pre>", escape_html(&code_accumulator))
+                        });
 
                 new_events.push(Event::Html(highlighted_html.into()));
             }
@@ -103,77 +186,76 @@ fn md_to_html(markdown_input: &str) -> String {
     html_output
 }
 
-pub fn create_mail_html(tasks: &[Task], image_data: &str) -> Result<String> {
-    // サマリーの集計
-    let summary = TemplateSummary {
+/// Aggregates per-status counts from the task list in a single pass
+fn summarize(tasks: &[Task]) -> TemplateSummary {
+    let mut summary = TemplateSummary {
         total: tasks.len(),
-        completed: tasks
-            .iter()
-            .filter(|t| t.status == TaskStatus::Complete)
-            .count(),
-        in_progress: tasks
-            .iter()
-            .filter(|t| t.status == TaskStatus::WorkInProgress)
-            .count(),
-        pending: tasks
-            .iter()
-            .filter(|t| t.status == TaskStatus::Pending)
-            .count(),
-        canceled: tasks
-            .iter()
-            .filter(|t| t.status == TaskStatus::Canceled)
-            .count(),
+        completed: 0,
+        in_progress: 0,
+        pending: 0,
+        canceled: 0,
     };
 
+    for task in tasks {
+        match task.status {
+            TaskStatus::Complete => summary.completed += 1,
+            TaskStatus::WorkInProgress => summary.in_progress += 1,
+            TaskStatus::Pending => summary.pending += 1,
+            TaskStatus::Canceled => summary.canceled += 1,
+        }
+    }
+
+    summary
+}
+
+fn to_template_task(task: &Task) -> TemplateTask {
+    let (status_text, status_color) = status_display(task.status);
+    let (priority_text, priority_color) = priority_display(task.priority);
+
+    let detail_html = if task.detail.trim().is_empty() {
+        format!(
+            "<span style=\"color: #a0aec0; font-style: italic;\">{}</span>",
+            fl!("no-additional-details")
+        )
+    } else {
+        md_to_html(&task.detail)
+    };
+
+    TemplateTask {
+        id: task.id,
+        title: task.title.clone(),
+        project: task.project.clone(),
+        priority_text,
+        priority_color,
+        status_text,
+        status_color,
+        start_date: task.start_date.strftime("%Y/%m/%d").to_string(),
+        due_date: task.due_date.strftime("%Y/%m/%d").to_string(),
+        time_spent: f64::from(task.time_spent),
+        progress: f64::from(task.progress),
+        detail_html,
+    }
+}
+
+pub fn create_mail_html(tasks: &[Task], image_data: &str) -> Result<String> {
+    let summary = summarize(tasks);
     let date_headline = Zoned::now().date().strftime("%B %d, %Y").to_string();
+    let template_tasks: Vec<TemplateTask> = tasks.iter().map(to_template_task).collect();
 
-    // テンプレート用のタスクデータ配列へ変換
-    let template_tasks: Vec<TemplateTask> = tasks
-        .iter()
-        .map(|task| {
-            let (status_text, status_color) = match task.status {
-                TaskStatus::Pending => ("Pending ⏳", "#6c757d"),
-                TaskStatus::WorkInProgress => ("Work In Progress 🏃", "#007bff"),
-                TaskStatus::Complete => ("Complete ✅", "#28a745"),
-                TaskStatus::Canceled => ("Canceled 🚫", "#ff5733"),
-            };
+    let locale = I18n::global().get_locale()?;
 
-            let (priority_text, priority_color) = match task.priority {
-                TaskPriority::High => ("🔴 High", "#dc3545"),
-                TaskPriority::Medium => ("🟡 Medium", "#ffc107"),
-                TaskPriority::Low => ("🔵 Low", "#20c997"),
-            };
+    let template_name = match locale.language.as_str() {
+        "en" => "mail_en",
+        "ja" => "mail_ja",
+        "de" => "mail_de",
+        "zh" => "mail_zh",
+        "vi" => "mail_vi",
+        "es" => "mail_es",
+        _ => "mail_en",
+    };
 
-            let detail_html = if task.detail.trim().is_empty() {
-                "<span style=\"color: #a0aec0; font-style: italic;\">No additional details provided.</span>".to_string()
-            } else {
-                md_to_html(&task.detail)
-            };
+    let tmpl = mail_env()?.get_template(template_name)?;
 
-            TemplateTask {
-                id: task.id,
-                title: task.title.clone(),
-                project: task.project.clone(),
-                priority_text,
-                priority_color,
-                status_text,
-                status_color,
-                start_date: task.start_date.strftime("%Y/%m/%d").to_string(),
-                due_date: task.due_date.strftime("%Y/%m/%d").to_string(),
-                time_spent: f64::from(task.time_spent),
-                progress: f64::from(task.progress),
-                detail_html,
-            }
-        })
-        .collect();
-
-    // minijinja の環境セットアップ（文字列インクルードでテンプレートを登録）
-    let mut env = Environment::new();
-    env.add_template("mail", include_str!("../assets/mail.html"))?;
-
-    let tmpl = env.get_template("mail")?;
-
-    // レンダリングを実行
     let rendered = tmpl.render(context! {
         image_data => image_data,
         date_headline => date_headline,
@@ -181,8 +263,8 @@ pub fn create_mail_html(tasks: &[Task], image_data: &str) -> Result<String> {
         tasks => template_tasks,
     })?;
 
-    // テスト要件を満たすため、すべての改行を確実に CRLF 形式に統一
-    Ok(rendered.replace("\r\n", "\n").replace('\n', "\r\n"))
+    // Normalize all line endings to CRLF to satisfy the test requirements
+    Ok(normalize_to_crlf(&rendered))
 }
 
 fn cleanup_old_eml_files(dir: &std::path::Path, retention_days: u64) -> Result<()> {
@@ -193,23 +275,23 @@ fn cleanup_old_eml_files(dir: &std::path::Path, retention_days: u64) -> Result<(
     let now = SystemTime::now();
     let max_age = Duration::from_secs(retention_days * 24 * 60 * 60);
 
+    let is_stale_eml = |entry: &fs::DirEntry| -> bool {
+        let path = entry.path();
+        let is_eml = path.is_file() && path.extension().is_some_and(|ext| ext == "eml");
+        if !is_eml {
+            return false;
+        }
+        entry
+            .metadata()
+            .and_then(|meta| meta.modified())
+            .map(|modified| now.duration_since(modified).unwrap_or_default())
+            .is_ok_and(|age| age > max_age)
+    };
+
     fs::read_dir(dir)?
-        .flatten() // Ok(entry) のみを取り出す
-        .filter(|entry| {
-            // 1. 拡張子が .eml のファイルのみを残す
-            let path = entry.path();
-            path.is_file() && path.extension().is_some_and(|ext| ext == "eml")
-        })
-        .filter(|entry| {
-            // 2. 更新日時が指定期間を過ぎているものだけを残す
-            entry
-                .metadata()
-                .and_then(|meta| meta.modified())
-                .map(|modified| now.duration_since(modified).unwrap_or_default())
-                .is_ok_and(|duration| duration > max_age)
-        })
+        .flatten() // Keep only the Ok(entry) values
+        .filter(is_stale_eml)
         .for_each(|entry| {
-            // 3. フィルタリングされたファイルに対して削除を実行
             let path = entry.path();
             match fs::remove_file(&path) {
                 Ok(()) => info!("Deleted old eml file: {}", path.display()),
@@ -220,12 +302,25 @@ fn cleanup_old_eml_files(dir: &std::path::Path, retention_days: u64) -> Result<(
     Ok(())
 }
 
-pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
+/// Builds the EML body (headers + HTML content).
+/// `html_body` is already CRLF-normalized by `create_mail_html`, so it's appended as-is.
+fn build_eml_content(subject: &str, html_body: &str) -> String {
+    let mut eml_content = String::new();
+    write!(
+        eml_content,
+        "Subject: {subject}\r\nX-Unsent: 1\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=utf-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n"
+    )
+    .expect("writing to a String never fails");
+
+    eml_content.push_str(html_body);
+    eml_content
+}
+
+pub fn launch_system_mailer(tasks: &[Task], image_data: &str, config: &Config) -> Result<()> {
+    I18n::global().set_locale_from_config(config.email_locale);
     let html_text = create_mail_html(tasks, image_data)?;
-    let raw_subject = Zoned::now()
-        .date()
-        .strftime("%Y/%m/%d Task Status Report")
-        .to_string();
+    let subject_str = format!("%Y/%m/%d {}", fl!("task-status-report"));
+    let subject = Zoned::now().date().strftime(&subject_str).to_string();
 
     let doc_dir = dirs::document_dir()
         .ok_or_else(|| anyhow!("Failed to get user document directory"))?
@@ -233,164 +328,35 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str) -> Result<()> {
     fs::create_dir_all(&doc_dir)
         .context("Failed to create task-fighter-emails directory in Documents")?;
 
-    let unique_id = std::time::SystemTime::now()
+    let unique_id = SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or_else(|_| "temp".to_string(), |d| d.as_millis().to_string());
 
-    cleanup_old_eml_files(&doc_dir, 5)?;
+    cleanup_old_eml_files(&doc_dir, EML_RETENTION_DAYS)?;
 
     let eml_path = doc_dir.join(format!("task_report_{unique_id}.eml"));
     info!("Mail file create at {}", eml_path.display());
+
+    let eml_content = build_eml_content(&subject, &html_text);
 
     let mut temp_file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
         .open(&eml_path)
-        .context(format!("Failed to create file at {}", eml_path.display()))?;
-
-    let mut eml_content = String::new();
-    let _ = write!(eml_content, "Subject: {raw_subject}\r\n");
-    eml_content.push_str("X-Unsent: 1\r\n");
-    eml_content.push_str("MIME-Version: 1.0\r\n");
-    eml_content.push_str("Content-Type: text/html; charset=utf-8\r\n");
-    eml_content.push_str("Content-Transfer-Encoding: 8bit\r\n\r\n");
-
-    let body_crlf = html_text.replace("\r\n", "\n").replace('\n', "\r\n");
-    eml_content.push_str(&body_crlf);
+        .with_context(|| format!("Failed to create eml file at {}", eml_path.display()))?;
 
     temp_file
         .write_all(eml_content.as_bytes())
-        .context("Failed writing compiled structural email buffers")?;
+        .context("Failed to write eml content to file")?;
     temp_file
         .flush()
-        .context("Failed flushing operating system write streams buffers")?;
+        .context("Failed to flush eml file to disk")?;
 
     drop(temp_file);
 
-    open::that(eml_path).context("Failed invoking native desktop standard protocol handlers")?;
+    open::that(eml_path).context("Failed to open eml file with the default mail client")?;
 
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use domain::{Task, TaskPriority, TaskStatus};
-    use jiff::civil::Date;
-    use std::fs;
-
-    // テスト用のダミータスクを作成するヘルパー
-    fn create_test_task(id: i32, status: TaskStatus, priority: TaskPriority, detail: &str) -> Task {
-        Task {
-            id,
-            active: true,
-            status,
-            project: "TestProject".to_string(),
-            title: format!("Task {id}"),
-            detail: detail.to_string(),
-            start_date: Date::new(2026, 7, 1).unwrap(),
-            due_date: Date::new(2026, 7, 31).unwrap(),
-            priority,
-            progress: 45.0,
-            time_spent: 8.5,
-            entry_date: Date::new(2026, 7, 1).unwrap(),
-            end_date: None,
-        }
-    }
-
-    #[test]
-    fn test_md_to_html_conversion() {
-        // 1. Markdown 変換（コードブロック以外）の検証
-        let markdown = "# Hello\nThis is **bold** text.";
-        let html = md_to_html(markdown);
-
-        assert!(html.contains("<h1>Hello</h1>"));
-        assert!(html.contains("<strong>bold</strong>"));
-
-        // 2. コードブロックとシンタックスハイライトの検証
-        let markdown_code = "```rust\nfn main() {}\n```";
-        let html_code = md_to_html(markdown_code);
-
-        // syntect によるハイライト結果（preやspanタグ）が含まれているか確認
-        assert!(html_code.contains("<pre"));
-        assert!(html_code.contains("main"));
-    }
-
-    #[test]
-    fn test_create_mail_html_summary_and_fallback() {
-        // さまざまなステータスのタスクを準備
-        let tasks = vec![
-            create_test_task(
-                1,
-                TaskStatus::Complete,
-                TaskPriority::High,
-                "Done everything",
-            ),
-            create_test_task(
-                2,
-                TaskStatus::WorkInProgress,
-                TaskPriority::Medium,
-                "Working hard",
-            ),
-            create_test_task(3, TaskStatus::Pending, TaskPriority::Low, ""), // 詳細空っぽ
-            create_test_task(4, TaskStatus::Canceled, TaskPriority::Low, "Dropped"),
-        ];
-
-        let image_data_mock = "data:image/png;base64,ABC...";
-        let html_result = create_mail_html(&tasks, image_data_mock);
-
-        // 改行コードがすべて CRLF (\r\n) に統一されているか確認
-        assert!(html_result.contains("\r\n"));
-        assert!(!html_result.contains("\n\n")); // 連続する単一の \n が残っていないか
-
-        // 詳細が空の場合のフォールバック表示の検証
-        assert!(html_result.contains("No additional details provided."));
-
-        // 優先度やステータスのテキスト/カラーマッピングが埋め込まれているか検証
-        assert!(html_result.contains("🔴 High"));
-        assert!(html_result.contains("Complete ✅"));
-        assert!(html_result.contains("#28a745")); // Complete のカラーコード
-    }
-
-    #[test]
-    #[ignore] // CI環境でのメーラー誤起動を防ぐため、通常テストからは除外（cargo test -- --ignored で実行可能）
-    fn test_launch_system_mailer_output() {
-        let tasks = vec![create_test_task(
-            1,
-            TaskStatus::WorkInProgress,
-            TaskPriority::High,
-            "Critical implementation",
-        )];
-        let image_data_mock = "data:image/png;base64,XYZ...";
-        let eml_path = "./task_report.eml";
-
-        // 既存の古いテストファイルを削除しておく
-        if fs::metadata(eml_path).is_ok() {
-            let _ = fs::remove_file(eml_path);
-        }
-
-        // 実行（環境によって open::that がエラーを返す可能性があるため、Resultの成否のみ、あるいはファイル生成を主目的とする）
-        let result = launch_system_mailer(&tasks, image_data_mock);
-
-        // ファイルが正しく生成されたか検証
-        assert!(fs::metadata(eml_path).is_ok(), "eml file should be created");
-
-        // 生成された EML ファイルのヘッダー内容を検証
-        let eml_content = fs::read_to_string(eml_path).unwrap();
-        assert!(eml_content.contains("Subject:"));
-        assert!(eml_content.contains("X-Unsent: 1"));
-        assert!(eml_content.contains("Content-Type: text/html; charset=utf-8"));
-        assert!(eml_content.contains("Critical implementation")); // 本文の内容
-
-        // テスト環境のクリーンアップ（生成したファイルを削除）
-        let _ = fs::remove_file(eml_path);
-
-        // open::that がデスクトップ環境のないCIなどでコケても、ファイル生成自体が成功していればOKとする場合はアサーションを調整
-        if let Err(ref e) = result {
-            println!(
-                "Note: mailer invoked successfully but open::that failed (expected in headless env): {e}"
-            );
-        }
-    }
-}

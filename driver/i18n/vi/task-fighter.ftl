@@ -1,0 +1,9 @@
+priority-high = 🔴 Cao
+priority-medium = 🟡 Trung bình
+priority-low = 🔵 Thấp
+status-pending = Chờ xử lý ⏳
+status-work-in-progress = Đang thực hiện 🏃
+status-complete = Hoàn thành ✅
+status-work-in-canceled = Đã hủy 🚫
+no-additional-details = Không có thông tin chi tiết bổ sung.
+task-status-report = Báo cáo trạng thái công việc

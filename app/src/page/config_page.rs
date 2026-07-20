@@ -147,6 +147,26 @@ impl Page for ConfigPage {
                         I18n::global().set_locale_from_config(self.config.locale);
                     }
                     ui.end_row();
+
+                    ui.label(fl!("email-locale-label"));
+                    let mut email_locale_changed = false;
+                    egui::ComboBox::from_id_salt("email_locale_picker")
+                        .selected_text(self.config.email_locale.label())
+                        .show_ui(ui, |ui| {
+                            for email_locale in LOCALE_OPTIONS {
+                                email_locale_changed |= ui
+                                    .selectable_value(
+                                        &mut self.config.email_locale,
+                                        email_locale,
+                                        email_locale.label(),
+                                    )
+                                    .changed();
+                            }
+                        });
+                    if email_locale_changed {
+                        work.config.email_locale = self.config.email_locale;
+                    }
+                    ui.end_row();
                 });
         });
     }
