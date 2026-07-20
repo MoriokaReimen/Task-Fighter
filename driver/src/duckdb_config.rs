@@ -33,7 +33,7 @@ impl TryFrom<DuckdbConfig> for Config {
         Ok(Self {
             color_scheme: duckdb_config.color_scheme.0,
             locale: duckdb_config.locale.0,
-            email_locale:  duckdb_config.email_locale.0,
+            email_locale: duckdb_config.email_locale.0,
         })
     }
 }

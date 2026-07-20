@@ -15,7 +15,8 @@ pub fn save_config(conn: &Connection, config: Config) -> Result<()> {
 }
 
 pub fn load_config(conn: &Connection) -> Result<Config> {
-    let mut stmt = conn.prepare_cached("SELECT color_scheme, locale, email_locale FROM config WHERE id = 1;")?;
+    let mut stmt =
+        conn.prepare_cached("SELECT color_scheme, locale, email_locale FROM config WHERE id = 1;")?;
     let mut rows = stmt.query([])?;
 
     if let Some(row) = rows.next()? {

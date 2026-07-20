@@ -359,4 +359,3 @@ pub fn launch_system_mailer(tasks: &[Task], image_data: &str, config: &Config) -
 
     Ok(())
 }
-
