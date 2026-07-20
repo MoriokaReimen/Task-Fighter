@@ -102,7 +102,7 @@ fn set_dark_orange(ctx: &egui::Context) {
     visuals.panel_fill = Color32::from_rgb(10, 5, 2); // メインパネル：黒を極めた超深淵エスプレッソ
     visuals.window_fill = Color32::from_rgb(18, 10, 4); // ウィンドウ：完全な闇に佇む影
     visuals.faint_bg_color = Color32::from_rgb(32, 16, 5); // ゼブラ行/グリッド線：ひっそりと佇む暗黒銅
-    visuals.extreme_bg_color = Color32::from_rgb(5, 2, 0); // 入力欄/プロット背景：光を吸い込む絶対零度の黒
+    visuals.extreme_bg_color = Color32::from_rgb(51, 28, 0); // 入力欄/プロット背景：光を吸い込む絶対零度の黒
 
     // --- Input & Code Fields ---
     visuals.text_edit_bg_color = Some(Color32::from_rgb(5, 2, 0));
@@ -144,7 +144,7 @@ fn set_dark_orange(ctx: &egui::Context) {
     visuals.widgets.inactive.bg_fill = Color32::from_rgb(255, 95, 0); // 鮮烈さを極めたアパチャー・コアオレンジ
     visuals.widgets.inactive.weak_bg_fill = Color32::from_rgb(180, 60, 0);
     visuals.widgets.inactive.bg_stroke = Stroke::new(1.0, Color32::from_rgb(255, 130, 30));
-    visuals.widgets.inactive.fg_stroke = Stroke::new(1.5, text_absolute_black); // 背景が強烈なため、文字は漆黒で完全に遮断
+    visuals.widgets.inactive.fg_stroke = Stroke::new(1.5, text_white_heat); // 背景が強烈なため、文字は漆黒で完全に遮断
 
     // 2. Hovered State (Core Overload Glowing)
     visuals.widgets.hovered.bg_fill = Color32::from_rgb(255, 125, 10);
@@ -324,7 +324,7 @@ fn set_sakura(ctx: &egui::Context) {
     visuals.panel_fill = Color32::from_rgb(12, 4, 8); // メインパネル：黒に近い超深層カシス
     visuals.window_fill = Color32::from_rgb(20, 8, 14); // ウィンドウ：ミステリアスなミッドナイトベリー
     visuals.faint_bg_color = Color32::from_rgb(36, 12, 24); // ゼブラ行/グリッド線：ひっそりと佇む暗黒オーキッド
-    visuals.extreme_bg_color = Color32::from_rgb(6, 2, 4); // 入力欄/プロット背景：光を吸い込む絶対零度の黒紫
+    visuals.extreme_bg_color = Color32::from_rgb(51, 10, 30); // 入力欄/プロット背景：光を吸い込む絶対零度の黒紫
 
     // --- Input & Code Fields ---
     visuals.text_edit_bg_color = Some(Color32::from_rgb(6, 2, 4));
@@ -366,7 +366,7 @@ fn set_sakura(ctx: &egui::Context) {
     visuals.widgets.inactive.bg_fill = Color32::from_rgb(255, 20, 130); // 鮮烈さを極めたコア・ホットピンク
     visuals.widgets.inactive.weak_bg_fill = Color32::from_rgb(180, 10, 90);
     visuals.widgets.inactive.bg_stroke = Stroke::new(1.0, Color32::from_rgb(255, 80, 170));
-    visuals.widgets.inactive.fg_stroke = Stroke::new(1.5, text_absolute_black); // 背景が強烈なため、文字は漆黒で視認性を確保
+    visuals.widgets.inactive.fg_stroke = Stroke::new(1.5, text_white_heat); // 背景が強烈なため、文字は漆黒で視認性を確保
 
     // 2. Hovered State (Core Overload Glowing)
     visuals.widgets.hovered.bg_fill = Color32::from_rgb(255, 60, 160);
