@@ -17,7 +17,6 @@ pub struct CreateTaskPage {
     yes_no: YesNoModal,
     warning: WarningModal,
     menu_bar: MenuBar,
-    back_page: Pages,
 }
 
 impl CreateTaskPage {
@@ -27,7 +26,6 @@ impl CreateTaskPage {
             yes_no: YesNoModal::new("create_task_yes_no"),
             warning: WarningModal::new("create_task_warning"),
             menu_bar: MenuBar::new(),
-            back_page: Pages::Main,
         }
     }
 }
@@ -40,7 +38,6 @@ impl Page for CreateTaskPage {
         } else {
             error!("Failed to get id");
         }
-        self.back_page = work.last_page;
     }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
@@ -65,7 +62,7 @@ impl Page for CreateTaskPage {
                         if work.task.is_saveable() {
                             work.outputs.push(work.core.upsert_task(&work.task));
                             work.task = Task::default();
-                            work.next_page = self.back_page;
+                            work.next_page = Pages::Main;
                             work.tasks = None;
                         } else {
                             let message = if work.task.project.is_empty() {
@@ -78,7 +75,7 @@ impl Page for CreateTaskPage {
                     }
                     yes_no_cancel_modal::ModalResult::No => {
                         work.task = Task::default();
-                        work.next_page = self.back_page;
+                        work.next_page = Pages::Main;
                         work.tasks = None;
                     }
                     _ => {}
