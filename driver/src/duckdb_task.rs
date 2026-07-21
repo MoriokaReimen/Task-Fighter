@@ -47,7 +47,6 @@ impl TryFrom<DuckdbTask> for Task {
     type Error = anyhow::Error;
 
     fn try_from(duckdb_task: DuckdbTask) -> Result<Self> {
-        // jiff::Error を DomainError::InvalidDate にマッピング
         let start_date = Date::from_str(&duckdb_task.start_date)?;
         let due_date = Date::from_str(&duckdb_task.due_date)?;
         let entry_date = Date::from_str(&duckdb_task.entry_date)?;
@@ -57,7 +56,6 @@ impl TryFrom<DuckdbTask> for Task {
             None => None,
         };
 
-        // 各数値を Enum に変換する際のエラーをマッピング
         let priority = TaskPriority::try_from(duckdb_task.priority)?;
         let status = TaskStatus::try_from(duckdb_task.status)?;
 

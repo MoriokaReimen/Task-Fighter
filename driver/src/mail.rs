@@ -135,8 +135,8 @@ fn md_to_html(markdown_input: &str) -> String {
     options.insert(Options::ENABLE_HEADING_ATTRIBUTES);
     options.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
     options.insert(Options::ENABLE_PLUSES_DELIMITED_METADATA_BLOCKS);
-    options.insert(Options::ENABLE_OLD_FOOTNOTES);
-    options.insert(Options::ENABLE_MATH);
+    options.insert(Options::ENABLE_SUPERSCRIPT);
+    options.insert(Options::ENABLE_SUBSCRIPT);
     options.insert(Options::ENABLE_GFM);
     let parser = Parser::new_ext(markdown_input, options);
 
