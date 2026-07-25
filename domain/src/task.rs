@@ -2,6 +2,7 @@ use anyhow::{Result, bail};
 use jiff::Zoned;
 use jiff::civil::Date;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
 pub enum TaskPriority {
@@ -49,7 +50,7 @@ impl TryFrom<i32> for TaskStatus {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Task {
-    pub id: i32,
+    pub uuid: Uuid,
     pub active: bool,
     pub status: TaskStatus,
     pub project: String,
@@ -81,7 +82,7 @@ impl Task {
 impl Default for Task {
     fn default() -> Self {
         Self {
-            id: 0,
+            uuid: Uuid::new_v4(),
             active: true,
             status: TaskStatus::Pending,
             project: String::new(),

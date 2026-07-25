@@ -1,9 +1,9 @@
 SELECT 
-  id, 
+  uuid, 
   active,
   project, 
   title, 
   detail, 
   priority 
 FROM daily_tasks
-WHERE id = $id;
+WHERE uuid = $uuid;

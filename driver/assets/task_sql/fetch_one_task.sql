@@ -1,5 +1,5 @@
 SELECT 
-  id, 
+  uuid,
   active, 
   status, 
   project, 
@@ -13,4 +13,4 @@ SELECT
   entry_date::VARCHAR AS entry_date,
   end_date::VARCHAR AS end_date
 FROM tasks
-WHERE id = $id;
+WHERE uuid = $uuid;

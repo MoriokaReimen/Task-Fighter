@@ -1,5 +1,5 @@
 SELECT 
-  id, 
+  uuid,
   active, 
   status, 
   project, 
@@ -60,7 +60,7 @@ ORDER BY
   CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 32) != 0  THEN priority END ASC,
   CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 64) != 0  THEN progress END ASC,
   CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 128) != 0 THEN time_spent END ASC,
-  CASE WHEN ($order_flags & 256) = 0 THEN id END ASC,
+  CASE WHEN ($order_flags & 256) = 0 THEN uuid END ASC,
 
   -- 【降順ソート】
   CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 1) != 0   THEN status END DESC,
@@ -71,4 +71,4 @@ ORDER BY
   CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 32) != 0  THEN priority END DESC,
   CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 64) != 0  THEN progress END DESC,
   CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 128) != 0 THEN time_spent END DESC,
-  CASE WHEN ($order_flags & 256) != 0 THEN id END DESC;
+  CASE WHEN ($order_flags & 256) != 0 THEN uuid END DESC;

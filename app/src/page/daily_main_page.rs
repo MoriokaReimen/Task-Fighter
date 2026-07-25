@@ -3,9 +3,9 @@ use crate::widget::DailyTaskTable; // 【変更】DailyTaskTableをインポー�
 use crate::widget::MenuBar;
 use crate::work::Work;
 use core::prelude::*;
-use core::{DailyTaskFilterFlags, DailyTaskOrderFlags};
+use core::{DailyTask, DailyTaskFilterFlags, DailyTaskOrderFlags};
 use egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
-use tracing::{error, info};
+use tracing::info;
 
 pub struct DailyMainPage {
     daily_task_table: DailyTaskTable, // 【変更】
@@ -93,13 +93,7 @@ impl DailyMainPage {
         // --- 副作用の処理 ---
         if clicked_create {
             work.next_page = Pages::CreateDailyTask;
-            // 既存のID取得ロジック（DailyTask用としてIDを取得）
-            if let Ok(id) = work.core.get_next_daily_task_id() {
-                work.daily_task.id = id;
-                info!("The next daily task id is {}", id);
-            } else {
-                error!("Failed to get daily task id");
-            }
+            work.daily_task = DailyTask::default();
         }
     }
 

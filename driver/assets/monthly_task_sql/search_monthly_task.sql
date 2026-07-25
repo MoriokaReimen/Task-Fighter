@@ -1,5 +1,5 @@
 SELECT 
-  id, 
+  uuid, 
   active,
   project, 
   title, 
@@ -31,7 +31,7 @@ ORDER BY
         WHEN ($order_flags & '0b100000000'::INTEGER) = '0b000000000'::INTEGER THEN
             CASE
                 WHEN ($order_flags & '0b000100000'::INTEGER) != '0b000000000'::INTEGER THEN priority::VARCHAR
-                ELSE id::VARCHAR
+                ELSE uuid::VARCHAR
             END
     END ASC,
     CASE 

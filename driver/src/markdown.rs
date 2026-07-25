@@ -38,7 +38,6 @@ impl TemplateSummary {
 
 #[derive(Serialize)]
 struct TemplateTask {
-    id: i32,
     title: String,
     project: String,
     priority_text: &'static str,
@@ -86,7 +85,6 @@ impl From<&Task> for TemplateTask {
         };
 
         Self {
-            id: task.id,
             title: task.title.clone(),
             project: task.project.clone(),
             priority_text,

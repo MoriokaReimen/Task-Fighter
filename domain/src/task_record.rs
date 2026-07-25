@@ -2,6 +2,7 @@ use crate::task::Task;
 use anyhow::Result;
 use bitflags::bitflags;
 use std::path::Path;
+use uuid::Uuid;
 
 pub type PlotResult = Result<Vec<(i32, i32, i32, i32)>>;
 
@@ -81,8 +82,7 @@ impl Default for TaskOrderFlags {
 
 pub trait TaskRecord {
     type AsyncOutput;
-    fn get_next_task_id(&self) -> Result<i32>;
-    fn fetch_one_task(&self, id: i32) -> Self::AsyncOutput;
+    fn fetch_one_task(&self, uuid: Uuid) -> Self::AsyncOutput;
     fn fetch_all_task(
         &self,
         filter_flags: TaskFilterFlags,

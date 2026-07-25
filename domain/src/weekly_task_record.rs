@@ -1,6 +1,6 @@
 use crate::weekly_task::WeeklyTask;
-use anyhow::Result;
 use bitflags::bitflags;
+use uuid::Uuid;
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -60,8 +60,7 @@ impl Default for WeeklyTaskOrderFlags {
 
 pub trait WeeklyTaskRecord {
     type AsyncOutput;
-    fn get_next_weekly_task_id(&self) -> Result<i32>;
-    fn fetch_one_weekly_task(&self, id: i32) -> Self::AsyncOutput;
+    fn fetch_one_weekly_task(&self, uuid: Uuid) -> Self::AsyncOutput;
     fn fetch_all_weekly_task(
         &self,
         filter_flags: WeeklyTaskFilterFlags,
@@ -77,6 +76,6 @@ pub trait WeeklyTaskRecord {
     fn insert_weekly_task(&self, task: &WeeklyTask) -> Self::AsyncOutput;
     fn update_weekly_task(&self, task: &WeeklyTask) -> Self::AsyncOutput;
     fn upsert_weekly_task(&self, task: &WeeklyTask) -> Self::AsyncOutput;
-    fn delete_weekly_task(&self, id: i32) -> Self::AsyncOutput;
+    fn delete_weekly_task(&self, uuid: Uuid) -> Self::AsyncOutput;
     fn sync_all_weekly_task(&self) -> Self::AsyncOutput;
 }

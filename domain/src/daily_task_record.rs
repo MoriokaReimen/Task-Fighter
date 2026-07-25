@@ -1,6 +1,6 @@
 use crate::daily_task::DailyTask;
-use anyhow::Result;
 use bitflags::bitflags;
+use uuid::Uuid;
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -61,8 +61,7 @@ impl Default for DailyTaskOrderFlags {
 
 pub trait DailyTaskRecord {
     type AsyncOutput;
-    fn get_next_daily_task_id(&self) -> Result<i32>;
-    fn fetch_one_daily_task(&self, id: i32) -> Self::AsyncOutput;
+    fn fetch_one_daily_task(&self, uuid: Uuid) -> Self::AsyncOutput;
     fn fetch_all_daily_task(
         &self,
         filter_flags: DailyTaskFilterFlags,
@@ -78,6 +77,6 @@ pub trait DailyTaskRecord {
     fn insert_daily_task(&self, task: &DailyTask) -> Self::AsyncOutput;
     fn update_daily_task(&self, task: &DailyTask) -> Self::AsyncOutput;
     fn upsert_daily_task(&self, task: &DailyTask) -> Self::AsyncOutput;
-    fn delete_daily_task(&self, id: i32) -> Self::AsyncOutput;
+    fn delete_daily_task(&self, uuid: Uuid) -> Self::AsyncOutput;
     fn sync_all_daily_task(&self) -> Self::AsyncOutput;
 }

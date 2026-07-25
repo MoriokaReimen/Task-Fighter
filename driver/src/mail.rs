@@ -35,7 +35,6 @@ struct TemplateSummary {
 
 #[derive(Serialize)]
 struct TemplateTask {
-    id: i32,
     title: String,
     project: String,
     priority_text: String,
@@ -222,7 +221,6 @@ fn to_template_task(task: &Task) -> TemplateTask {
     };
 
     TemplateTask {
-        id: task.id,
         title: task.title.clone(),
         project: task.project.clone(),
         priority_text,

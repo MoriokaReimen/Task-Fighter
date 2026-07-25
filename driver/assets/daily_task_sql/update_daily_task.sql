@@ -5,4 +5,4 @@ SET
   title      = $title,
   detail     = $detail,
   priority   = $priority
-WHERE id = $id;
+WHERE uuid = $uuid;

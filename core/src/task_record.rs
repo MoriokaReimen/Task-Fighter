@@ -6,6 +6,7 @@ use jiff::{ToSpan, Zoned};
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::oneshot::{self};
+use uuid::Uuid;
 
 macro_rules! spawn_async_db {
     ($self:expr, $output_variant:ident, |$conn:ident| $action:expr) => {{
@@ -30,16 +31,9 @@ macro_rules! spawn_async_db {
 impl TaskRecord for Core {
     type AsyncOutput = CoreOutput;
 
-    fn get_next_task_id(&self) -> Result<i32> {
-        self.runtime.block_on(async {
-            let conn = self.conn.lock().await;
-            driver::get_next_task_id(&conn)
-        })
-    }
-
-    fn fetch_one_task(&self, id: i32) -> Self::AsyncOutput {
+    fn fetch_one_task(&self, uuid: Uuid) -> Self::AsyncOutput {
         spawn_async_db!(self, FetchOneTask, |conn| {
-            driver::fetch_one_task(conn, id)
+            driver::fetch_one_task(conn, uuid)
         })
     }
 

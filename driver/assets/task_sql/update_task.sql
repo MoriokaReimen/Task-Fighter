@@ -12,4 +12,4 @@ SET
   time_spent = $time_spent,
   entry_date = $entry_date,
   end_date   = $end_date
-WHERE id = $id;
+WHERE uuid = $uuid;

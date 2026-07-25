@@ -1,9 +1,10 @@
 use crate::duckdb_daily_task::DuckdbDailyTask;
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use domain::DailyTask;
 use domain::{DailyTaskFilterFlags, DailyTaskOrderFlags, DailyTaskSearchFlags};
 use duckdb::Connection;
 use tracing::info;
+use uuid::Uuid;
 
 pub fn insert_daily_task(conn: &Connection, daily_task: &DailyTask) -> Result<()> {
     const INSERT_TASK_SQL: &str = include_str!("../assets/daily_task_sql/insert_daily_task.sql");
@@ -11,53 +12,39 @@ pub fn insert_daily_task(conn: &Connection, daily_task: &DailyTask) -> Result<()
     info!("Inserting daily_task: {:?}", daily_task);
     let duckdb_daily_task: DuckdbDailyTask = daily_task.clone().into();
     let mut params = duckdb_daily_task.to_named_params();
-    params.remove("id");
+    params.remove("uuid");
     let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
     let _ = stmt.query(&params)?;
 
     Ok(())
 }
 
-fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
-    if id <= 0 {
-        bail!(format!("Invalid id: {id}"));
-    }
-
+fn exists_uuid(conn: &Connection, uuid: Uuid) -> Result<bool> {
     let count: i64 = conn
         .query_row(
-            "SELECT COUNT(1) FROM daily_tasks WHERE id = ?;",
-            duckdb::params![id],
+            "SELECT COUNT(1) FROM daily_tasks WHERE uuid = ?;",
+            duckdb::params![uuid],
             |row| row.get(0),
         )
-        .context("Failed to check if daily_task ID exists")?;
+        .context("Failed to check if daily_task uuid exists")?;
 
     Ok(count > 0)
 }
 
 pub fn upsert_daily_task(conn: &Connection, daily_task: &DailyTask) -> Result<()> {
-    let exists = exists_id(conn, daily_task.id)?;
+    let exists = exists_uuid(conn, daily_task.uuid)?;
     if exists {
-        info!("ID {} exists. Update daily_task.", daily_task.id);
+        info!("uuid {} exists. Update daily_task.", daily_task.uuid);
         update_daily_task(conn, daily_task)?;
     } else {
-        info!("ID {} not exists. Create new daily_task.", daily_task.id);
+        info!(
+            "uuid {} not exists. Create new daily_task.",
+            daily_task.uuid
+        );
         insert_daily_task(conn, daily_task)?;
     }
 
     Ok(())
-}
-
-pub fn get_next_daily_task_id(conn: &Connection) -> Result<i32> {
-    const GET_NEXT_DAILY_TASK_ID_SQL: &str =
-        "SELECT last_value FROM duckdb_sequences() WHERE sequence_name = 'daily_tasks_id_seq';";
-    let mut stmt = conn.prepare(GET_NEXT_DAILY_TASK_ID_SQL)?;
-    let last_value: Option<i64> = stmt
-        .query_row([], |row| row.get(0))
-        .context("Failed to query next sequence value from DuckDB catalogs")?;
-    let next_id = last_value.map_or(1, |val| (val + 1) as i32);
-    info!("Next daily_task id is {}.", next_id);
-
-    Ok(next_id)
 }
 
 pub fn update_daily_task(conn: &Connection, daily_task: &DailyTask) -> Result<()> {
@@ -70,7 +57,7 @@ pub fn update_daily_task(conn: &Connection, daily_task: &DailyTask) -> Result<()
     let mut stmt = conn.prepare(UPDATE_TASK_SQL)?;
     stmt.execute(&params)?;
 
-    info!("DailyTask {} update success.", daily_task.id);
+    info!("DailyTask {} update success.", daily_task.uuid);
     Ok(())
 }
 
@@ -105,13 +92,13 @@ pub fn search_daily_task(
     Ok(daily_tasks)
 }
 
-pub fn fetch_one_daily_task(conn: &Connection, id: i32) -> Result<DailyTask> {
+pub fn fetch_one_daily_task(conn: &Connection, uuid: Uuid) -> Result<DailyTask> {
     const FETCH_ONE_SQL: &str = include_str!("../assets/daily_task_sql/fetch_one_daily_task.sql");
 
-    info!("Querying daily_task with id: {}", id);
+    info!("Querying daily_task with uuid: {}", uuid);
     let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
-    let duckdb_daily_task = stmt.query_row(duckdb::named_params! { "id": id }, |row| {
+    let duckdb_daily_task = stmt.query_row(duckdb::named_params! { "uuid": uuid }, |row| {
         DuckdbDailyTask::try_from(row)
     })?;
 
@@ -145,11 +132,11 @@ pub fn fetch_all_daily_task(
     Ok(daily_tasks)
 }
 
-pub fn delete_daily_task(conn: &Connection, id: i32) -> Result<()> {
+pub fn delete_daily_task(conn: &Connection, uuid: Uuid) -> Result<()> {
     const DELETE_SQL: &str = include_str!("../assets/daily_task_sql/delete_daily_task.sql");
-    info!("Delete daily task: {}", id);
+    info!("Delete daily task: {}", uuid);
     let mut stmt = conn.prepare(DELETE_SQL)?;
-    stmt.execute(duckdb::named_params! { "id": id })?;
+    stmt.execute(duckdb::named_params! { "uuid": uuid })?;
 
     Ok(())
 }
@@ -170,9 +157,9 @@ mod tests {
     }
 
     // テスト用のダミーDailyTaskデータを生成するヘルパー関数
-    fn create_dummy_task(id: i32, title: &str) -> DailyTask {
+    fn create_dummy_task(uuid: Uuid, title: &str) -> DailyTask {
         DailyTask {
-            id,
+            uuid,
             active: true,
             project: "TestProject".to_string(),
             title: title.to_string(),
@@ -205,7 +192,7 @@ mod tests {
 
         // 取得テスト
         let fetched = fetch_one_daily_task(&conn, 1)?;
-        assert_eq!(fetched.id, task.id);
+        assert_eq!(fetched.uuid, task.uuid);
         assert_eq!(fetched.title, task.title);
 
         Ok(())
@@ -215,10 +202,10 @@ mod tests {
     fn test_exists_id_validation() {
         let conn = setup_in_memory_db();
 
-        // 異常系: id が 0 以下のときは bail! でエラーになるか確認
+        // 異常系: uuid が 0 以下のときは bail! でエラーになるか確認
         let result = exists_id(&conn, 0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Invalid id: 0"));
+        assert!(result.unwrap_err().to_string().contains("Invalid uuid: 0"));
     }
 
     #[test]
@@ -254,7 +241,7 @@ mod tests {
         // 実際にシーケンスを進めるダミークエリを発行
         conn.execute("SELECT nextval('daily_tasks_id_seq');", [])?;
 
-        // シーケンスが進んだ後の次ID取得テスト
+        // シーケンスが進んだ後の次uuid取得テスト
         let next_id_after = get_next_daily_task_id(&conn)?;
         assert_eq!(next_id_after, 2);
 

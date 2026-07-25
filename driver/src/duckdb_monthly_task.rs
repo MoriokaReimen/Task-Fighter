@@ -3,10 +3,11 @@ use domain::{MonthlyTask, TaskPriority};
 use duckdb::Row;
 use duckdb::ToSql;
 use std::collections::HashMap;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DuckdbMonthlyTask {
-    pub id: i32,
+    pub uuid: Uuid,
     pub active: bool,
     pub project: String,
     pub title: String,
@@ -19,7 +20,7 @@ pub struct DuckdbMonthlyTask {
 impl From<MonthlyTask> for DuckdbMonthlyTask {
     fn from(task: MonthlyTask) -> Self {
         Self {
-            id: task.id,
+            uuid: task.uuid,
             active: task.active,
             project: task.project,
             title: task.title,
@@ -37,7 +38,7 @@ impl TryFrom<DuckdbMonthlyTask> for MonthlyTask {
     fn try_from(duckdb_monthly_task: DuckdbMonthlyTask) -> Result<Self> {
         let priority = TaskPriority::try_from(duckdb_monthly_task.priority)?;
         Ok(Self {
-            id: duckdb_monthly_task.id,
+            uuid: duckdb_monthly_task.uuid,
             active: duckdb_monthly_task.active,
             project: duckdb_monthly_task.project,
             title: duckdb_monthly_task.title,
@@ -54,7 +55,7 @@ impl TryFrom<&Row<'_>> for DuckdbMonthlyTask {
 
     fn try_from(row: &Row<'_>) -> Result<Self, Self::Error> {
         Ok(Self {
-            id: row.get("id")?,
+            uuid: row.get("uuid")?,
             active: row.get("active")?,
             project: row.get("project")?,
             title: row.get("title")?,
@@ -69,7 +70,7 @@ impl TryFrom<&Row<'_>> for DuckdbMonthlyTask {
 impl DuckdbMonthlyTask {
     pub fn to_named_params(&self) -> HashMap<&str, &dyn ToSql> {
         HashMap::from_iter([
-            ("id", &self.id as &dyn ToSql),
+            ("uuid", &self.uuid as &dyn ToSql),
             ("active", &self.active as &dyn ToSql),
             ("project", &self.project as &dyn ToSql),
             ("title", &self.title as &dyn ToSql),

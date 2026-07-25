@@ -2,10 +2,11 @@ use crate::task::{Task, TaskPriority};
 use anyhow::{Result, bail};
 use jiff::civil::{Date, Weekday};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct WeeklyTask {
-    pub id: i32,
+    pub uuid: Uuid,
     pub active: bool,
     pub project: String,
     pub title: String,
@@ -27,7 +28,7 @@ pub struct WeeklyTask {
 impl Default for WeeklyTask {
     fn default() -> Self {
         Self {
-            id: 0,
+            uuid: Uuid::new_v4(),
             active: true,
             project: String::new(),
             title: String::new(),
@@ -105,7 +106,7 @@ impl WeeklyTask {
         );
 
         Ok(Task {
-            id: self.id,
+            uuid: Uuid::new_v4(),
             project: self.project.clone(),
             title: title_with_week,
             detail: self.detail.clone(),

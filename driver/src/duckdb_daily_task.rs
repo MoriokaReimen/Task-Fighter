@@ -3,10 +3,11 @@ use domain::{DailyTask, TaskPriority};
 use duckdb::Row;
 use duckdb::ToSql;
 use std::collections::HashMap;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DuckdbDailyTask {
-    pub id: i32,
+    pub uuid: Uuid,
     pub active: bool,
     pub project: String,
     pub title: String,
@@ -17,7 +18,7 @@ pub struct DuckdbDailyTask {
 impl From<DailyTask> for DuckdbDailyTask {
     fn from(task: DailyTask) -> Self {
         Self {
-            id: task.id,
+            uuid: task.uuid,
             active: task.active,
             project: task.project,
             title: task.title,
@@ -34,7 +35,7 @@ impl TryFrom<DuckdbDailyTask> for DailyTask {
         let priority = TaskPriority::try_from(duckdb_daily_task.priority)?;
 
         Ok(Self {
-            id: duckdb_daily_task.id,
+            uuid: duckdb_daily_task.uuid,
             active: duckdb_daily_task.active,
             project: duckdb_daily_task.project,
             title: duckdb_daily_task.title,
@@ -49,7 +50,7 @@ impl TryFrom<&Row<'_>> for DuckdbDailyTask {
 
     fn try_from(row: &Row<'_>) -> Result<Self, Self::Error> {
         Ok(Self {
-            id: row.get("id")?,
+            uuid: row.get("uuid")?,
             active: row.get("active")?,
             project: row.get("project")?,
             title: row.get("title")?,
@@ -62,7 +63,7 @@ impl TryFrom<&Row<'_>> for DuckdbDailyTask {
 impl DuckdbDailyTask {
     pub fn to_named_params(&self) -> HashMap<&str, &dyn ToSql> {
         HashMap::from_iter([
-            ("id", &self.id as &dyn ToSql),
+            ("uuid", &self.uuid as &dyn ToSql),
             ("active", &self.active as &dyn ToSql),
             ("project", &self.project as &dyn ToSql),
             ("title", &self.title as &dyn ToSql),
@@ -78,11 +79,11 @@ mod tests {
     use duckdb::Connection;
 
     // テスト用のドメインモデルのモック
-    fn create_dummy_daily_task(id: i32, priority_value: u8) -> DailyTask {
+    fn create_dummy_daily_task(uuid: i32, priority_value: u8) -> DailyTask {
         // ※実際の TaskPriority::try_from などの挙動に合わせてダミーを作ります
         // ここでは、環境に合わせて適宜マッピングを想定してください
         DailyTask {
-            id,
+            uuid,
             active: true,
             project: "TestProject".to_string(),
             title: "TestTitle".to_string(),
@@ -100,7 +101,7 @@ mod tests {
         // From トレイトの検証
         let duckdb_task = DuckdbDailyTask::from(domain_task.clone());
 
-        assert_eq!(duckdb_task.id, domain_task.id);
+        assert_eq!(duckdb_task.uuid, domain_task.uuid);
         assert_eq!(duckdb_task.active, domain_task.active);
         assert_eq!(duckdb_task.project, domain_task.project);
         assert_eq!(duckdb_task.title, domain_task.title);
@@ -110,7 +111,7 @@ mod tests {
 
         // TryFrom トレイトの検証 (逆変換)
         let converted_domain_task = DailyTask::try_from(duckdb_task).unwrap();
-        assert_eq!(converted_domain_task.id, domain_task.id);
+        assert_eq!(converted_domain_task.uuid, domain_task.uuid);
         assert_eq!(converted_domain_task.title, domain_task.title);
     }
 
@@ -118,7 +119,7 @@ mod tests {
     fn test_duckdb_daily_task_try_from_invalid_priority() {
         // 2. 異常系: 不正な priority の値が入っていた場合に TryFrom が失敗するか
         let invalid_duckdb_task = DuckdbDailyTask {
-            id: 1,
+            uuid: 1,
             active: true,
             project: "Proj".to_string(),
             title: "Title".to_string(),
@@ -134,7 +135,7 @@ mod tests {
     fn test_to_named_params_and_map_manipulation() {
         // 3. to_named_params のテスト（HashMap の中身と、キー削除の応用）
         let duckdb_task = DuckdbDailyTask {
-            id: 100,
+            uuid: 100,
             active: false,
             project: "Secret".to_string(),
             title: "Task".to_string(),
@@ -145,7 +146,7 @@ mod tests {
         let mut params = duckdb_task.to_named_params();
 
         // 正しくすべてのキーが登録されているか
-        assert!(params.contains_key("id"));
+        assert!(params.contains_key("uuid"));
         assert!(params.contains_key("active"));
         assert!(params.contains_key("project"));
         assert!(params.contains_key("title"));
@@ -153,11 +154,11 @@ mod tests {
         assert!(params.contains_key("priority"));
         assert_eq!(params.len(), 6);
 
-        // 先ほどの応用：特定のキー（例: id）を削除して、残りのパラメータだけを使うようなケースのシミュレート
-        let removed_id_param = params.remove("id");
+        // 先ほどの応用：特定のキー（例: uuid）を削除して、残りのパラメータだけを使うようなケースのシミュレート
+        let removed_id_param = params.remove("uuid");
         assert!(removed_id_param.is_some());
-        assert_eq!(params.len(), 5); // id が抜けて5件になっている
-        assert!(!params.contains_key("id"));
+        assert_eq!(params.len(), 5); // uuid が抜けて5件になっている
+        assert!(!params.contains_key("uuid"));
     }
 
     #[test]
@@ -167,7 +168,7 @@ mod tests {
 
         // ダミーのデータを一件だけ SELECT できるテーブルを作成
         conn.execute(
-            "CREATE TABLE temp_tasks (id INT, active BOOL, project VARCHAR, title VARCHAR, detail VARCHAR, priority INT);",
+            "CREATE TABLE temp_tasks (uuid INT, active BOOL, project VARCHAR, title VARCHAR, detail VARCHAR, priority INT);",
             [],
         )?;
         conn.execute(
@@ -176,7 +177,7 @@ mod tests {
         )?;
 
         let mut stmt = conn.prepare(
-            "SELECT id, active, project, title, detail, priority FROM temp_tasks WHERE id = 7;",
+            "SELECT uuid, active, project, title, detail, priority FROM temp_tasks WHERE uuid = 7;",
         )?;
         let mut rows = stmt.query([])?;
 
@@ -185,7 +186,7 @@ mod tests {
         // &Row からの TryFrom を実行
         let parsed_task = DuckdbDailyTask::try_from(row)?;
 
-        assert_eq!(parsed_task.id, 7);
+        assert_eq!(parsed_task.uuid, 7);
         assert!(parsed_task.active);
         assert_eq!(parsed_task.project, "P");
         assert_eq!(parsed_task.title, "T");

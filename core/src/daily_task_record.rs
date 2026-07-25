@@ -6,6 +6,7 @@ use domain::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 use jiff::Zoned;
 use std::sync::Arc;
 use tokio::sync::oneshot::{self};
+use uuid::Uuid;
 
 /// `tokio::sync::Mutex` をブロッキングタスク内で安全に取得・処理するマクロ
 macro_rules! spawn_async_db {
@@ -35,16 +36,9 @@ macro_rules! spawn_async_db {
 impl DailyTaskRecord for Core {
     type AsyncOutput = CoreOutput;
 
-    fn get_next_daily_task_id(&self) -> Result<i32> {
-        self.runtime.block_on(async {
-            let conn = self.conn.lock().await;
-            driver::get_next_daily_task_id(&conn)
-        })
-    }
-
-    fn fetch_one_daily_task(&self, id: i32) -> Self::AsyncOutput {
+    fn fetch_one_daily_task(&self, uuid: Uuid) -> Self::AsyncOutput {
         spawn_async_db!(self, FetchOneDailyTask, |conn| {
-            driver::fetch_one_daily_task(conn, id)
+            driver::fetch_one_daily_task(conn, uuid)
         })
     }
 
@@ -95,9 +89,9 @@ impl DailyTaskRecord for Core {
         ))
     }
 
-    fn delete_daily_task(&self, id: i32) -> Self::AsyncOutput {
+    fn delete_daily_task(&self, uuid: Uuid) -> Self::AsyncOutput {
         spawn_async_db!(self, DeleteDailyTask, |c| {
-            driver::delete_daily_task(c, id)
+            driver::delete_daily_task(c, uuid)
         })
     }
 

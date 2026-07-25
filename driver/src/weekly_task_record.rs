@@ -1,16 +1,17 @@
 use crate::duckdb_weekly_task::DuckdbWeeklyTask;
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use domain::WeeklyTask;
 use domain::{WeeklyTaskFilterFlags, WeeklyTaskOrderFlags, WeeklyTaskSearchFlags};
 use duckdb::Connection;
 use tracing::info;
+use uuid::Uuid;
 
 pub fn insert_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result<()> {
     const INSERT_TASK_SQL: &str = include_str!("../assets/weekly_task_sql/insert_weekly_task.sql");
     info!("Inserting weekly_task: {:?}", weekly_task);
     let duckdb_weekly_task: DuckdbWeeklyTask = weekly_task.clone().into();
     let mut params = duckdb_weekly_task.to_named_params();
-    params.remove("id");
+    params.remove("uuid");
 
     let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
     stmt.execute(&params)?;
@@ -18,15 +19,11 @@ pub fn insert_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result
     Ok(())
 }
 
-fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
-    if id <= 0 {
-        bail!(format!("Invalid id: {id}"));
-    }
-
+fn exists_id(conn: &Connection, uuid: &Uuid) -> Result<bool> {
     let count: i64 = conn
         .query_row(
-            "SELECT COUNT(1) FROM weekly_tasks WHERE id = ?;",
-            duckdb::params![id],
+            "SELECT COUNT(1) FROM weekly_tasks WHERE uuid = ?;",
+            duckdb::params![uuid],
             |row| row.get(0),
         )
         .context("Failed to check if weekly_task ID exists")?;
@@ -35,28 +32,19 @@ fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
 }
 
 pub fn upsert_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result<()> {
-    let exists = exists_id(conn, weekly_task.id)?;
+    let exists = exists_id(conn, &weekly_task.uuid)?;
     if exists {
-        info!("ID {} exists. Update weekly_task.", weekly_task.id);
+        info!("ID {} exists. Update weekly_task.", weekly_task.uuid);
         update_weekly_task(conn, weekly_task)?;
     } else {
-        info!("ID {} not exists. Create new weekly_task.", weekly_task.id);
+        info!(
+            "ID {} not exists. Create new weekly_task.",
+            weekly_task.uuid
+        );
         insert_weekly_task(conn, weekly_task)?;
     }
 
     Ok(())
-}
-
-pub fn get_next_weekly_task_id(conn: &Connection) -> Result<i32> {
-    let query =
-        "SELECT last_value FROM duckdb_sequences() WHERE sequence_name = 'weekly_tasks_id_seq';";
-    let last_value: Option<i64> = conn
-        .query_row(query, [], |row| row.get(0))
-        .context("Failed to query next sequence value from DuckDB catalogs")?;
-    let next_id = last_value.map_or(1, |val| (val + 1) as i32);
-    info!("Next weekly_task id is {}.", next_id);
-
-    Ok(next_id)
 }
 
 pub fn update_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result<()> {
@@ -68,7 +56,7 @@ pub fn update_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result
     let mut stmt = conn.prepare(UPDATE_TASK_SQL)?;
     stmt.execute(&params)?;
 
-    info!("WeeklyTask {} update success.", weekly_task.id);
+    info!("WeeklyTask {} update success.", weekly_task.uuid);
     Ok(())
 }
 
@@ -102,12 +90,12 @@ pub fn search_weekly_task(
     Ok(weekly_tasks)
 }
 
-pub fn fetch_one_weekly_task(conn: &Connection, id: i32) -> Result<WeeklyTask> {
+pub fn fetch_one_weekly_task(conn: &Connection, uuid: &Uuid) -> Result<WeeklyTask> {
     const FETCH_ONE_SQL: &str = include_str!("../assets/weekly_task_sql/fetch_one_weekly_task.sql");
-    info!("Querying weekly_task with id: {}", id);
+    info!("Querying weekly_task with uuid: {}", uuid);
     let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
-    let duckdb_weekly_task = stmt.query_row(duckdb::named_params! { ":id": id }, |row| {
+    let duckdb_weekly_task = stmt.query_row(duckdb::named_params! { ":uuid": uuid }, |row| {
         DuckdbWeeklyTask::try_from(row)
     })?;
 
@@ -141,11 +129,11 @@ pub fn fetch_all_weekly_task(
     Ok(weekly_tasks)
 }
 
-pub fn delete_weekly_task(conn: &Connection, id: i32) -> Result<()> {
+pub fn delete_weekly_task(conn: &Connection, uuid: &Uuid) -> Result<()> {
     const DELETE_SQL: &str = include_str!("../assets/weekly_task_sql/delete_weekly_task.sql");
-    info!("Delete weekly task: {}", id);
+    info!("Delete weekly task: {}", uuid);
     let mut stmt = conn.prepare(DELETE_SQL)?;
-    stmt.execute(duckdb::named_params! { ":id": id })?;
+    stmt.execute(duckdb::named_params! { ":uuid": uuid })?;
 
     Ok(())
 }

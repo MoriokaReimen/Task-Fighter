@@ -46,7 +46,7 @@ impl TaskTable {
                         let task = &tasks[row.index()];
 
                         // 各行（タスク）ごとに一意なベースIDを生成
-                        let row_id = egui::Id::new(("task-row", task.id));
+                        let row_id = egui::Id::new(("task-row", task.uuid));
 
                         // ★ 修正ポイント: 各カラムごとにIDが衝突しないよう、ユニークな文字列をコンバイナ（ID合成）します
                         row.col(|ui| {

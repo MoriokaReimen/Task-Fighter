@@ -6,6 +6,7 @@ use domain::{WeeklyTask, WeeklyTaskFilterFlags, WeeklyTaskOrderFlags, WeeklyTask
 use jiff::Zoned;
 use std::sync::Arc;
 use tokio::sync::oneshot::{self};
+use uuid::Uuid;
 
 macro_rules! spawn_async_db {
     ($self:expr, $output_variant:ident, |$conn:ident| $action:expr) => {{
@@ -31,16 +32,9 @@ macro_rules! spawn_async_db {
 impl WeeklyTaskRecord for Core {
     type AsyncOutput = CoreOutput;
 
-    fn get_next_weekly_task_id(&self) -> Result<i32> {
-        self.runtime.block_on(async {
-            let conn = self.conn.lock().await;
-            driver::get_next_weekly_task_id(&conn)
-        })
-    }
-
-    fn fetch_one_weekly_task(&self, id: i32) -> Self::AsyncOutput {
+    fn fetch_one_weekly_task(&self, uuid: Uuid) -> Self::AsyncOutput {
         spawn_async_db!(self, FetchOneWeeklyTask, |conn| {
-            driver::fetch_one_weekly_task(conn, id)
+            driver::fetch_one_weekly_task(conn, &uuid)
         })
     }
 
@@ -91,9 +85,9 @@ impl WeeklyTaskRecord for Core {
         ))
     }
 
-    fn delete_weekly_task(&self, id: i32) -> Self::AsyncOutput {
+    fn delete_weekly_task(&self, uuid: Uuid) -> Self::AsyncOutput {
         spawn_async_db!(self, DeleteWeeklyTask, |c| {
-            driver::delete_weekly_task(c, id)
+            driver::delete_weekly_task(c, &uuid)
         })
     }
 

@@ -1,5 +1,5 @@
 SELECT
-    id,
+    uuid,
     active,
     status,
     project,

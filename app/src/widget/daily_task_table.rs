@@ -46,7 +46,7 @@ impl DailyTaskTable {
                         let task = &tasks[row.index()];
 
                         // 各行（タスク）ごとに一意なベースIDを生成
-                        let row_id = egui::Id::new(("daily-task-row", task.id));
+                        let row_id = egui::Id::new(("daily-task-row", task.uuid));
 
                         row.col(|ui| {
                             ui.push_id(row_id.with("active"), |ui| {

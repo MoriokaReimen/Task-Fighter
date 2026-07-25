@@ -1,11 +1,12 @@
 use crate::duckdb_task::DuckdbTask;
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use domain::{Task, TaskStatus};
 use domain::{TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 use duckdb::Connection;
 use jiff::Zoned;
 use jiff::civil::Date;
 use tracing::info;
+use uuid::Uuid;
 
 pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     const INSERT_TASK_SQL: &str = include_str!("../assets/task_sql/insert_task.sql");
@@ -21,15 +22,11 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     Ok(())
 }
 
-fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
-    if id <= 0 {
-        bail!(format!("Invalid id: {id}"));
-    }
-
+fn exists_uuid(conn: &Connection, uuid: Uuid) -> Result<bool> {
     let count: i64 = conn
         .query_row(
-            "SELECT COUNT(1) FROM tasks WHERE id = ?;",
-            duckdb::params![id],
+            "SELECT COUNT(1) FROM tasks WHERE uuid = ?;",
+            duckdb::params![uuid],
             |row| row.get(0),
         )
         .context("Failed to check if task ID exists")?;
@@ -38,12 +35,12 @@ fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
 }
 
 pub fn upsert_task(conn: &Connection, task: &Task) -> Result<()> {
-    let exists = exists_id(conn, task.id)?;
+    let exists = exists_uuid(conn, task.uuid)?;
     if exists {
-        info!("ID {} exists. Update task.", task.id);
+        info!("ID {} exists. Update task.", task.uuid);
         update_task(conn, task)?;
     } else {
-        info!("ID {} not exists. Create new task.", task.id);
+        info!("ID {} not exists. Create new task.", task.uuid);
         insert_task(conn, task)?;
     }
 
@@ -72,11 +69,12 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
         None
     };
 
-    let params = db_task.to_named_params();
+    let mut params = db_task.to_named_params();
+    params.remove("id");
     let mut stmt = conn.prepare(UPDATE_TASK_SQL)?;
     stmt.execute(&params)?;
 
-    info!("Task {} update success.", task.id);
+    info!("Task {} update success.", task.uuid);
     Ok(())
 }
 
@@ -132,12 +130,12 @@ pub fn search_task(
     Ok(tasks)
 }
 
-pub fn fetch_one_task(conn: &Connection, id: i32) -> Result<Task> {
+pub fn fetch_one_task(conn: &Connection, uuid: Uuid) -> Result<Task> {
     const FETCH_ONE_SQL: &str = include_str!("../assets/task_sql/fetch_one_task.sql");
-    info!("Querying task with id: {}", id);
+    info!("Querying task with uuid: {}", uuid);
     let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
-    let duckdb_task = stmt.query_row(duckdb::named_params! { "id": id }, |row| {
+    let duckdb_task = stmt.query_row(duckdb::named_params! { "uuid": uuid }, |row| {
         DuckdbTask::try_from(row)
     })?;
 

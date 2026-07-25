@@ -1,6 +1,6 @@
 use crate::monthly_task::MonthlyTask;
-use anyhow::Result;
 use bitflags::bitflags;
+use uuid::Uuid;
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -59,8 +59,7 @@ impl Default for MonthlyTaskOrderFlags {
 
 pub trait MonthlyTaskRecord {
     type AsyncOutput;
-    fn get_next_monthly_task_id(&self) -> Result<i32>;
-    fn fetch_one_monthly_task(&self, id: i32) -> Self::AsyncOutput;
+    fn fetch_one_monthly_task(&self, uuid: Uuid) -> Self::AsyncOutput;
     fn fetch_all_monthly_task(
         &self,
         filter_flags: MonthlyTaskFilterFlags,
@@ -76,6 +75,6 @@ pub trait MonthlyTaskRecord {
     fn insert_monthly_task(&self, task: &MonthlyTask) -> Self::AsyncOutput;
     fn update_monthly_task(&self, task: &MonthlyTask) -> Self::AsyncOutput;
     fn upsert_monthly_task(&self, task: &MonthlyTask) -> Self::AsyncOutput;
-    fn delete_monthly_task(&self, id: i32) -> Self::AsyncOutput;
+    fn delete_monthly_task(&self, uuid: Uuid) -> Self::AsyncOutput;
     fn sync_all_monthly_task(&self) -> Self::AsyncOutput;
 }

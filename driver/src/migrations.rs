@@ -19,6 +19,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "second_schema",
         sql: include_str!("../assets/migrations/second_schema.sql"),
     },
+    Migration {
+        version: 3,
+        name: "third_schema",
+        sql: include_str!("../assets/migrations/third_schema.sql"),
+    },
 ];
 
 const CREATE_MIGRATIONS_TABLE_SQL: &str = "

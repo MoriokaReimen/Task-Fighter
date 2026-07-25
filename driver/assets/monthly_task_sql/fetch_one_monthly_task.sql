@@ -1,5 +1,5 @@
 SELECT 
-  id, 
+  uuid, 
   active,
   project, 
   title, 
@@ -8,4 +8,4 @@ SELECT
   start_day,
   due_day
 FROM monthly_tasks
-WHERE id = $id;
+WHERE uuid = $uuid;

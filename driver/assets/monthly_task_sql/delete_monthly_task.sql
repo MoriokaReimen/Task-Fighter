@@ -1,4 +1,4 @@
 UPDATE monthly_tasks
 SET
   active     = false
-WHERE id = $id;
+WHERE uuid = $uuid;

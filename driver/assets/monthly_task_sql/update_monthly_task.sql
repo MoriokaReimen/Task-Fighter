@@ -7,4 +7,4 @@ SET
   priority   = $priority,
   start_day  = $start_day,
   due_day    = $due_day
-WHERE id = $id;
+WHERE uuid = $uuid;

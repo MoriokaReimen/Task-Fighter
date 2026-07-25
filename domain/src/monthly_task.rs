@@ -2,10 +2,11 @@ use crate::task::{Task, TaskPriority};
 use anyhow::{Result, bail};
 use jiff::civil::Date;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MonthlyTask {
-    pub id: i32,
+    pub uuid: Uuid,
     pub active: bool,
     pub project: String,
     pub title: String,
@@ -18,7 +19,7 @@ pub struct MonthlyTask {
 impl Default for MonthlyTask {
     fn default() -> Self {
         Self {
-            id: 0,
+            uuid: Uuid::new_v4(),
             active: true,
             project: String::new(),
             title: String::new(),
@@ -53,7 +54,7 @@ impl MonthlyTask {
         let title_with_month = format!("{} for {}", self.title, task_start_date.strftime("%Y/%m"));
 
         Ok(Task {
-            id: self.id,
+            uuid: Uuid::new_v4(),
             project: self.project.clone(),
             title: title_with_month,
             detail: self.detail.clone(),

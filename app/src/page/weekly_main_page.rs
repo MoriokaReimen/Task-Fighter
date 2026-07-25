@@ -3,9 +3,9 @@ use crate::widget::MenuBar;
 use crate::widget::WeeklyTaskTable; // WeeklyTaskTable をインポート
 use crate::work::Work;
 use core::prelude::*;
-use core::{WeeklyTaskFilterFlags, WeeklyTaskOrderFlags}; // Weekly用のフラグを使用
+use core::{WeeklyTask, WeeklyTaskFilterFlags, WeeklyTaskOrderFlags}; // Weekly用のフラグを使用
 use egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
-use tracing::{error, info};
+use tracing::info;
 
 pub struct WeeklyMainPage {
     // 構造体名を Weekly に変更
@@ -94,13 +94,7 @@ impl WeeklyMainPage {
         // --- 副作用の処理 ---
         if clicked_create {
             work.next_page = Pages::CreateWeeklyTask;
-            // WeeklyTask 用としてIDを取得
-            if let Ok(id) = work.core.get_next_weekly_task_id() {
-                work.weekly_task.id = id;
-                info!("The next weekly task id is {}", id);
-            } else {
-                error!("Failed to get weekly task id");
-            }
+            work.weekly_task = WeeklyTask::default();
         }
     }
 

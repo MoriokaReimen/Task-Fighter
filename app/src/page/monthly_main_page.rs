@@ -3,9 +3,9 @@ use crate::widget::MenuBar;
 use crate::widget::MonthlyTaskTable; // MonthlyTaskTable に変更
 use crate::work::Work;
 use core::prelude::*;
-use core::{MonthlyTaskFilterFlags, MonthlyTaskOrderFlags}; // Monthly用のフラグを使用
+use core::{MonthlyTask, MonthlyTaskFilterFlags, MonthlyTaskOrderFlags}; // Monthly用のフラグを使用
 use egui::{self, Align, Button, Color32, Layout, ScrollArea, Ui, vec2};
-use tracing::{error, info};
+use tracing::info;
 
 pub struct MonthlyMainPage {
     // 構造体名を Monthly に変更
@@ -94,14 +94,7 @@ impl MonthlyMainPage {
         // --- 副作用の処理 ---
         if clicked_create {
             work.next_page = Pages::CreateMonthlyTask; // 遷移先を変更
-            // MonthlyTask 用としてIDを取得
-            if let Ok(id) = work.core.get_next_monthly_task_id() {
-                // monthly に変更
-                work.monthly_task.id = id;
-                info!("The next monthly task id is {}", id);
-            } else {
-                error!("Failed to get monthly task id");
-            }
+            work.monthly_task = MonthlyTask::default();
         }
     }
 

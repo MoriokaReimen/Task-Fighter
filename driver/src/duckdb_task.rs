@@ -5,10 +5,11 @@ use duckdb::ToSql;
 use jiff::civil::Date;
 use std::collections::HashMap;
 use std::str::FromStr;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DuckdbTask {
-    pub id: i32,
+    pub uuid: Uuid,
     pub active: bool,
     pub status: i32,
     pub project: String,
@@ -26,7 +27,7 @@ pub struct DuckdbTask {
 impl From<Task> for DuckdbTask {
     fn from(task: Task) -> Self {
         Self {
-            id: task.id,
+            uuid: task.uuid,
             active: task.active,
             status: task.status as i32,
             project: task.project,
@@ -60,7 +61,7 @@ impl TryFrom<DuckdbTask> for Task {
         let status = TaskStatus::try_from(duckdb_task.status)?;
 
         Ok(Self {
-            id: duckdb_task.id,
+            uuid: duckdb_task.uuid,
             active: duckdb_task.active,
             status,
             project: duckdb_task.project,
@@ -82,7 +83,7 @@ impl TryFrom<&Row<'_>> for DuckdbTask {
 
     fn try_from(row: &Row<'_>) -> Result<Self, Self::Error> {
         Ok(Self {
-            id: row.get("id")?,
+            uuid: row.get("uuid")?,
             active: row.get("active")?,
             status: row.get("status")?,
             project: row.get("project")?,
@@ -102,7 +103,7 @@ impl TryFrom<&Row<'_>> for DuckdbTask {
 impl DuckdbTask {
     pub fn to_named_params(&self) -> HashMap<&str, &dyn ToSql> {
         HashMap::from_iter([
-            ("id", &self.id as &dyn ToSql),
+            ("uuid", &self.uuid as &dyn ToSql),
             ("active", &self.active as &dyn ToSql),
             ("status", &self.status as &dyn ToSql),
             ("project", &self.project as &dyn ToSql),

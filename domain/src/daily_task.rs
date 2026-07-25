@@ -2,10 +2,11 @@ use crate::task::{Task, TaskPriority};
 use anyhow::{Result, bail};
 use jiff::civil::Date;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct DailyTask {
-    pub id: i32,
+    pub uuid: Uuid,
     pub active: bool,
     pub project: String,
     pub title: String,
@@ -16,7 +17,7 @@ pub struct DailyTask {
 impl Default for DailyTask {
     fn default() -> Self {
         Self {
-            id: 0,
+            uuid: Uuid::new_v4(),
             active: true,
             project: String::new(),
             title: String::new(),
@@ -42,7 +43,7 @@ impl DailyTask {
         let task_target_date = *today;
 
         Ok(Task {
-            id: self.id,
+            uuid: Uuid::new_v4(),
             project: self.project.clone(),
             title: title_with_date,
             detail: self.detail.clone(),

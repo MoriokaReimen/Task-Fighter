@@ -4,10 +4,11 @@ use duckdb::Row;
 use duckdb::ToSql;
 use jiff::civil::Weekday;
 use std::collections::HashMap;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DuckdbWeeklyTask {
-    pub id: i32,
+    pub uuid: Uuid,
     pub active: bool,
     pub project: String,
     pub title: String,
@@ -20,7 +21,7 @@ pub struct DuckdbWeeklyTask {
 impl From<WeeklyTask> for DuckdbWeeklyTask {
     fn from(task: WeeklyTask) -> Self {
         Self {
-            id: task.id,
+            uuid: task.uuid,
             active: task.active,
             project: task.project,
             title: task.title,
@@ -44,7 +45,7 @@ impl TryFrom<DuckdbWeeklyTask> for WeeklyTask {
             .map_err(|e| anyhow::anyhow!("invalid due_day: {e}"))?;
 
         Ok(Self {
-            id: duckdb_weekly_task.id,
+            uuid: duckdb_weekly_task.uuid,
             active: duckdb_weekly_task.active,
             project: duckdb_weekly_task.project,
             title: duckdb_weekly_task.title,
@@ -61,7 +62,7 @@ impl TryFrom<&Row<'_>> for DuckdbWeeklyTask {
 
     fn try_from(row: &Row<'_>) -> Result<Self, Self::Error> {
         Ok(Self {
-            id: row.get("id")?,
+            uuid: row.get("uuid")?,
             active: row.get("active")?,
             project: row.get("project")?,
             title: row.get("title")?,
@@ -76,7 +77,7 @@ impl TryFrom<&Row<'_>> for DuckdbWeeklyTask {
 impl DuckdbWeeklyTask {
     pub fn to_named_params(&self) -> HashMap<&str, &dyn ToSql> {
         HashMap::from_iter([
-            ("id", &self.id as &dyn ToSql),
+            ("uuid", &self.uuid as &dyn ToSql),
             ("active", &self.active as &dyn ToSql),
             ("project", &self.project as &dyn ToSql),
             ("title", &self.title as &dyn ToSql),
@@ -95,9 +96,9 @@ mod tests {
     use jiff::civil::Weekday;
 
     // テスト用のドメインモデルモックを生成するヘルパー関数
-    fn create_dummy_weekly_task(id: i32, start_offset: i8, due_offset: i8) -> WeeklyTask {
+    fn create_dummy_weekly_task(uuid: Uuid, start_offset: i8, due_offset: i8) -> WeeklyTask {
         WeeklyTask {
-            id,
+            uuid,
             active: true,
             project: "WeeklyProject".to_string(),
             title: "WeeklyTitle".to_string(),
@@ -116,14 +117,14 @@ mod tests {
 
         // From トレイトの検証
         let duckdb_task = DuckdbWeeklyTask::from(domain_task.clone());
-        assert_eq!(duckdb_task.id, domain_task.id);
+        assert_eq!(duckdb_task.uuid, domain_task.uuid);
         assert_eq!(duckdb_task.start_day, 1);
         assert_eq!(duckdb_task.due_day, 5);
         assert_eq!(duckdb_task.priority, 1);
 
         // TryFrom トレイトの検証 (逆変換)
         let converted_domain = WeeklyTask::try_from(duckdb_task).unwrap();
-        assert_eq!(converted_domain.id, domain_task.id);
+        assert_eq!(converted_domain.uuid, domain_task.uuid);
         assert_eq!(converted_domain.start_day, Weekday::Tuesday);
         assert_eq!(converted_domain.due_day, Weekday::Saturday);
     }
@@ -132,7 +133,7 @@ mod tests {
     fn test_try_from_invalid_weekday_offset() {
         // 2. 異常系: 曜日オフセットが不正な値（例: 7）の場合にパースエラーになるか
         let invalid_task = DuckdbWeeklyTask {
-            id: 1,
+            uuid: 1,
             active: true,
             project: "Proj".to_string(),
             title: "Title".to_string(),
@@ -151,7 +152,7 @@ mod tests {
     fn test_try_from_invalid_priority() {
         // 3. 異常系: 優先度が不正な値の場合にパースエラーになるか
         let invalid_task = DuckdbWeeklyTask {
-            id: 2,
+            uuid: 2,
             active: true,
             project: "Proj".to_string(),
             title: "Title".to_string(),
@@ -169,7 +170,7 @@ mod tests {
     fn test_to_named_params() {
         // 4. to_named_params のテスト（HashMap の保持チェックとキー削除）
         let duckdb_task = DuckdbWeeklyTask {
-            id: 300,
+            uuid: 300,
             active: true,
             project: "Gym".to_string(),
             title: "Workout".to_string(),
@@ -182,7 +183,7 @@ mod tests {
         let mut params = duckdb_task.to_named_params();
         assert_eq!(params.len(), 8);
 
-        assert!(params.contains_key("id"));
+        assert!(params.contains_key("uuid"));
         assert!(params.contains_key("start_day"));
         assert!(params.contains_key("due_day"));
 
@@ -201,7 +202,7 @@ mod tests {
         // 以前のDDL（weekly_tasks）に合わせて、end_day を due_day として取得するケースをシミュレート
         conn.execute(
             "CREATE TABLE temp_weekly_tasks (
-                id INT, active BOOL, project VARCHAR, title VARCHAR, detail VARCHAR, priority INT, start_day INT, end_day INT
+                uuid INT, active BOOL, project VARCHAR, title VARCHAR, detail VARCHAR, priority INT, start_day INT, end_day INT
             );",
             [],
         )?;
@@ -214,7 +215,7 @@ mod tests {
 
         // 構造体のフィールド名（due_day）を満たすために、エイリアス（end_day AS due_day）を使用
         let mut stmt = conn.prepare(
-            "SELECT id, active, project, title, detail, priority, start_day, end_day AS due_day FROM temp_weekly_tasks WHERE id = 15;"
+            "SELECT uuid, active, project, title, detail, priority, start_day, end_day AS due_day FROM temp_weekly_tasks WHERE uuid = 15;"
         )?;
         let mut rows = stmt.query([])?;
 
@@ -223,7 +224,7 @@ mod tests {
         // 型不整合を回避するため、row をそのまま渡す
         let parsed_task = DuckdbWeeklyTask::try_from(row)?;
 
-        assert_eq!(parsed_task.id, 15);
+        assert_eq!(parsed_task.uuid, 15);
         assert!(parsed_task.active);
         assert_eq!(parsed_task.project, "ProjW");
         assert_eq!(parsed_task.start_day, 3);

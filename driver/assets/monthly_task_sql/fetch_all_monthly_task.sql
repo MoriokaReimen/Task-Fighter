@@ -1,5 +1,5 @@
 SELECT 
-  id, 
+  uuid, 
   active,
   project, 
   title, 
@@ -29,10 +29,10 @@ WHERE
 ORDER BY 
   -- Ascending Sort
   CASE WHEN ($order_flags & 256) = 0 AND ($order_flags & 32) != 0  THEN priority END ASC,
-  CASE WHEN ($order_flags & 256) = 0 THEN id END ASC,
+  CASE WHEN ($order_flags & 256) = 0 THEN uuid END ASC,
 
   -- Descending Sort
   CASE WHEN ($order_flags & 256) != 0 AND ($order_flags & 32) != 0  THEN priority END DESC,
-  CASE WHEN ($order_flags & 256) != 0 THEN id END DESC;
+  CASE WHEN ($order_flags & 256) != 0 THEN uuid END DESC;
 
 
