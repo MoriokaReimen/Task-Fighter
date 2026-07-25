@@ -3,9 +3,7 @@ use crate::widget::DailyTaskEdit; // 【変更】DailyTaskEditをインポート
 use crate::widget::MenuBar;
 use crate::widget::WarningModal;
 use crate::widget::YesNoCancelModal;
-use crate::widget::YesNoModal;
 use crate::widget::yes_no_cancel_modal;
-use crate::widget::yes_no_modal;
 use crate::work::Work;
 use core::DailyTask; // 【変更】DailyTask構造体を使用
 use core::prelude::*;
@@ -14,7 +12,6 @@ use tracing::info;
 
 pub struct EditDailyTaskPage {
     yes_no_cancel: YesNoCancelModal,
-    yes_no: YesNoModal,
     warning: WarningModal,
     menu_bar: MenuBar,
     last_page: Pages,
@@ -24,7 +21,6 @@ impl EditDailyTaskPage {
     pub fn new() -> Self {
         Self {
             yes_no_cancel: YesNoCancelModal::new("edit_daily_task_yes_no_cancel"),
-            yes_no: YesNoModal::new("edit_daily_task_yes_no"),
             warning: WarningModal::new("edit_daily_task_warning"),
             menu_bar: MenuBar::new(),
             last_page: Pages::DailyMain,
@@ -34,6 +30,7 @@ impl EditDailyTaskPage {
 
 impl Page for EditDailyTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {
+        info!("Enter to EditDaily Page");
         if work.last_page != Pages::Config {
             self.last_page = work.last_page;
         }
@@ -80,10 +77,6 @@ impl Page for EditDailyTaskPage {
                     .clicked()
                 {
                     info!("Save Button Pressed");
-                    self.yes_no.open(fl!("save-task"), fl!("save-task-message"));
-                }
-
-                if self.yes_no.show(ui) == yes_no_modal::ModalResult::Yes {
                     if work.daily_task.is_saveable() {
                         work.outputs
                             .push(work.core.upsert_daily_task(&work.daily_task));
@@ -117,5 +110,7 @@ impl Page for EditDailyTaskPage {
         });
     }
 
-    fn on_exit(&mut self, _: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {
+        info!("Exit from EditDaily Page");
+    }
 }

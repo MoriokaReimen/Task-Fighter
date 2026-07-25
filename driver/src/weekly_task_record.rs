@@ -12,7 +12,7 @@ pub fn insert_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result
     let mut params = duckdb_weekly_task.to_named_params();
     params.remove("id");
 
-    let mut stmt = conn.prepare_cached(INSERT_TASK_SQL)?;
+    let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
     stmt.execute(&params)?;
 
     Ok(())
@@ -22,12 +22,16 @@ fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
     if id <= 0 {
         bail!(format!("Invalid id: {id}"));
     }
-    let mut stmt = conn.prepare_cached("SELECT 1 FROM weekly_tasks WHERE id = ?;")?;
-    let exists = stmt
-        .exists(duckdb::params![id])
+
+    let count: i64 = conn
+        .query_row(
+            "SELECT COUNT(1) FROM weekly_tasks WHERE id = ?;",
+            duckdb::params![id],
+            |row| row.get(0),
+        )
         .context("Failed to check if weekly_task ID exists")?;
 
-    Ok(exists)
+    Ok(count > 0)
 }
 
 pub fn upsert_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result<()> {
@@ -61,7 +65,7 @@ pub fn update_weekly_task(conn: &Connection, weekly_task: &WeeklyTask) -> Result
     let duckdb_weekly_task: DuckdbWeeklyTask = weekly_task.clone().into();
 
     let params = duckdb_weekly_task.to_named_params();
-    let mut stmt = conn.prepare_cached(UPDATE_TASK_SQL)?;
+    let mut stmt = conn.prepare(UPDATE_TASK_SQL)?;
     stmt.execute(&params)?;
 
     info!("WeeklyTask {} update success.", weekly_task.id);
@@ -77,7 +81,7 @@ pub fn search_weekly_task(
 ) -> Result<Vec<WeeklyTask>> {
     const SEARCH_SQL: &str = include_str!("../assets/weekly_task_sql/search_weekly_task.sql");
     info!("Searching weekly_tasks with pattern: '{}'", pattern);
-    let mut stmt = conn.prepare_cached(SEARCH_SQL)?;
+    let mut stmt = conn.prepare(SEARCH_SQL)?;
 
     let params = duckdb::named_params! {
         "pattern": pattern,
@@ -101,7 +105,7 @@ pub fn search_weekly_task(
 pub fn fetch_one_weekly_task(conn: &Connection, id: i32) -> Result<WeeklyTask> {
     const FETCH_ONE_SQL: &str = include_str!("../assets/weekly_task_sql/fetch_one_weekly_task.sql");
     info!("Querying weekly_task with id: {}", id);
-    let mut stmt = conn.prepare_cached(FETCH_ONE_SQL)?;
+    let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
     let duckdb_weekly_task = stmt.query_row(duckdb::named_params! { ":id": id }, |row| {
         DuckdbWeeklyTask::try_from(row)
@@ -118,7 +122,7 @@ pub fn fetch_all_weekly_task(
 ) -> Result<Vec<WeeklyTask>> {
     const FETCH_ALL_SQL: &str = include_str!("../assets/weekly_task_sql/fetch_all_weekly_task.sql");
     info!("Querying weekly_tasks");
-    let mut stmt = conn.prepare_cached(FETCH_ALL_SQL)?;
+    let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
 
     let params = duckdb::named_params! {
         "filter_flags": filter_flags.bits() as i32,
@@ -140,7 +144,7 @@ pub fn fetch_all_weekly_task(
 pub fn delete_weekly_task(conn: &Connection, id: i32) -> Result<()> {
     const DELETE_SQL: &str = include_str!("../assets/weekly_task_sql/delete_weekly_task.sql");
     info!("Delete weekly task: {}", id);
-    let mut stmt = conn.prepare_cached(DELETE_SQL)?;
+    let mut stmt = conn.prepare(DELETE_SQL)?;
     stmt.execute(duckdb::named_params! { ":id": id })?;
 
     Ok(())

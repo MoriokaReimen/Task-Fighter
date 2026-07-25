@@ -81,6 +81,7 @@ impl ConfigPage {
 
 impl Page for ConfigPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {
+        info!("Enter to Config Page");
         self.back_page = work.last_page;
         self.config = work.core.load_config().expect("Failed to load config");
     }
@@ -172,6 +173,7 @@ impl Page for ConfigPage {
     }
 
     fn on_exit(&mut self, work: &mut crate::work::Work) {
+        info!("Exit from Config Page");
         work.core
             .save_config(&self.config)
             .expect("Failed to save config");

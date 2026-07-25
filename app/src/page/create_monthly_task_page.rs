@@ -3,9 +3,7 @@ use crate::widget::MenuBar;
 use crate::widget::MonthlyTaskEdit; // MonthlyTaskEdit に変更
 use crate::widget::WarningModal;
 use crate::widget::YesNoCancelModal;
-use crate::widget::YesNoModal;
 use crate::widget::yes_no_cancel_modal;
-use crate::widget::yes_no_modal;
 use crate::work::Work;
 use core::MonthlyTask; // MonthlyTask 構造体を使用
 use core::prelude::*;
@@ -15,7 +13,6 @@ use tracing::info;
 pub struct CreateMonthlyTaskPage {
     // 構造体名を Monthly に変更
     yes_no_cancel: YesNoCancelModal,
-    yes_no: YesNoModal,
     warning: WarningModal,
     menu_bar: MenuBar,
     last_page: Pages,
@@ -25,7 +22,6 @@ impl CreateMonthlyTaskPage {
     pub fn new() -> Self {
         Self {
             yes_no_cancel: YesNoCancelModal::new("create_monthly_task_yes_no_cancel"),
-            yes_no: YesNoModal::new("create_monthly_task_yes_no"),
             warning: WarningModal::new("create_monthly_task_warning"),
             menu_bar: MenuBar::new(),
             last_page: Pages::MonthlyMain,
@@ -35,6 +31,7 @@ impl CreateMonthlyTaskPage {
 
 impl Page for CreateMonthlyTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {
+        info!("Enter to MonthlyTask Page");
         if work.last_page != Pages::Config {
             self.last_page = work.last_page;
         }
@@ -81,10 +78,6 @@ impl Page for CreateMonthlyTaskPage {
                     .clicked()
                 {
                     info!("Save Button Pressed");
-                    self.yes_no.open(fl!("save-task"), fl!("save-task-message"));
-                }
-
-                if self.yes_no.show(ui) == yes_no_modal::ModalResult::Yes {
                     if work.monthly_task.is_saveable() {
                         work.outputs
                             .push(work.core.upsert_monthly_task(&work.monthly_task));
@@ -116,5 +109,7 @@ impl Page for CreateMonthlyTaskPage {
         });
     }
 
-    fn on_exit(&mut self, _: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {
+        info!("Exit from MonthlyTask Page");
+    }
 }

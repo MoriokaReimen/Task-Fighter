@@ -4,6 +4,7 @@ use crate::widget::StopWatch;
 use crate::work::Work;
 use egui::{RichText, ScrollArea, TextEdit, Ui};
 use std::time::Duration;
+use tracing::info;
 
 pub struct TimerPage {
     menu_bar: MenuBar,
@@ -18,7 +19,10 @@ impl TimerPage {
 }
 
 impl Page for TimerPage {
-    fn on_entry(&mut self, _: &mut crate::work::Work) {}
+    fn on_entry(&mut self, _: &mut crate::work::Work) {
+        info!("Enter to Timer Page");
+    }
+
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         self.menu_bar.show(ui, work);
         // 毎フレーム再描画を要求（アニメーションを滑らかにするため）
@@ -71,5 +75,7 @@ impl Page for TimerPage {
         });
     }
 
-    fn on_exit(&mut self, _: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {
+        info!("Exit from Timer Page");
+    }
 }

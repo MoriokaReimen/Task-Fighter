@@ -3,9 +3,7 @@ use crate::widget::MenuBar;
 use crate::widget::TaskEdit;
 use crate::widget::WarningModal;
 use crate::widget::YesNoCancelModal;
-use crate::widget::YesNoModal;
 use crate::widget::yes_no_cancel_modal;
-use crate::widget::yes_no_modal;
 use crate::work::Work;
 use core::Task;
 use core::prelude::*;
@@ -14,7 +12,6 @@ use tracing::info;
 
 pub struct EditTaskPage {
     yes_no_cancel: YesNoCancelModal,
-    yes_no: YesNoModal,
     warning: WarningModal,
     menu_bar: MenuBar,
     last_page: Pages,
@@ -24,7 +21,6 @@ impl EditTaskPage {
     pub fn new() -> Self {
         Self {
             yes_no_cancel: YesNoCancelModal::new("create_task_yes_no_cancel"),
-            yes_no: YesNoModal::new("create_task_yes_no"),
             warning: WarningModal::new("create_task_warning"),
             menu_bar: MenuBar::new(),
             last_page: Pages::Main,
@@ -34,6 +30,7 @@ impl EditTaskPage {
 
 impl Page for EditTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {
+        info!("Enter to EditTask Page");
         if work.last_page != Pages::Config && work.last_page != Pages::Timer {
             self.last_page = work.last_page;
         }
@@ -84,9 +81,6 @@ impl Page for EditTaskPage {
                     .clicked()
                 {
                     info!("Save Button Pressed");
-                    self.yes_no.open(fl!("save-task"), fl!("save-task-message"));
-                }
-                if self.yes_no.show(ui) == yes_no_modal::ModalResult::Yes {
                     if work.task.is_saveable() {
                         work.outputs.push(work.core.upsert_task(&work.task));
                     } else {
@@ -98,6 +92,7 @@ impl Page for EditTaskPage {
                         self.warning.open(fl!("save-error"), message);
                     }
                 }
+                self.warning.show(ui);
                 if ui
                     .add(Button::new(fl!("start-work")).min_size(vec2(90.0, 28.0)))
                     .clicked()
@@ -106,7 +101,6 @@ impl Page for EditTaskPage {
                     work.next_page = Pages::Timer;
                     work.start_time = jiff::Zoned::now();
                 }
-                self.warning.show(ui);
             });
         });
 
@@ -128,5 +122,7 @@ impl Page for EditTaskPage {
         });
     }
 
-    fn on_exit(&mut self, _: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {
+        info!("Exit from EditTask Page");
+    }
 }

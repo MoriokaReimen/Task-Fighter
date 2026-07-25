@@ -205,6 +205,7 @@ impl MainPage {
 
 impl Page for MainPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {
+        info!("Enter to Main Page");
         work.outputs.push(work.core.sync_all_daily_task());
         work.outputs.push(work.core.sync_all_weekly_task());
         work.outputs.push(work.core.sync_all_monthly_task());
@@ -240,5 +241,7 @@ impl Page for MainPage {
         });
     }
 
-    fn on_exit(&mut self, _: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {
+        info!("Exit from Main Page");
+    }
 }

@@ -12,7 +12,7 @@ pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
     info!("Inserting task: {:?}", task);
     let db_task: DuckdbTask = task.clone().into();
     let mut params = db_task.to_named_params();
-    let mut stmt = conn.prepare_cached(INSERT_TASK_SQL)?;
+    let mut stmt = conn.prepare(INSERT_TASK_SQL)?;
     params.remove("end_date");
     params.remove("id");
 
@@ -25,12 +25,16 @@ fn exists_id(conn: &Connection, id: i32) -> Result<bool> {
     if id <= 0 {
         bail!(format!("Invalid id: {id}"));
     }
-    let mut stmt = conn.prepare_cached("SELECT 1 FROM tasks WHERE id = ?;")?;
-    let exists = stmt
-        .exists(duckdb::params![id])
+
+    let count: i64 = conn
+        .query_row(
+            "SELECT COUNT(1) FROM tasks WHERE id = ?;",
+            duckdb::params![id],
+            |row| row.get(0),
+        )
         .context("Failed to check if task ID exists")?;
 
-    Ok(exists)
+    Ok(count > 0)
 }
 
 pub fn upsert_task(conn: &Connection, task: &Task) -> Result<()> {
@@ -69,7 +73,7 @@ pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
     };
 
     let params = db_task.to_named_params();
-    let mut stmt = conn.prepare_cached(UPDATE_TASK_SQL)?;
+    let mut stmt = conn.prepare(UPDATE_TASK_SQL)?;
     stmt.execute(&params)?;
 
     info!("Task {} update success.", task.id);
@@ -82,7 +86,7 @@ pub fn get_plot_data(
     end_date: Date,
 ) -> Result<Vec<(i32, i32, i32, i32)>> {
     const COUNT_TASK_BY_DATE_SQL: &str = include_str!("../assets/task_sql/get_plot_data.sql");
-    let mut stmt = conn.prepare_cached(COUNT_TASK_BY_DATE_SQL)?;
+    let mut stmt = conn.prepare(COUNT_TASK_BY_DATE_SQL)?;
     let rows = stmt.query_map(
         duckdb::named_params!{"start_date": start_date.to_string(), "end_date": end_date.to_string()},
         |row| {
@@ -107,7 +111,7 @@ pub fn search_task(
 ) -> Result<Vec<Task>> {
     const SEARCH_SQL: &str = include_str!("../assets/task_sql/search_task.sql");
     info!("Searching tasks with pattern: '{}'", pattern);
-    let mut stmt = conn.prepare_cached(SEARCH_SQL)?;
+    let mut stmt = conn.prepare(SEARCH_SQL)?;
 
     let params = duckdb::named_params! {
         "pattern": pattern,
@@ -131,7 +135,7 @@ pub fn search_task(
 pub fn fetch_one_task(conn: &Connection, id: i32) -> Result<Task> {
     const FETCH_ONE_SQL: &str = include_str!("../assets/task_sql/fetch_one_task.sql");
     info!("Querying task with id: {}", id);
-    let mut stmt = conn.prepare_cached(FETCH_ONE_SQL)?;
+    let mut stmt = conn.prepare(FETCH_ONE_SQL)?;
 
     let duckdb_task = stmt.query_row(duckdb::named_params! { "id": id }, |row| {
         DuckdbTask::try_from(row)
@@ -148,7 +152,7 @@ pub fn fetch_all_task(
 ) -> Result<Vec<Task>> {
     const FETCH_ALL_SQL: &str = include_str!("../assets/task_sql/fetch_all_task.sql");
     info!("Querying tasks");
-    let mut stmt = conn.prepare_cached(FETCH_ALL_SQL)?;
+    let mut stmt = conn.prepare(FETCH_ALL_SQL)?;
 
     let params = duckdb::named_params! {
         "filter_flags": filter_flags.bits() as i32,
@@ -201,7 +205,7 @@ mod tests {
     }
 
     #[test]
-    fn test_insert_and_exists_id_and_upsert() -> Result<()> {
+    fn test_insert_and_exists_id() -> Result<()> {
         let conn = setup_test_db()?;
         let task = create_test_task(1, TaskStatus::Pending);
         insert_task(&conn, &task)?;
@@ -213,6 +217,29 @@ mod tests {
 
         let invalid_result = exists_id(&conn, 0);
         assert!(invalid_result.is_err(), "exists_id should fail for ID <= 0");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_upsert() -> Result<()> {
+        let conn = setup_test_db()?;
+        let task = create_test_task(1, TaskStatus::Pending);
+        upsert_task(&conn, &task)?;
+        let exists = exists_id(&conn, 1)?;
+        assert!(exists, "Task with ID 1 should exist after insertion");
+
+        upsert_task(&conn, &task)?;
+        let exists = exists_id(&conn, 1)?;
+        assert!(exists, "Task with ID 1 should exist after upsert");
+        let exists = exists_id(&conn, 2)?;
+        assert!(!exists, "Task with ID 2 should not exist after upsert");
+
+        upsert_task(&conn, &task)?;
+        let exists = exists_id(&conn, 1)?;
+        assert!(exists, "Task with ID 1 should exist after upsert");
+        let exists = exists_id(&conn, 2)?;
+        assert!(!exists, "Task with ID 2 should not exist after upsert");
 
         Ok(())
     }

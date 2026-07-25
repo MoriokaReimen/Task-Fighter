@@ -124,7 +124,9 @@ impl DailyMainPage {
 }
 
 impl Page for DailyMainPage {
-    fn on_entry(&mut self, _: &mut crate::work::Work) {}
+    fn on_entry(&mut self, _: &mut crate::work::Work) {
+        info!("Enter to DailyMain Page");
+    }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         if work.outputs.is_empty() && work.daily_tasks.is_none() {
@@ -163,5 +165,7 @@ impl Page for DailyMainPage {
         });
     }
 
-    fn on_exit(&mut self, _: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {
+        info!("Exit from DailyMain Page");
+    }
 }

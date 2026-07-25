@@ -3,9 +3,7 @@ use crate::widget::MenuBar;
 use crate::widget::WarningModal;
 use crate::widget::WeeklyTaskEdit; // WeeklyTaskEdit をインポート
 use crate::widget::YesNoCancelModal;
-use crate::widget::YesNoModal;
 use crate::widget::yes_no_cancel_modal;
-use crate::widget::yes_no_modal;
 use crate::work::Work;
 use core::WeeklyTask; // WeeklyTask 構造体を使用
 use core::prelude::*;
@@ -15,7 +13,6 @@ use tracing::info;
 pub struct EditWeeklyTaskPage {
     // 構造体名を Weekly に変更
     yes_no_cancel: YesNoCancelModal,
-    yes_no: YesNoModal,
     warning: WarningModal,
     menu_bar: MenuBar,
     last_page: Pages,
@@ -25,7 +22,6 @@ impl EditWeeklyTaskPage {
     pub fn new() -> Self {
         Self {
             yes_no_cancel: YesNoCancelModal::new("edit_weekly_task_yes_no_cancel"),
-            yes_no: YesNoModal::new("edit_weekly_task_yes_no"),
             warning: WarningModal::new("edit_weekly_task_warning"),
             menu_bar: MenuBar::new(),
             last_page: Pages::WeeklyMain,
@@ -35,6 +31,7 @@ impl EditWeeklyTaskPage {
 
 impl Page for EditWeeklyTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {
+        info!("Enter to EditWeekly Page");
         if work.last_page != Pages::Config {
             self.last_page = work.last_page;
         }
@@ -81,10 +78,6 @@ impl Page for EditWeeklyTaskPage {
                     .clicked()
                 {
                     info!("Save Button Pressed");
-                    self.yes_no.open(fl!("save-task"), fl!("save-task-message"));
-                }
-
-                if self.yes_no.show(ui) == yes_no_modal::ModalResult::Yes {
                     if work.weekly_task.is_saveable() {
                         work.outputs
                             .push(work.core.upsert_weekly_task(&work.weekly_task));
@@ -94,6 +87,7 @@ impl Page for EditWeeklyTaskPage {
                         self.warning.open(fl!("save-error"), fl!("title-empty"));
                     }
                 }
+
                 self.warning.show(ui);
             });
         });
@@ -118,5 +112,7 @@ impl Page for EditWeeklyTaskPage {
         });
     }
 
-    fn on_exit(&mut self, _: &mut crate::work::Work) {}
+    fn on_exit(&mut self, _: &mut crate::work::Work) {
+        info!("Exit from EditWeekly Page");
+    }
 }

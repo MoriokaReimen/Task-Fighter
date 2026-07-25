@@ -6,6 +6,7 @@ use core::prelude::*;
 use core::{TaskFilterFlags, TaskOrderFlags};
 use core::{TaskPriority, TaskStatus};
 use egui::{Button, Ui, vec2};
+use tracing::info;
 
 // レイアウト用の定数
 const SPINNER_SIZE: f32 = 64.0;
@@ -94,6 +95,7 @@ impl KanbanPage {
 
 impl Page for KanbanPage {
     fn on_entry(&mut self, work: &mut Work) {
+        info!("Enter to Kanban Page");
         self.kanban_area.pop_columns();
         self.kanban_ready = false;
         work.tasks = None;
@@ -115,6 +117,7 @@ impl Page for KanbanPage {
     }
 
     fn on_exit(&mut self, work: &mut Work) {
+        info!("Exit from Kanban Page");
         let mut columns = self.kanban_area.pop_columns();
         let _ = columns[0]
             .iter_mut()
