@@ -4,5 +4,6 @@
 extend-exclude = [
     "*.sql",
     "*.ftl",
+    "*.html",
     "assets/*"
 ]

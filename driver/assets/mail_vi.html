@@ -3,143 +3,200 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
     <title>Báo cáo trạng thái công việc</title>
     <style>
         .markdown {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            font-size: 15px;
-            line-height: 1.6;
-            color: #24292e;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #3c4149;
             max-width: 100%;
             margin: 0 auto;
-            padding: 2.5%;
         }
         .markdown h1 {
-            font-size: 200%;
-            padding-bottom: 0.6%;
+            font-size: 180%;
+            padding-bottom: 0.5em;
             border-bottom: 1px solid #eaecef;
         }
         .markdown h2 {
-            font-size: 150%;
-            padding-bottom: 0.6%; 
+            font-size: 140%;
+            padding-bottom: 0.5em;
             border-bottom: 1px solid #eaecef;
         }
         .markdown p {
             margin-top: 0;
-            margin-bottom: 2%;
+            margin-bottom: 1em;
         }
         .markdown code {
-            padding: 0.4% 0.8%;
+            padding: 2px 6px;
             margin: 0;
             font-size: 85%;
-            background-color: rgba(27,31,35,0.05);
-            border-radius: 3px;
+            background-color: rgba(27,31,35,0.06);
+            border-radius: 4px;
             font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
         }
         .markdown pre {
-            padding: 2%;
+            padding: 14px 16px;
             overflow: auto;
             font-size: 85%;
-            line-height: 1.45;
+            line-height: 1.5;
             background-color: #f6f8fa;
             border-radius: 6px;
         }
         .markdown pre code {
             background-color: transparent;
-            padding: 0%;
+            padding: 0;
             color: #24292e;
         }
+        .markdown table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1em;
+            background-color: #ffffff !important;
+            color: #24292e !important;
+        }
+        .markdown th, .markdown td {
+            border: 1px solid #d0d7de;
+            padding: 6px 12px;
+            background-color: #ffffff !important;
+            color: #24292e !important;
+        }
+        .markdown th {
+            background-color: #f6f8fa !important;
+            font-weight: 600;
+        }
+        .markdown ul, .markdown ol {
+            padding-left: 1.4em;
+            margin-bottom: 1em;
+        }
+        .markdown blockquote {
+            border-left: 3px solid #d0d7de;
+            color: #57606a;
+            margin: 0 0 1em 0;
+            padding: 0 1em;
+        }
+        .markdown a {
+            color: #0366d6;
+        }
+        .markdown img {
+            max-width: 100%;
+        }
+        .task-card { transition: none; }
     </style>
 </head>
-<body style="background-color: #f4f6f8; margin: 0; padding: 20px; font-family: sans-serif;">
+<body style="background-color: #eef1f5; margin: 0; padding: 24px 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-    {# assets/mail_vi.html #}
-    <div style="max-width: 800px; width: 100%; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); box-sizing: border-box;">
-        
-        <h1 style="font-size: 36px; color: #111111; margin-top: 0; font-weight: bold;">
-            {{ date_headline }} Báo cáo trạng thái công việc
-        </h1>
-        
-        <div style="text-align: center; margin-bottom: 24px;">
-            <img src="{{ image_data }}" alt="Hình thu nhỏ báo cáo" style="width: 100%; max-width: 100%; height: auto; display: block; border-radius: 4px;">
+    {# assets/mail.html #}
+    <div style="width: 100%; margin: 0 auto;">
+
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #2b3a55 0%, #1f2937 100%); border-radius: 12px 12px 0 0; padding: 28px 32px;">
+            <h1 style="font-size: 26px; color: #ffffff; margin: 0; font-weight: 700; letter-spacing: -0.02em;">
+                Báo cáo tiến độ công việc
+            </h1>
+            <p style="color: #b9c2d0; margin: 6px 0 0 0; font-size: 14px;">{{ date_headline }}</p>
         </div>
 
-        <div style="background: #f8f9fa; border: 1px solid #e1e4e6; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
-            <h3 style="margin: 0 0 12px 0; font-size: 24px; color: #111111; font-weight: bold;">📊 Tóm tắt</h3>
-            <table style="width: 100%; font-size: 14px; border-collapse: collapse; color: #333333;">
-                <tr>
-                    <td colspan="2" style="padding-bottom: 8px; color: #111111;">
-                        <strong>Tổng số công việc:</strong> {{ summary.total }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px 0; width: 50%;"><strong>Đã hoàn thành:</strong> {{ summary.completed }} ✅</td>
-                    <td style="padding: 4px 0; width: 50%;"><strong>Đang thực hiện:</strong> {{ summary.in_progress }} 🏃</td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px 0;"><strong>Tạm dừng / Chờ xử lý:</strong> {{ summary.pending }} ⏳</td>
-                    <td style="padding: 4px 0;"><strong>Đã hủy:</strong> {{ summary.canceled }} 🚫</td>
-                </tr>
-            </table>
-        </div>
-
-        {% for task in tasks %}
-        <div style="border: 1px solid #e1e4e6; border-radius: 6px; padding: 18px; margin-bottom: 16px; background-color: #ffffff;">
-            
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
-                <tr>
-                    <td>
-                        <h2 style="font-size: 24px; margin: 0; color: #111111;">
-                            <span style="color: #888888; font-size: 20px; font-weight: normal; margin-right: 6px;">#{{ task.id }}</span>{{ task.title }}
-                        </h2>
-                    </td>
-                </tr>
-            </table>
-
-            <table style="width: 100%; font-size: 14px; margin-bottom: 12px; border-collapse: collapse; color: #333333;">
-                <tr>
-                    <td style="padding: 6px 0; color: #666666; width: 120px;">Dự án</td>
-                    <td style="padding: 6px 0; color: #111111;"><strong>{{ task.project }}</strong></td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666666;">Độ ưu tiên</td>
-                    <td style="padding: 6px 0; color: {{ task.priority_color }}; font-weight: bold;">{{ task.priority_text }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666666;">Trạng thái</td>
-                    <td style="padding: 6px 0; color: {{ task.status_color }}; font-weight: bold;">{{ task.status_text }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666666;">Thời gian</td>
-                    <td style="padding: 6px 0; font-family: monospace; color: #111111;">{{ task.start_date }} ~ {{ task.due_date }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666666;">Thời gian thực hiện</td>
-                    <td style="padding: 6px 0; color: #111111;">{{ "%.1f" | format(task.time_spent) }} giờ</td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666666; vertical-align: middle;">Tiến độ</td>
-                    <td style="padding: 6px 0; vertical-align: middle;">
-                        <table style="width: 120px; border-collapse: collapse; display: inline-block; vertical-align: middle; margin-right: 8px;">
-                            <tr>
-                                <td style="background-color: #e1e4e6; border-radius: 4px; width: 100%; height: 12px; padding: 0; overflow: hidden;">
-                                    <div style="background-color: #28a745; width: {{ task.progress | int }}%; height: 12px; border-radius: 4px;"></div>
-                                </td>
-                            </tr>
-                        </table>
-                        <span style="font-weight: bold; vertical-align: middle; display: inline-block; color: #111111;">{{ task.progress | int }}%</span>
-                    </td>
-                </tr>
-            </table>
-
-            <div style="border-radius: 4px; border-left: 4px solid #888888;">
-                <div class="markdown">{{ task.detail_html | safe }}</div>
+        <div style="background: #ffffff; padding: 24px 32px 8px 32px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <img src="{{ image_data }}" alt="Header báo cáo" style="width: 100%; max-width: 100%; height: auto; display: block; border-radius: 8px;">
             </div>
         </div>
-        {% endfor %}
 
-        <div style="text-align: center; border-top: 1px solid #eaecef; font-size: 13px; color: #666666; margin-top: 32px; padding-top: 16px;">
-            Cung cấp bởi <a href="https://github.com/MoriokaReimen/Task-Fighter" target="_blank" style="color: #0366d6; text-decoration: none; font-weight: bold;">Task Fighter</a>
+        <!-- Tóm tắt -->
+        <div style="background: #ffffff; padding: 0 32px 24px 32px;">
+            <div style="background: #f8f9fb; border: 1px solid #e6e9ee; border-radius: 10px; padding: 20px 24px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 15px; color: #111827; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">📊 Tóm tắt tổng quan</h3>
+
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+                    <tr>
+                        <td style="font-size: 32px; font-weight: 800; color: #111827;">{{ summary.total }}</td>
+                        <td style="font-size: 13px; color: #6b7280; padding-left: 8px; vertical-align: bottom;">Tổng số công việc</td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%; border-collapse: separate; border-spacing: 8px 0;">
+                    <tr>
+                        <td style="width: 25%; background: #ecfdf5; border-radius: 8px; padding: 10px 12px; text-align: center;">
+                            <div style="font-size: 20px; font-weight: 700; color: #059669;">{{ summary.completed }}</div>
+                            <div style="font-size: 11px; color: #047857; font-weight: 600;">✅ Hoàn thành</div>
+                        </td>
+                        <td style="width: 25%; background: #eff6ff; border-radius: 8px; padding: 10px 12px; text-align: center;">
+                            <div style="font-size: 20px; font-weight: 700; color: #2563eb;">{{ summary.in_progress }}</div>
+                            <div style="font-size: 11px; color: #1d4ed8; font-weight: 600;">🏃 Đang thực hiện</div>
+                        </td>
+                        <td style="width: 25%; background: #fffbeb; border-radius: 8px; padding: 10px 12px; text-align: center;">
+                            <div style="font-size: 20px; font-weight: 700; color: #d97706;">{{ summary.pending }}</div>
+                            <div style="font-size: 11px; color: #b45309; font-weight: 600;">⏳ Chưa bắt đầu</div>
+                        </td>
+                        <td style="width: 25%; background: #fef2f2; border-radius: 8px; padding: 10px 12px; text-align: center;">
+                            <div style="font-size: 20px; font-weight: 700; color: #dc2626;">{{ summary.canceled }}</div>
+                            <div style="font-size: 11px; color: #b91c1c; font-weight: 600;">🚫 Đã hủy</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Danh sách công việc -->
+        <div style="background: #ffffff; padding: 0 32px;">
+            {% for task in tasks %}
+            <div class="task-card" style="border: 1px solid #e6e9ee; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; background-color: #ffffff;">
+
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 14px;">
+                    <tr>
+                        <td>
+                            <h2 style="font-size: 19px; margin: 0; color: #111827; font-weight: 700;">
+                                <span style="color: #9ca3af; font-size: 15px; font-weight: 500; margin-right: 6px;">#{{ task.id }}</span>{{ task.title }}
+                            </h2>
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background-color: {{ task.status_color }}22; color: {{ task.status_color }};">{{ task.status_text }}</span>
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background-color: {{ task.priority_color }}22; color: {{ task.priority_color }}; margin-left: 6px;">{{ task.priority_text }}</span>
+                        </td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%; font-size: 13px; margin-bottom: 14px; border-collapse: collapse; color: #4b5563;">
+                    <tr>
+                        <td style="padding: 5px 0; color: #9ca3af; width: 110px;">Dự án</td>
+                        <td style="padding: 5px 0; color: #111827; font-weight: 600;">{{ task.project }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0; color: #9ca3af;">Thời gian</td>
+                        <td style="padding: 5px 0; font-family: monospace; color: #111827;">{{ task.start_date }} → {{ task.due_date }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0; color: #9ca3af;">Thời gian đã dùng</td>
+                        <td style="padding: 5px 0; color: #111827;">{{ "%.1f" | format(task.time_spent) }} giờ</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0; color: #9ca3af; vertical-align: middle;">Tiến độ</td>
+                        <td style="padding: 5px 0; vertical-align: middle;">
+                            <table style="width: 140px; border-collapse: collapse; display: inline-block; vertical-align: middle; margin-right: 8px;">
+                                <tr>
+                                    <td style="background-color: #eef0f3; border-radius: 6px; width: 100%; height: 10px; padding: 0; overflow: hidden;">
+                                        <div style="background-color: #28a745; width: {{ task.progress | int }}%; height: 10px; border-radius: 6px;"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <span style="font-weight: 700; vertical-align: middle; display: inline-block; color: #111827; font-size: 12px;">{{ task.progress | int }}%</span>
+                        </td>
+                    </tr>
+                </table>
+
+                <div style="border-radius: 6px; border-left: 3px solid #e0e3e8; padding-left: 14px;">
+                    <div class="markdown">{{ task.detail_html | safe }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #ffffff; text-align: center; font-size: 12px; color: #9ca3af; padding: 20px 32px 28px 32px; border-radius: 0 0 12px 12px;">
+            Cung cấp bởi <a href="https://github.com/MoriokaReimen/Task-Fighter" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 700;">Task Fighter</a>
         </div>
 
     </div>
