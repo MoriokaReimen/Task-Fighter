@@ -21,9 +21,7 @@ pub fn details(
     panic_formatted: &str,
     app_info: &AppInfo,
 ) -> String {
-    let payload_display = panic_payload_display
-        .map(String::as_str)
-        .unwrap_or("[PAYLOAD IS NOT A STRING]");
+    let payload_display = panic_payload_display.map_or("[PAYLOAD IS NOT A STRING]", |s| s.as_str());
     let name = app_info.name;
     let pkg_name = env!("CARGO_PKG_NAME");
     let pkg_version = env!("CARGO_PKG_VERSION");
@@ -178,10 +176,11 @@ fn render_package_meta(ui: &mut egui::Ui) {
 /// Extracts a human-readable panic message, if the payload is a `&str` or
 /// `String` (the two common cases for `std::panic!`).
 fn extract_payload_display(payload: &(dyn std::any::Any + Send)) -> Option<String> {
-    payload
-        .downcast_ref::<&str>()
-        .map(|s| s.to_string())
-        .or_else(|| payload.downcast_ref::<String>().cloned())
+    if let Some(&s) = payload.downcast_ref::<&str>() {
+        Some(s.to_string())
+    } else {
+        payload.downcast_ref::<String>().cloned()
+    }
 }
 
 /// Installs a panic hook that logs the panic and shows a native crash

@@ -36,12 +36,11 @@ impl Page for CreateTaskPage {
         }
 
         if work.task.id == 0 {
-            match work.core.get_next_task_id() {
-                Ok(id) => {
-                    work.task.id = id;
-                    info!("The next id is {}", id);
-                }
-                Err(_) => error!("Failed to get id"),
+            if let Ok(id) = work.core.get_next_task_id() {
+                work.task.id = id;
+                info!("The next id is {}", id);
+            } else {
+                error!("Failed to get id")
             }
         }
     }

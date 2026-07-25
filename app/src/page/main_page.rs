@@ -25,9 +25,9 @@ enum BottomAction {
 
 impl BottomAction {
     /// Keep `self` if it is not `None`, otherwise fall back to `other`.
-    fn or(self, other: Self) -> Self {
+    const fn or(self, other: Self) -> Self {
         match self {
-            BottomAction::None => other,
+            Self::None => other,
             action => action,
         }
     }
@@ -130,10 +130,10 @@ impl MainPage {
             },
         );
 
-        Self::apply_bottom_action(left_action.or(right_action), work);
+        Self::apply_bottom_action(&left_action.or(right_action), work);
     }
 
-    fn apply_bottom_action(action: BottomAction, work: &mut Work) {
+    fn apply_bottom_action(action: &BottomAction, work: &mut Work) {
         match action {
             BottomAction::None => {}
 

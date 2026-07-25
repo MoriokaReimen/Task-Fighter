@@ -4,7 +4,7 @@ use jiff::Zoned;
 use minijinja::{Environment, context};
 use serde::Serialize;
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 use tracing::info;
 
 #[derive(Serialize, Default)]
@@ -53,7 +53,7 @@ struct TemplateTask {
 }
 
 /// ステータスに対応する表示テキストと色を返す。
-fn status_display(status: TaskStatus) -> (&'static str, &'static str) {
+const fn status_display(status: TaskStatus) -> (&'static str, &'static str) {
     match status {
         TaskStatus::Pending => ("Pending ⏳", "#6c757d"),
         TaskStatus::WorkInProgress => ("Work In Progress 🏃", "#007bff"),
@@ -63,7 +63,7 @@ fn status_display(status: TaskStatus) -> (&'static str, &'static str) {
 }
 
 /// 優先度に対応する表示テキストと色を返す。
-fn priority_display(priority: TaskPriority) -> (&'static str, &'static str) {
+const fn priority_display(priority: TaskPriority) -> (&'static str, &'static str) {
     match priority {
         TaskPriority::High => ("🔴 High", "#dc3545"),
         TaskPriority::Medium => ("🟡 Medium", "#ffc107"),
@@ -133,7 +133,7 @@ pub fn create_markdown(tasks: &[Task]) -> Result<String> {
     Ok(to_crlf(&rendered))
 }
 
-pub fn export_markdown(output: &PathBuf, tasks: &[Task]) -> Result<()> {
+pub fn export_markdown(output: &Path, tasks: &[Task]) -> Result<()> {
     info!("Dump {} tasks to file {}.", tasks.len(), output.display());
     let md_text = create_markdown(tasks)?;
     fs::write(output, md_text)

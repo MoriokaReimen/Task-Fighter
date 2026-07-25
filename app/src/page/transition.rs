@@ -16,17 +16,17 @@ enum EffectType {
 }
 
 impl EffectType {
-    pub const ALL: [EffectType; 10] = [
-        EffectType::LeftToRight,
-        EffectType::RightToLeft,
-        EffectType::TopToBottom,
-        EffectType::BottomToTop,
-        EffectType::FadeIn,
-        EffectType::ZoomOut,
-        EffectType::ZoomIn,
-        EffectType::Bounce,
-        EffectType::Pop,
-        EffectType::Corner,
+    pub const ALL: [Self; 10] = [
+        Self::LeftToRight,
+        Self::RightToLeft,
+        Self::TopToBottom,
+        Self::BottomToTop,
+        Self::FadeIn,
+        Self::ZoomOut,
+        Self::ZoomIn,
+        Self::Bounce,
+        Self::Pop,
+        Self::Corner,
     ];
 
     pub fn random() -> Self {
@@ -50,7 +50,7 @@ enum SlideFrom {
 fn ease_out_back(t: f32) -> f32 {
     const OVERSHOOT: f32 = 1.70158;
     let t = t - 1.0;
-    1.0 + (OVERSHOOT + 1.0) * t.powi(3) + OVERSHOOT * t.powi(2)
+    (OVERSHOOT + 1.0).mul_add(t.powi(3), 1.0)
 }
 
 pub struct Transition {
@@ -101,7 +101,7 @@ impl Transition {
     /// Returns the normalized progress in the range [0.0, 1.0].
     fn advance(&mut self, ui: &Ui) -> f32 {
         let dt = ui.ctx().input(|i| i.stable_dt);
-        self.progress += self.speed * dt;
+        self.progress = self.speed.mul_add(dt, self.progress);
 
         if self.progress >= 100.0 {
             self.progress = 100.0;
@@ -131,10 +131,8 @@ impl Transition {
         let remaining = distance * (1.0 - t);
 
         let offset = match from {
-            SlideFrom::Left => -remaining,
-            SlideFrom::Right => remaining,
-            SlideFrom::Top => -remaining,
-            SlideFrom::Bottom => remaining,
+            SlideFrom::Right | SlideFrom::Bottom => remaining,
+            SlideFrom::Top | SlideFrom::Left => -remaining,
         };
 
         let translation = match from {
@@ -156,7 +154,7 @@ impl Transition {
     fn zoom(&mut self, ui: &Ui, start_scale: f32) {
         let center = ui.ctx().content_rect().center().to_vec2();
         let t = self.advance(ui);
-        let scaling = start_scale + (1.0 - start_scale) * t;
+        let scaling = (1.0 - start_scale).mul_add(t, start_scale);
 
         // Keep the center fixed: center * scaling + translation == center.
         let translation = center - center * scaling;
@@ -195,7 +193,7 @@ impl Transition {
         let content_rect = ui.ctx().content_rect();
         let center = content_rect.center().to_vec2();
         let t = self.advance(ui);
-        let scaling = START_SCALE + (1.0 - START_SCALE) * t;
+        let scaling = (1.0 - START_SCALE).mul_add(t, START_SCALE);
 
         // The zoom-centering translation, plus a diagonal offset from the
         // top-right corner that shrinks to zero as the transition finishes.

@@ -1,7 +1,7 @@
 use crate::task::Task;
 use anyhow::Result;
 use bitflags::bitflags;
-use std::path::PathBuf;
+use std::path::Path;
 
 pub type PlotResult = Result<Vec<(i32, i32, i32, i32)>>;
 
@@ -100,5 +100,5 @@ pub trait TaskRecord {
     fn upsert_task(&self, task: &Task) -> Self::AsyncOutput;
     fn get_plot_data(&self) -> Self::AsyncOutput;
     fn mail_daily(&self, tasks: &[Task]) -> Self::AsyncOutput;
-    fn export_markdown(&self, output: &PathBuf, tasks: &[Task]) -> Self::AsyncOutput;
+    fn export_markdown(&self, output: &Path, tasks: &[Task]) -> Self::AsyncOutput;
 }

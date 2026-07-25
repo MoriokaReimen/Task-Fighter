@@ -245,13 +245,12 @@ pub fn create_mail_html(tasks: &[Task], image_data: &str) -> Result<String> {
     let locale = I18n::global().get_locale()?;
 
     let template_name = match locale.language.as_str() {
-        "en" => "mail_en",
         "ja" => "mail_ja",
         "de" => "mail_de",
         "zh" => "mail_zh",
         "vi" => "mail_vi",
         "es" => "mail_es",
-        _ => "mail_en",
+        _ => "mail_en", // default to english
     };
 
     let tmpl = mail_env()?.get_template(template_name)?;

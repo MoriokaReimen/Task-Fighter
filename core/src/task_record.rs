@@ -3,7 +3,7 @@ use anyhow::Result;
 use domain::prelude::*;
 use domain::{Task, TaskFilterFlags, TaskOrderFlags, TaskSearchFlags};
 use jiff::{ToSpan, Zoned};
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::oneshot::{self};
 
@@ -115,10 +115,10 @@ impl TaskRecord for Core {
         CoreOutput::MailDaily(rx)
     }
 
-    fn export_markdown(&self, output: &PathBuf, tasks: &[Task]) -> Self::AsyncOutput {
+    fn export_markdown(&self, output: &Path, tasks: &[Task]) -> Self::AsyncOutput {
         let (tx, rx) = oneshot::channel();
         let tasks = tasks.to_vec();
-        let output = output.clone();
+        let output = output.to_path_buf();
 
         self.runtime.spawn_blocking(move || {
             let result = (|| -> Result<()> {
