@@ -11,7 +11,8 @@ use tracing::info;
 
 const ACTION_BUTTON_SIZE: Vec2 = vec2(110.0, 28.0);
 const SEARCH_BUTTON_SIZE: Vec2 = vec2(80.0, 28.0);
-const EMAIL_BUTTON_SIZE: Vec2 = vec2(120.0, 28.0);
+/// Buttons whose label is long enough to need extra width (email report, markdown export).
+const WIDE_BUTTON_SIZE: Vec2 = vec2(120.0, 28.0);
 
 /// Action requested by one of the bottom panel buttons.
 enum BottomAction {
@@ -23,14 +24,10 @@ enum BottomAction {
     ExportMarkdown,
 }
 
-impl BottomAction {
-    /// Keep `self` if it is not `None`, otherwise fall back to `other`.
-    const fn or(self, other: Self) -> Self {
-        match self {
-            Self::None => other,
-            action => action,
-        }
-    }
+/// Action requested from the search control bar (reset, or whatever the modal reported).
+enum SearchBarAction {
+    Reset,
+    Modal(ModalResult),
 }
 
 /// Render a fixed-size button and report whether it was clicked.
@@ -42,6 +39,12 @@ pub struct MainPage {
     search_condition_modal: SearchConditionModal,
     task_table: TaskTable,
     menu_bar: MenuBar,
+}
+
+impl Default for MainPage {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MainPage {
@@ -59,6 +62,13 @@ impl MainPage {
             | TaskOrderFlags::OrderByDueDate
             | TaskOrderFlags::Reversed;
         (filter_flag, order_flag)
+    }
+
+    /// Kick off the standard "fetch every active task" request.
+    fn fetch_all_tasks(work: &mut Work) {
+        let (filter_flag, order_flag) = Self::default_fetch_flags();
+        work.outputs
+            .push(work.core.fetch_all_task(filter_flag, order_flag));
     }
 
     fn show_loading_spinner(ui: &mut Ui) {
@@ -90,13 +100,12 @@ impl MainPage {
         ui.separator();
         self.task_table.show(ui, tasks);
 
-        let clicked_task = self
+        if let Some(clicked_task) = self
             .task_table
             .clicked()
             .then(|| self.task_table.clicked_task())
-            .flatten();
-
-        if let Some(clicked_task) = clicked_task {
+            .flatten()
+        {
             work.task = clicked_task;
             work.next_page = Pages::EditTask;
             info!("Edit Button Pressed: {:?}", work.task);
@@ -114,10 +123,10 @@ impl MainPage {
                 if button_clicked(ui, fl!("kanban"), ACTION_BUTTON_SIZE) {
                     return BottomAction::Kanban;
                 }
-                if button_clicked(ui, fl!("email-report"), EMAIL_BUTTON_SIZE) {
+                if button_clicked(ui, fl!("email-report"), WIDE_BUTTON_SIZE) {
                     return BottomAction::EmailReport;
                 }
-                if button_clicked(ui, fl!("export-markdown"), EMAIL_BUTTON_SIZE) {
+                if button_clicked(ui, fl!("export-markdown"), WIDE_BUTTON_SIZE) {
                     return BottomAction::ExportMarkdown;
                 }
                 BottomAction::None
@@ -130,75 +139,93 @@ impl MainPage {
             },
         );
 
-        Self::apply_bottom_action(&left_action.or(right_action), work);
+        // Only one side can be clicked in a given frame, so whichever side fired wins;
+        // when neither did, both are `None` and nothing happens.
+        let action = match left_action {
+            BottomAction::None => right_action,
+            clicked => clicked,
+        };
+        Self::apply_bottom_action(&action, work);
     }
 
     fn apply_bottom_action(action: &BottomAction, work: &mut Work) {
         match action {
             BottomAction::None => {}
-
-            BottomAction::Graph => {
-                work.next_page = Pages::Graph;
-                work.outputs.push(work.core.get_plot_data());
-            }
-
+            BottomAction::Graph => Self::open_graph(work),
             BottomAction::Kanban => work.next_page = Pages::Kanban,
             BottomAction::CreateTask => work.next_page = Pages::CreateTask,
-
-            BottomAction::EmailReport => {
-                info!("Email Report Button Pressed");
-                if let Some(tasks) = &work.tasks {
-                    work.outputs.push(work.core.mail_daily(tasks));
-                }
-            }
-
-            BottomAction::ExportMarkdown => {
-                info!("Export Markdown Button Pressed");
-                let path = rfd::FileDialog::new()
-                    .set_title(fl!("export-markdown"))
-                    .add_filter("Mark Down", &["md"])
-                    .set_file_name("tasks.md")
-                    .save_file();
-                if let (Some(path), Some(tasks)) = (path, &work.tasks) {
-                    work.outputs.push(work.core.export_markdown(&path, tasks));
-                }
-            }
+            BottomAction::EmailReport => Self::send_email_report(work),
+            BottomAction::ExportMarkdown => Self::export_markdown(work),
         }
     }
 
+    fn open_graph(work: &mut Work) {
+        work.next_page = Pages::Graph;
+        work.outputs.push(work.core.get_plot_data());
+    }
+
+    fn send_email_report(work: &mut Work) {
+        info!("Email Report Button Pressed");
+        if let Some(tasks) = &work.tasks {
+            work.outputs.push(work.core.mail_daily(tasks));
+        }
+    }
+
+    fn export_markdown(work: &mut Work) {
+        info!("Export Markdown Button Pressed");
+        let Some(path) = rfd::FileDialog::new()
+            .set_title(fl!("export-markdown"))
+            .add_filter("Mark Down", &["md"])
+            .set_file_name("tasks.md")
+            .save_file()
+        else {
+            return;
+        };
+
+        if let Some(tasks) = &work.tasks {
+            work.outputs.push(work.core.export_markdown(&path, tasks));
+        }
+    }
+
+    /// Render the heading, reset/search buttons, and search modal; apply whichever action fired.
     fn render_search_control_bar(&mut self, ui: &mut Ui, work: &mut Work) {
-        let mut reset_clicked = false;
+        let action = egui::Sides::new()
+            .show(
+                ui,
+                |ui| {
+                    ui.heading(fl!("task-list"));
+                },
+                |ui| {
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        if button_clicked(ui, fl!("reset"), SEARCH_BUTTON_SIZE) {
+                            return SearchBarAction::Reset;
+                        }
 
-        egui::Sides::new().show(
-            ui,
-            |ui| {
-                ui.heading(fl!("task-list"));
-            },
-            |ui| {
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if button_clicked(ui, fl!("reset"), SEARCH_BUTTON_SIZE) {
-                        reset_clicked = true;
-                    }
+                        if button_clicked(ui, fl!("search"), SEARCH_BUTTON_SIZE) {
+                            self.search_condition_modal.open();
+                        }
 
-                    if button_clicked(ui, fl!("search"), SEARCH_BUTTON_SIZE) {
-                        self.search_condition_modal.open();
-                    }
+                        SearchBarAction::Modal(self.search_condition_modal.show(ui))
+                    })
+                    .inner
+                },
+            )
+            .1;
 
-                    if let ModalResult::Search(pattern, filter, order, search) =
-                        self.search_condition_modal.show(ui)
-                    {
-                        work.outputs
-                            .push(work.core.search_task(&pattern, search, filter, order));
-                    }
-                });
-            },
-        );
+        self.apply_search_bar_action(action, work);
+    }
 
-        if reset_clicked {
-            info!("Reset Button Pressed");
-            let (filter_flag, order_flag) = Self::default_fetch_flags();
-            work.outputs
-                .push(work.core.fetch_all_task(filter_flag, order_flag));
+    fn apply_search_bar_action(&self, action: SearchBarAction, work: &mut Work) {
+        match action {
+            SearchBarAction::Reset => {
+                info!("Reset Button Pressed");
+                Self::fetch_all_tasks(work);
+            }
+            SearchBarAction::Modal(ModalResult::Search(pattern, filter, order, search)) => {
+                work.outputs
+                    .push(work.core.search_task(&pattern, search, filter, order));
+            }
+            SearchBarAction::Modal(_) => {}
         }
     }
 }
@@ -210,16 +237,12 @@ impl Page for MainPage {
         work.outputs.push(work.core.sync_all_weekly_task());
         work.outputs.push(work.core.sync_all_monthly_task());
         work.tasks = None;
-        let (filter_flag, order_flag) = Self::default_fetch_flags();
-        work.outputs
-            .push(work.core.fetch_all_task(filter_flag, order_flag));
+        Self::fetch_all_tasks(work);
     }
 
     fn show(&mut self, ui: &mut egui::Ui, work: &mut Work) {
         if work.outputs.is_empty() && work.tasks.is_none() {
-            let (filter_flag, order_flag) = Self::default_fetch_flags();
-            work.outputs
-                .push(work.core.fetch_all_task(filter_flag, order_flag));
+            Self::fetch_all_tasks(work);
         }
 
         self.menu_bar.show(ui, work);

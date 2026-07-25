@@ -40,7 +40,7 @@ impl Page for CreateTaskPage {
                 work.task.id = id;
                 info!("The next id is {}", id);
             } else {
-                error!("Failed to get id")
+                error!("Failed to get id");
             }
         }
     }
