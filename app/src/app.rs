@@ -1,6 +1,6 @@
 use super::style;
 use crate::i18n::I18n;
-use crate::page::{self, Page, Pages};
+use crate::page::{self, Page, Pages, Transition};
 use crate::work::Work;
 use core::prelude::*;
 use core::{CoreOutput, Receiver, TryRecvError};
@@ -14,6 +14,7 @@ pub struct App {
     work: Work,
     pages: HashMap<Pages, Box<dyn Page>>,
     last_synched: Timestamp,
+    transition: Transition,
 }
 
 impl App {
@@ -68,6 +69,7 @@ impl App {
             work,
             pages,
             last_synched,
+            transition: Transition::default(),
         }
     }
 }
@@ -80,6 +82,7 @@ impl eframe::App for App {
 
         /* Invoke on entry handler */
         if self.work.next_page != self.work.last_page {
+            self.transition.start();
             if let Some(page) = self.pages.get_mut(&self.work.next_page) {
                 info!("{:?} entry handler called", &self.work.next_page);
                 page.on_entry(&mut self.work);
@@ -91,6 +94,7 @@ impl eframe::App for App {
 
         /* Show page */
         if let Some(page) = self.pages.get_mut(&self.work.next_page) {
+            self.transition.animate(ui);
             page.show(ui, &mut self.work);
         } else {
             warn!("Page not found: {:?}", self.work.next_page);

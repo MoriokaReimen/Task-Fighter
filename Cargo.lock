@@ -253,6 +253,7 @@ dependencies = [
  "image 0.25.10",
  "jiff",
  "lazy_static",
+ "rand 0.8.6",
  "rfd",
  "rust-embed",
  "sys-locale",

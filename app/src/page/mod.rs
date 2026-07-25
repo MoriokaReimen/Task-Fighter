@@ -38,6 +38,9 @@ pub use kanban_page::*;
 mod config_page;
 pub use config_page::*;
 
+mod transition;
+pub use transition::*;
+
 pub trait Page {
     fn on_entry(&mut self, work: &mut crate::work::Work);
     fn show(&mut self, ui: &mut egui::Ui, work: &mut crate::work::Work);
