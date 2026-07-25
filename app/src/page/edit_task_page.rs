@@ -34,7 +34,7 @@ impl EditTaskPage {
 
 impl Page for EditTaskPage {
     fn on_entry(&mut self, work: &mut crate::work::Work) {
-        if work.last_page != Pages::Config {
+        if work.last_page != Pages::Config && work.last_page != Pages::Timer {
             self.last_page = work.last_page;
         }
     }
